@@ -85,10 +85,10 @@ source C:/xampp/htdocs/classtrack/database/classtrack_db.sql;
 
 **2. Update database credentials if needed:**
 ``` bash
-**$host = "localhost";
+$host = "localhost";
 $dbname = "classtrack_db";
 $username = "root";
-$password = "";*
+$password = "";
 ```
 
 **Save the file.**
@@ -97,7 +97,7 @@ $password = "";*
 
 ## Open your browser and go to:
 
-**http://localhost/classtrack*
+*http://localhost/classtrack*
 
 If setup is correct, the system should load successfully.
 
