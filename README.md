@@ -148,7 +148,7 @@ If setup is correct, the system should load successfully.
 
 - Manage user accounts.
 
-#🏗 Project Structure (Simplified)
+# 🏗 Project Structure (Simplified)
 ``` bash
 /config
 /includes
