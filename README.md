@@ -74,22 +74,23 @@ USE classtrack_db;
 
 After that, import or execute the provided SQL file to create the required tables.
 ``` bash
-source C:/xampp/htdocs/classtrack/database/classtrack_db.sql;
+source C:/xampp/htdocs/classtrack/classtrack_db.sql;
 ```
 
 **4️. Configure Database Connection**
 
 **Open:**
+**config/database.php**
 
-**1. config/database.php**
-
-**2. Update database credentials if needed:**
+**The database connection is already configured with default XAMPP settings:**
 ``` bash
 $host = "localhost";
 $dbname = "classtrack_db";
 $username = "root";
 $password = "";
 ```
+
+**If you need different credentials, update them in config/database.php**
 
 **Save the file.**
 
