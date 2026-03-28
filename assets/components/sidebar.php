@@ -59,7 +59,7 @@
                     <li class="sidebar-item">
                         <a href="../teacher/attendance_history.php" class="sidebar-link" data-page="attendance-history">
                             <i class="bi bi-clock-history sidebar-icon"></i>
-                            <span class="sidebar-text">Attendance Session History</span>
+                            <span class="sidebar-text">Attendance Sessions</span>
                         </a>
                     </li>
                     
