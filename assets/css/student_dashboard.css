@@ -1,0 +1,353 @@
+
+/* Ultra-aggressive animation prevention - EXCEPT main content, sidebar, and their children */
+*:not(.main-content):not(.main-content *):not(.sidebar):not(.sidebar *),
+*::before:not(.main-content):not(.main-content *):not(.sidebar):not(.sidebar *),
+*::after:not(.main-content):not(.main-content *):not(.sidebar):not(.sidebar *) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+    animation: none !important;
+    transition: none !important;
+}
+
+/* NO TRANSITIONS for sidebar and main content */
+.sidebar,
+.main-content {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* BUT allow sidebar icons to have NO transitions at all */
+.sidebar-icon,
+.sidebar .sidebar-icon,
+.sidebar-link .sidebar-icon,
+.sidebar:hover .sidebar-icon,
+.sidebar-link:hover .sidebar-icon,
+.sidebar-link.active .sidebar-icon,
+.sidebar:not(.expanded) .sidebar-icon,
+.sidebar.expanded .sidebar-icon {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+}
+
+/* Allow main content to have smooth transitions for sidebar synchronization */
+.main-content {
+    min-height: calc(100vh - 60px); 
+    background: #F2F3F4;
+    padding: 2rem 3rem; 
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; 
+    will-change: margin-left; 
+    z-index: 1; 
+    position: relative;
+    margin-left: 70px;
+}
+
+/* Allow specific hover interactions */
+.info-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12) !important;
+    transition: all 0.3s ease !important;
+}
+
+.qr-code-image-large:hover {
+    transform: scale(1.05) !important;
+    transition: transform 0.3s ease !important;
+}
+
+/* Prevent all animations on dashboard page - EXCEPT QR section */
+.main-content *,
+.info-card * {
+    animation-delay: 0s !important;
+    transition-delay: 0s !important;
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+/* Allow QR section to have smooth transitions */
+.qr-section {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+.qr-section * {
+    transition: inherit;
+}
+
+/* Info Card Styles */
+.info-card {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    /* transition: all 0.3s ease; Removed to prevent blinking */
+    overflow: hidden;
+    /* animation: fadeInUp 1.2s ease; Removed to prevent blinking */
+    /* Force immediate visibility */
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    transition-delay: 0s !important;
+}
+
+/* Mobile responsive adjustments for main content */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 1rem;
+        padding-top: 4rem; /* Reduced padding for mobile */
+        margin-left: 0; /* No margin on mobile */
+        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Keep transition for consistency */
+    }
+}
+
+@media (max-width: 576px) {
+    .main-content {
+        padding: 0.75rem;
+        padding-top: 3.5rem; /* Further reduced for small mobile */
+        margin-left: 0; /* No margin on small mobile */
+        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Keep transition for consistency */
+    }
+}
+
+.info-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.info-card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.info-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.info-card-subtitle {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0;
+    font-style: italic;
+}
+
+.info-card-body {
+    padding: 2rem;
+}
+
+/* Student Information Display */
+.student-info-display {
+    width: 100%;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.info-value {
+    color: #2c3e50;
+    margin-bottom: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f3f4;
+    min-height: 2rem;
+    display: flex;
+    align-items: center;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.info-value .badge {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.65rem;
+}
+
+/* QR Code Section Styling - Smooth animations enabled */
+.qr-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.qr-code-image-large {
+    width: 220px;
+    height: 220px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    margin-bottom: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.qr-code-image-large:hover {
+    transform: scale(1.05);
+}
+
+.qr-description {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 0.75rem;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+    margin-top: 1rem;
+}
+
+.form-actions .btn {
+    border-radius: 25px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.form-actions .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Animations - Removed to prevent blinking */
+/* @keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+} */
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .main-content {
+        margin-left: 0;
+        padding: 1rem;
+        padding-top: 5rem; /* Match new navbar height on mobile */
+    }
+    
+    .info-card-body {
+        padding: 1.5rem;
+    }
+    
+    .qr-code-image-large {
+        width: 180px;
+        height: 180px;
+    }
+    
+    .qr-section {
+        padding: 1.5rem 1rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+        max-width: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .info-card-body {
+        padding: 1rem;
+    }
+    
+    .qr-code-image-large {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .qr-section {
+        padding: 1rem;
+    }
+    
+    .qr-description {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .main-content {
+        padding: 0.75rem;
+    }
+    
+    .info-card-body {
+        padding: 0.75rem;
+    }
+    
+    .qr-code-image-large {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .qr-description {
+        font-size: 0.75rem;
+    }
+    
+    .info-label {
+        font-size: 0.8rem;
+    }
+    
+    .info-value {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .form-actions .btn {
+        font-size: 0.8rem;
+        padding: 0.4rem 1rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .sidebar,
+    .navbar,
+    .form-actions {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+    }
+    
+    .info-card {
+        box-shadow: none;
+        border: 1px solid #dee2e6;
+        break-inside: avoid;
+    }
+    
+    .info-value {
+        border: 1px solid #dee2e6;
+        background: white !important;
+    }
+}
+
+

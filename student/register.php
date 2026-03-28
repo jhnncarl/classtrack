@@ -1,8 +1,4 @@
 <?php
-/**
- * ClassTrack Student Registration Page
- * Handles new student account creation
- */
 
 require_once '../config/auth.php';
 
@@ -55,9 +51,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = $auth->register($userData);
         
         if ($result['success']) {
-            $success_message = 'Student account created successfully! You can now login.';
-            // Clear form
-            $userData = [];
+            $registration_success = true;
+            $student_data = $result['data'] ?? [];
+            $qr_code_data = $result['qr_code'] ?? '';
+            $success_message = 'Registration successful! Your account has been created successfully.';
         } else {
             $error_message = $result['message'];
         }
@@ -80,8 +77,9 @@ if ($auth->isLoggedIn()) {
     <title>ClassTrack - Student Registration</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="../assets/css/student_registration.css">
-    <link rel="stylesheet" href="../assets/css/toast.css">
+    <link rel="stylesheet" href="../assets/css/student_registration.css?v=13">
+    <link rel="stylesheet" href="../assets/css/toast.css?v=1">
+    <link rel="stylesheet" href="../assets/css/qr_modal.css?v=17">
 </head>
 <body>
     <div class="registration-container">
@@ -89,15 +87,15 @@ if ($auth->isLoggedIn()) {
             <h2>Create Student Account</h2>
             <p class="subtitle">Fill in your information to get started with ClassTrack</p>
             
-            <?php if (isset($success_message)): ?>
-            <div class="alert alert-success">
+            <?php if (!empty($success_message)): ?>
+            <div class="alert alert-success" style="display: none;">
                 <?php echo $success_message; ?>
                 <p><a href="../auth/login.php">Click here to login</a></p>
             </div>
             <?php endif; ?>
             
-            <?php if (isset($error_message)): ?>
-            <div class="alert alert-error">
+            <?php if (!empty($error_message)): ?>
+            <div class="alert alert-error" style="display: none;">
                 <?php echo $error_message; ?>
             </div>
             <?php endif; ?>
@@ -239,29 +237,85 @@ if ($auth->isLoggedIn()) {
         </div>
     </div>
     
-    <!-- Toast Notification Component -->
-    <div id="toast-container" class="toast-container">
-        <div id="registration-toast" class="toast toast-success">
-            <div class="toast-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
+    <!-- QR Code Success Modal -->
+    <?php if (isset($registration_success) && $registration_success): ?>
+    <div class="qr-success-modal" id="qrSuccessModal">
+        <div class="modal-overlay" id="modalOverlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Registration Successful!</h3>
+                <button class="close-btn" id="closeModal">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
-            <div class="toast-content">
-                <div class="toast-title">Success</div>
-                <div class="toast-message">Student account created successfully!</div>
+            <div class="modal-body">
+                <div class="success-content">
+                    <div class="qr-section">
+                        <div class="qr-container" id="qrContainer">
+                            <?php if (!empty($qr_code_data)): ?>
+                                <img src="data:image/png;base64,<?php echo base64_encode($qr_code_data); ?>" alt="Your QR Code" class="qr-code">
+                                <script>
+                                    console.log('QR Code data found and displayed');
+                                    console.log('QR Code data length:', '<?php echo strlen($qr_code_data); ?>');
+                                </script>
+                            <?php else: ?>
+                                <div class="qr-placeholder">
+                                    <i class="bi bi-qr-code"></i>
+                                </div>
+                                <script>
+                                    console.log('No QR Code data available');
+                                    console.log('qr_code_data variable:', <?php echo var_export($qr_code_data, true); ?>);
+                                </script>
+                            <?php endif; ?>
+                        </div>
+                        <p class="qr-description">This is your unique QR code for attendance scanning</p>
+                    </div>
+                    
+                    <div class="student-info-section">
+                        <h4>Student Information</h4>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label>Name:</label>
+                                <span><?php echo htmlspecialchars(($student_data['first_name'] ?? '') . ' ' . ($student_data['last_name'] ?? '')); ?></span>
+                            </div>
+                            <div class="info-item">
+                                <label>Student Number:</label>
+                                <span><?php echo htmlspecialchars($student_data['StudentNumber'] ?? ''); ?></span>
+                            </div>
+                            <div class="info-item">
+                                <label>Email:</label>
+                                <span><?php echo htmlspecialchars($student_data['Email'] ?? ''); ?></span>
+                            </div>
+                            <div class="info-item">
+                                <label>Course:</label>
+                                <span><?php echo htmlspecialchars($student_data['Course'] ?? ''); ?></span>
+                            </div>
+                            <div class="info-item">
+                                <label>Year Level:</label>
+                                <span><?php echo htmlspecialchars($student_data['year_level_text'] ?? ''); ?></span>
+                            </div>
+                        </div>
+                        <script>
+                            console.log('Student data:', <?php echo json_encode($student_data ?? []); ?>);
+                        </script>
+                    </div>
+                </div>
             </div>
-            <button class="toast-close" id="registrationToastClose">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
+            <div class="modal-footer">
+                <button class="btn btn-download" id="downloadBtn" style="color: #060606;">
+                    <i class="bi bi-download"></i> Download QR
+                </button>
+            </div>
         </div>
     </div>
+    <?php endif; ?>
     
-    <script src="../assets/js/register.js?v=2"></script>
+    <!-- Toast Notification Component -->
+    <?php require_once '../assets/components/toast.php'; ?>
+    
+    <script src="../assets/js/register.js?v=10"></script>
 </body>
 </html>
-?>

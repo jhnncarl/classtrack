@@ -1,0 +1,607 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background: #F2F3F4;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.registration-container {
+    width: 100%;
+    max-width: 800px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+}
+
+.registration-form-container {
+    padding: 40px;
+}
+
+.registration-form-container h2 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.subtitle {
+    font-size: 14px;
+    color: #6c757d;
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.registration-form {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Two Column Layout */
+.form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.form-row .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.form-group {
+    margin-bottom: 50px;
+    position: relative;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'Montserrat', sans-serif;
+    transition: all 0.3s ease;
+    background: white;
+    line-height: 1.5;
+    height: 46px;
+    box-sizing: border-box;
+}
+
+.form-group select {
+    cursor: pointer;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.password-input-container {
+    position: relative;
+}
+
+.password-input-container input {
+    padding-right: 45px !important;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.password-toggle-btn:hover {
+    background-color: #f8f9fa;
+}
+
+.eye-icon, .eye-off-icon {
+    width: 20px;
+    height: 20px;
+    color: #6c757d;
+    transition: color 0.2s ease;
+}
+
+.password-toggle-btn:hover .eye-icon,
+.password-toggle-btn:hover .eye-off-icon {
+    color: #495057;
+}
+
+.register-btn {
+    width: 100%;
+    padding: 14px;
+    background-color: #060606;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: 'Montserrat', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 8px;
+    margin-bottom: 20px;
+}
+
+.register-btn:hover {
+    background-color: #1a1a1a;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(6, 6, 6, 0.2);
+}
+
+.register-btn:active {
+    transform: translateY(0);
+}
+
+.login-text {
+    font-size: 14px;
+    color: #6c757d;
+    text-align: center;
+}
+
+.login-text a {
+    font-weight: 600;
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.login-text a:hover {
+    color: #5a6fd8;
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    body {
+        padding: 15px;
+    }
+    
+    .registration-container {
+        max-width: 100%;
+    }
+    
+    .registration-form-container {
+        padding: 30px 25px;
+    }
+    
+    .registration-form-container h2 {
+        font-size: 28px;
+    }
+    
+    .subtitle {
+        font-size: 13px;
+        margin-bottom: 30px;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+        margin-bottom: 20px;
+    }
+    
+    .form-row .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 44px;
+    }
+    
+    .form-group label {
+        font-size: 13px;
+        margin-bottom: 5px;
+    }
+    
+    .form-group input,
+    .form-group select {
+        padding: 12px 14px;
+        font-size: 16px; /* Prevents zoom on iOS */
+        height: 48px;
+    }
+    
+    .password-toggle-btn {
+        right: 14px;
+    }
+    
+    .register-btn {
+        padding: 14px;
+        font-size: 16px;
+        margin-top: 6px;
+        margin-bottom: 16px;
+    }
+    
+    .login-text {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+        align-items: stretch;
+        min-height: 100vh;
+    }
+    
+    .registration-container {
+        border-radius: 15px;
+        min-height: 100vh;
+        box-shadow: none;
+        margin: 0;
+    }
+    
+    .registration-form-container {
+        padding: 25px 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 100vh;
+    }
+    
+    .registration-form-container h2 {
+        font-size: 24px;
+        margin-bottom: 6px;
+    }
+    
+    .subtitle {
+        font-size: 12px;
+        margin-bottom: 25px;
+    }
+    
+    .form-group {
+        margin-bottom: 40px;
+    }
+    
+    .form-group label {
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
+    
+    .form-group input,
+    .form-group select {
+        padding: 12px 14px;
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    .register-btn {
+        padding: 14px;
+        font-size: 16px;
+        margin-top: 8px;
+        margin-bottom: 18px;
+    }
+    
+    .login-text {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 360px) {
+    .registration-form-container {
+        padding: 20px 15px;
+    }
+    
+    .registration-form-container h2 {
+        font-size: 20px;
+    }
+    
+    .form-group input,
+    .form-group select {
+        padding: 10px 12px;
+    }
+    
+    .register-btn {
+        padding: 12px;
+        font-size: 15px;
+    }
+}
+
+/* Landscape mobile adjustments */
+@media (max-height: 700px) and (orientation: landscape) and (max-width: 1024px) {
+    body {
+        padding: 10px;
+    }
+    
+    .registration-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .registration-form-container {
+        padding: 30px;
+    }
+    
+    .registration-form-container h2 {
+        font-size: 24px;
+        margin-bottom: 6px;
+    }
+    
+    .subtitle {
+        font-size: 13px;
+        margin-bottom: 25px;
+    }
+    
+    .form-group {
+        margin-bottom: 40px;
+    }
+    
+    .form-row {
+        margin-bottom: 20px;
+    }
+    
+    .register-btn {
+        margin-top: 6px;
+        margin-bottom: 16px;
+    }
+}
+
+/* Custom Error Messages */
+.error-message {
+    position: absolute;
+    bottom: -17px;
+    left: 0;
+    color: #dc3545;
+    font-size: 9px;
+    margin-top: 4px;
+    display: block;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1;
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+.error-message.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.error-message.fade-out {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.5s ease;
+}
+
+/* Focus states for accessibility */
+.register-btn:focus,
+.login-text a:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Approval Modal Styles */
+.approval-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9998;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.approval-modal.show {
+    display: block;
+}
+
+.approval-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(5px);
+    z-index: 1;
+}
+
+.approval-modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+    z-index: 2;
+}
+
+.approval-modal-icon {
+    margin-bottom: 20px;
+    color: #667eea;
+}
+
+.approval-modal-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 16px;
+}
+
+.approval-modal-message {
+    font-size: 14px;
+    color: #6c757d;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.approval-modal-btn {
+    background-color: #060606;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 40px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: 'Montserrat', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.approval-modal-btn:hover {
+    background-color: #1a1a1a;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(6, 6, 6, 0.2);
+}
+
+.approval-modal-btn:active {
+    transform: translateY(0);
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* Responsive Design for Approval Modal */
+@media (max-width: 768px) {
+    .approval-modal-content {
+        padding: 30px 25px;
+        max-width: 350px;
+        width: 85%;
+    }
+    
+    .approval-modal-title {
+        font-size: 22px;
+        margin-bottom: 14px;
+    }
+    
+    .approval-modal-message {
+        font-size: 13px;
+        margin-bottom: 25px;
+    }
+    
+    .approval-modal-btn {
+        padding: 12px 35px;
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .approval-modal-content {
+        padding: 25px 20px;
+        max-width: 320px;
+        width: 90%;
+        border-radius: 15px;
+    }
+    
+    .approval-modal-icon {
+        margin-bottom: 15px;
+    }
+    
+    .approval-modal-icon svg {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .approval-modal-title {
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+    
+    .approval-modal-message {
+        font-size: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .approval-modal-btn {
+        padding: 12px 30px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 360px) {
+    .approval-modal-content {
+        padding: 20px 15px;
+        width: 95%;
+    }
+    
+    .approval-modal-title {
+        font-size: 18px;
+    }
+    
+    .approval-modal-message {
+        font-size: 12px;
+    }
+    
+    .approval-modal-btn {
+        padding: 10px 25px;
+        font-size: 13px;
+    }
+}
+
+/* Landscape mobile adjustments */
+@media (max-height: 700px) and (orientation: landscape) and (max-width: 1024px) {
+    .approval-modal-content {
+        padding: 20px 25px;
+        max-width: 380px;
+    }
+    
+    .approval-modal-icon {
+        margin-bottom: 10px;
+    }
+    
+    .approval-modal-icon svg {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .approval-modal-title {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+    
+    .approval-modal-message {
+        font-size: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .approval-modal-btn {
+        padding: 10px 30px;
+        font-size: 14px;
+    }
+}

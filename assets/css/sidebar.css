@@ -1,0 +1,476 @@
+/* CSS Variables for dynamic sidebar state */
+:root {
+    --sidebar-width: 70px;
+    --main-content-margin: 70px;
+}
+
+.sidebar {
+    position: fixed;
+    top: 60px; /* Position below navbar */
+    left: 0;
+    height: calc(100vh - 60px); /* Full height minus navbar */
+    width: var(--sidebar-width); /* Use CSS variable */
+    background: #FFFFFF;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    border-right: 1px solid #e9ecef;
+    z-index: 1010;
+    /* NO TRANSITION - instant width changes */
+    font-family: 'Montserrat', sans-serif;
+    overflow: hidden;
+}
+
+/* Main content margin using CSS variable - NO TRANSITION */
+.main-content {
+    margin-left: var(--main-content-margin) !important;
+    /* NO TRANSITION - instant margin changes */
+}
+
+/* Expanded Sidebar State */
+.sidebar.expanded {
+    width: 250px; /* Expanded width - icons + text */
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15); /* Enhanced shadow when expanded */
+}
+
+/* Sidebar Container */
+.sidebar-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 0;
+}
+
+/* Sidebar Navigation */
+.sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Sidebar Menu */
+.sidebar-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* Sidebar Menu Items - Consistent Spacing */
+.sidebar-item {
+    margin-bottom: 0; /* Remove margin, handle with link height */
+}
+
+/* Sidebar Links - NO TRANSITIONS */
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Always left-align to prevent shifting */
+    padding: 0 1.25rem; /* Consistent padding for both states */
+    height: 56px; /* Fixed height for consistent spacing */
+    color: #495057;
+    text-decoration: none;
+    /* NO TRANSITION - instant changes */
+    border-radius: 0;
+    position: relative;
+    overflow: visible; /* Allow background to show */
+    margin: 2px 8px; /* Consistent margin for all items */
+}
+
+/* Collapsed state - Keep icon centered visually */
+.sidebar:not(.expanded) .sidebar-link {
+    justify-content: center; /* Center content in collapsed state */
+    padding: 0; /* Remove padding for true centering */
+}
+
+/* Sidebar Link Hover Effect */
+.sidebar-link:hover {
+    background-color: #f8f9fa;
+    color: #2c3e50;
+    text-decoration: none;
+}
+
+/* Active Sidebar Link - Perfect Centering */
+.sidebar-link.active,
+.sidebar .sidebar-link.active {
+    background-color: #060606 !important; /* Dark selection focus color */
+    color: #ffffff !important; /* White text for contrast */
+    border-radius: 16px !important; /* Modern rounded corners */
+    margin: 2px 8px !important; /* Consistent margin */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important; /* Subtle shadow */
+    transform: scale(1.02); /* Slight scale for emphasis */
+}
+
+/* Collapsed state - Perfect icon centering */
+.sidebar:not(.expanded) .sidebar-link.active,
+.sidebar:not(.expanded) .sidebar .sidebar-link.active {
+    margin: 2px 6px !important; /* Slightly reduced margins for collapsed */
+    border-radius: 12px !important; /* Smaller radius for collapsed */
+    transform: scale(1); /* No scale in collapsed state */
+}
+
+.sidebar-link.active:hover,
+.sidebar .sidebar-link.active:hover {
+    background-color: #060606 !important; /* Keep same color on hover */
+    color: #ffffff !important;
+    transform: translateY(-1px) !important; /* Slight lift on hover */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important; /* Enhanced shadow on hover */
+}
+
+/* Sidebar Icon - Perfect Centering */
+.sidebar-icon {
+    font-size: 1.25rem;
+    width: 24px; /* Fixed width for consistency */
+    height: 24px; /* Fixed height for consistency */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    /* NO TRANSITION - prevent unwanted animations during collapse/expand */
+    color: inherit !important;
+    z-index: 2; /* Ensure icon stays above background */
+}
+
+/* Override any Bootstrap icon color defaults */
+.sidebar .bi {
+    color: inherit !important;
+}
+
+/* Sidebar Text - NO TRANSITIONS */
+.sidebar-text {
+    margin-left: 1rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    /* NO TRANSITION - instant show/hide */
+    transform: translateX(-10px);
+    position: absolute; /* Prevent affecting icon centering */
+    left: 48px; /* Position after icon */
+}
+
+/* Show text when sidebar is expanded */
+.sidebar.expanded .sidebar-text {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    /* NO TRANSITION - instant show/hide */
+    position: relative; /* Reset position for expanded state */
+    left: auto; /* Reset left position */
+}
+
+/* Hover Animation for Menu Items - REMOVED */
+.sidebar-item::before {
+    display: none; /* Completely remove the left indicator */
+}
+
+/* Main Content Margin Adjustment */
+body.sidebar-expanded {
+    margin-left: 250px;
+}
+
+body.sidebar-collapsed {
+    margin-left: 70px;
+}
+
+/* Responsive Design */
+
+/* Large Desktop - 1200px and up */
+@media (min-width: 1200px) {
+    .sidebar {
+        width: 70px;
+    }
+    
+    .sidebar.expanded {
+        width: 260px; /* Slightly larger for big screens */
+    }
+    
+    /* Ensure main content uses correct margin */
+    .main-content {
+        margin-left: 70px;
+    }
+    
+    .sidebar.expanded ~ .main-content {
+        margin-left: 260px;
+    }
+}
+
+/* Desktop - 992px to 1199px */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .sidebar {
+        width: 70px;
+    }
+    
+    .sidebar.expanded {
+        width: 240px;
+    }
+    
+    .main-content {
+        margin-left: 70px;
+    }
+    
+    .sidebar.expanded ~ .main-content {
+        margin-left: 240px;
+    }
+}
+
+/* Tablet - 768px to 991px */
+@media (max-width: 991px) {
+    .sidebar {
+        width: 70px;
+    }
+    
+    .sidebar.expanded {
+        width: 220px;
+    }
+    
+    .main-content {
+        margin-left: 70px;
+    }
+    
+    .sidebar.expanded ~ .main-content {
+        margin-left: 220px;
+    }
+    
+    /* Adjust active state for tablet */
+    .sidebar-link.active,
+    .sidebar .sidebar-link.active {
+        margin: 2px 6px !important;
+        border-radius: 14px !important;
+    }
+    
+    /* Collapsed state for tablet */
+    .sidebar:not(.expanded) .sidebar-link.active,
+    .sidebar:not(.expanded) .sidebar .sidebar-link.active {
+        margin: 2px 4px !important;
+        border-radius: 10px !important;
+    }
+}
+
+/* Mobile - 577px to 767px */
+@media (max-width: 767px) {
+    .sidebar {
+        width: 0;
+        transform: translateX(-100%);
+        box-shadow: none;
+        z-index: 1050; /* Ensure sidebar is above mobile content */
+    }
+    
+    .sidebar.expanded {
+        width: 280px;
+        transform: translateX(0);
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .main-content {
+        margin-left: 0 !important; /* No sidebar margin on mobile */
+        padding: 1rem;
+        padding-top: 5rem; /* Account for fixed navbar */
+    }
+    
+    .sidebar-text {
+        font-size: 0.95rem;
+    }
+    
+    .sidebar-link {
+        height: 60px; /* Larger touch targets for mobile */
+        padding: 0 1.5rem;
+        margin: 2px 12px;
+    }
+    
+    /* Adjust active state for mobile */
+    .sidebar-link.active,
+    .sidebar .sidebar-link.active {
+        margin: 2px 12px !important;
+        border-radius: 18px !important;
+    }
+    
+    /* Better touch targets for mobile */
+    .sidebar-icon {
+        min-width: 28px;
+        min-height: 28px;
+        font-size: 1.3rem;
+    }
+}
+
+/* Small Mobile - 320px to 576px */
+@media (max-width: 576px) {
+    .sidebar.expanded {
+        width: 260px; /* Slightly smaller for small screens */
+        max-width: 85vw; /* Ensure it doesn't exceed screen width */
+    }
+    
+    .sidebar-link {
+        height: 56px;
+        padding: 0 1.25rem;
+        margin: 2px 10px;
+    }
+    
+    .sidebar-icon {
+        font-size: 1.1rem;
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
+        min-height: 24px;
+    }
+    
+    .sidebar-text {
+        font-size: 0.9rem;
+    }
+    
+    /* Adjust active state for small mobile */
+    .sidebar-link.active,
+    .sidebar .sidebar-link.active {
+        margin: 2px 10px !important;
+        border-radius: 16px !important;
+    }
+    
+    .main-content {
+        padding: 0.75rem;
+        padding-top: 4.5rem;
+    }
+}
+
+/* Extra Small Mobile - up to 320px */
+@media (max-width: 320px) {
+    .sidebar.expanded {
+        width: 240px;
+        max-width: 90vw;
+    }
+    
+    .sidebar-link {
+        height: 52px;
+        padding: 0 1rem;
+        margin: 2px 8px;
+    }
+    
+    .sidebar-text {
+        font-size: 0.85rem;
+    }
+    
+    .main-content {
+        padding: 0.5rem;
+        padding-top: 4rem;
+    }
+}
+
+/* Overlay for mobile - NO TRANSITION */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1005;
+    opacity: 0;
+    /* NO TRANSITION - instant show/hide */
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+/* NO TRANSITIONS - All sidebar elements are instant */
+.sidebar,
+.sidebar-link,
+.sidebar-text,
+.sidebar-item::before {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* Sidebar icons should NOT have transitions during collapse/expand */
+.sidebar-icon {
+    transition: none !important;
+}
+
+/* FORCE NO TRANSITIONS on all icon-related elements */
+.sidebar .sidebar-icon,
+.sidebar-link .sidebar-icon,
+.sidebar-item .sidebar-icon,
+.sidebar:not(.expanded) .sidebar-icon,
+.sidebar.expanded .sidebar-icon {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+}
+
+/* Override any Bootstrap active styles in sidebar */
+.sidebar .nav-link.active,
+.sidebar .active,
+.sidebar-item .active,
+.sidebar-item .sidebar-link.active {
+    background-color: #060606 !important;
+    color: #ffffff !important;
+    border-radius: 16px !important;
+    margin: 2px 8px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    transform: scale(1.02);
+}
+
+/* Collapsed state Bootstrap overrides */
+.sidebar:not(.expanded) .nav-link.active,
+.sidebar:not(.expanded) .active,
+.sidebar:not(.expanded) .sidebar-item .active,
+.sidebar:not(.expanded) .sidebar-item .sidebar-link.active {
+    margin: 2px 6px !important;
+    border-radius: 12px !important;
+    transform: scale(1);
+}
+
+/* Focus states for accessibility */
+.sidebar-link:focus {
+    outline: none; /* Remove blue focus outline */
+}
+
+/* Log Out item special styling */
+.sidebar-item[data-page="logout"] .sidebar-link {
+    border-top: 1px solid #e9ecef;
+    margin-top: 1rem;
+    padding-top: 1.25rem;
+}
+
+/* Icon animations - DISABLED to prevent movement during expand/collapse */
+.sidebar-link:hover .sidebar-icon {
+    /* NO TRANSFORM - icons stay static */
+    color: #2c3e50;
+    transform: none !important;
+}
+
+.sidebar-link.active .sidebar-icon,
+.sidebar .sidebar-link.active .sidebar-icon {
+    /* NO TRANSFORM - icons stay static */
+    color: #ffffff !important;
+    transform: none !important;
+}
+
+/* Collapsed state - No icon movement on active */
+.sidebar:not(.expanded) .sidebar-link.active .sidebar-icon,
+.sidebar:not(.expanded) .sidebar .sidebar-link.active .sidebar-icon {
+    /* NO TRANSFORM - icons stay static */
+    transform: none !important;
+}
+
+/* FORCE NO TRANSFORMS on ALL sidebar icons in ALL states */
+.sidebar .sidebar-icon,
+.sidebar-link .sidebar-icon,
+.sidebar-item .sidebar-icon,
+.sidebar:hover .sidebar-icon,
+.sidebar-link:hover .sidebar-icon,
+.sidebar-link.active .sidebar-icon,
+.sidebar:not(.expanded) .sidebar-icon,
+.sidebar.expanded .sidebar-icon {
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+}
+
+/* Hide scrollbar completely for sidebar */
+.sidebar-nav::-webkit-scrollbar {
+    display: none;
+}
+
+.sidebar-nav {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}

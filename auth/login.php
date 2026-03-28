@@ -50,7 +50,7 @@ if ($auth->isLoggedIn()) {
     <title>ClassTrack - Login</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="../assets/css/login.css">
+    <link rel="stylesheet" href="../assets/css/login.css?v=3">
     <link rel="stylesheet" href="../assets/css/toast.css">
 </head>
 <body>
@@ -58,11 +58,11 @@ if ($auth->isLoggedIn()) {
         <!-- Left Side: Login Form -->
         <div class="login-form-section">
             <div class="login-form-container">
-                <h2>Welcome back</h2>
+                <h2 id="greeting-text">Welcome back</h2>
                 <p class="subtitle">Please enter your credentials to access your account</p>
                 
                 <?php if (isset($error_message)): ?>
-                <div class="alert alert-error">
+                <div class="alert alert-error" style="display: none;">
                     <?php echo htmlspecialchars($error_message); ?>
                 </div>
                 <?php endif; ?>
@@ -100,7 +100,7 @@ if ($auth->isLoggedIn()) {
                         <a href="forgot_password.php" class="forgot-password">Forgot Password?</a>
                     </div>
                     
-                    <button type="submit" class="sign-in-btn">Sign In</button>
+                    <button type="submit" class="sign-in-btn" id="signInBtn">Sign In</button>
                     
                     <p class="account-text">
                         Don't have an account? <a href="#" class="signup-link">Sign up</a>
@@ -156,28 +156,8 @@ if ($auth->isLoggedIn()) {
     </div>
     
     <!-- Toast Notification Component -->
-    <div id="toast-container" class="toast-container">
-        <div id="login-toast" class="toast toast-error">
-            <div class="toast-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="15" y1="9" x2="9" y2="15"></line>
-                    <line x1="9" y1="9" x2="15" y2="15"></line>
-                </svg>
-            </div>
-            <div class="toast-content">
-                <div class="toast-title">Error</div>
-                <div class="toast-message">Invalid credentials</div>
-            </div>
-            <button class="toast-close" id="loginToastClose">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        </div>
-    </div>
+    <?php require_once '../assets/components/toast.php'; ?>
     
-    <script src="../assets/js/login.js"></script>
+    <script src="../assets/js/login.js?v=5"></script>
 </body>
 </html>

@@ -1,0 +1,710 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background: #F2F3F4;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-container {
+    display: flex;
+    width: 100%;
+    max-width: 1200px;
+    min-height: 600px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    margin: 20px;
+}
+
+/* Left Side - Login Form */
+.login-form-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background: #f8f9fa;
+}
+
+.login-form-container {
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-form-container h2 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    font-size: 14px;
+    color: #6c757d;
+    margin-bottom: 40px;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group {
+    margin-bottom: 24px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: 'Montserrat', sans-serif;
+    transition: all 0.3s ease;
+    background: white;
+    line-height: 1.5;
+    height: 48px;
+    box-sizing: border-box;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #495057;
+    cursor: pointer;
+    position: relative;
+}
+
+.remember-me input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e9ecef;
+    border-radius: 4px;
+    margin-right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.remember-me input[type="checkbox"]:checked ~ .checkmark {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.remember-me input[type="checkbox"]:checked ~ .checkmark::after {
+    content: '✓';
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.forgot-password {
+    font-size: 14px;
+    font-weight: 600;
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.forgot-password:hover {
+    color: #5a6fd8;
+    text-decoration: underline;
+}
+
+.sign-in-btn {
+    width: 100%;
+    padding: 14px;
+    background-color: #060606;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: 'Montserrat', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 24px;
+}
+
+.sign-in-btn:hover {
+    background-color: #1a1a1a;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(6, 6, 6, 0.2);
+}
+
+.sign-in-btn:active {
+    transform: translateY(0);
+}
+
+.account-text {
+    font-size: 14px;
+    color: #6c757d;
+    text-align: center;
+}
+
+.signup-link {
+    font-weight: 600;
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.signup-link:hover {
+    color: #5a6fd8;
+    text-decoration: underline;
+}
+
+/* Right Side - Logo */
+.logo-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #EBEBEB;
+    padding: 40px;
+}
+
+.logo-container {
+    text-align: center;
+    color: #2c3e50;
+}
+
+.logo-icon {
+    font-size: 120px;
+    margin-bottom: 24px;
+    color: #667eea;
+    text-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+    animation: greenGlow 2s ease-in-out infinite alternate;
+}
+
+.brand-name {
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: -1px;
+}
+
+.brand-tagline {
+    font-size: 18px;
+    font-weight: 400;
+    opacity: 0.7;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .login-container {
+        margin: 15px;
+        max-width: 100%;
+    }
+    
+    .login-form-section {
+        padding: 35px;
+    }
+    
+    .logo-section {
+        padding: 35px;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .login-container {
+        flex-direction: column;
+        margin: 0;
+        max-width: 100%;
+        min-height: auto;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .login-form-section {
+        padding: 30px 25px;
+        order: 2;
+        background: white;
+    }
+    
+    .logo-section {
+        padding: 40px 25px;
+        order: 1;
+        min-height: 250px;
+        background: #EBEBEB;
+    }
+    
+    .login-form-container {
+        max-width: 100%;
+    }
+    
+    .login-form-container h2 {
+        font-size: 28px;
+        text-align: center;
+    }
+    
+    .subtitle {
+        font-size: 13px;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .brand-name {
+        font-size: 32px;
+    }
+    
+    .brand-tagline {
+        font-size: 14px;
+    }
+    
+    .logo-icon {
+        font-size: 70px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 0%;
+        align-items: stretch;
+        min-height: 100vh;
+    }
+    
+    .login-container {
+        margin: 0;
+        border-radius: 0;
+        min-height: 100vh;
+        box-shadow: none;
+    }
+    
+    .login-form-section {
+        padding: 25px 20px;
+        flex: 1;
+        display: flex;
+        align-items: center;
+    }
+    
+    .logo-section {
+        padding: 30px 20px;
+        min-height: 200px;
+    }
+    
+    .login-form-container h2 {
+        font-size: 24px;
+        margin-bottom: 6px;
+    }
+    
+    .subtitle {
+        font-size: 12px;
+        margin-bottom: 25px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
+    
+    .form-group input {
+        padding: 12px 14px;
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    .remember-me {
+        font-size: 13px;
+    }
+    
+    .forgot-password {
+        font-size: 13px;
+        margin-bottom: 25px;
+    }
+    
+    .sign-in-btn {
+        padding: 14px;
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+    
+    .account-text {
+        font-size: 13px;
+    }
+    
+    .brand-name {
+        font-size: 28px;
+        margin-bottom: 8px;
+    }
+    
+    .brand-tagline {
+        font-size: 13px;
+    }
+    
+    .logo-icon {
+        font-size: 60px;
+    }
+}
+
+@media (max-width: 360px) {
+    .login-form-section {
+        padding: 20px 15px;
+    }
+    
+    .logo-section {
+        padding: 25px 15px;
+    }
+    
+    .login-form-container h2 {
+        font-size: 22px;
+    }
+    
+    .form-group input {
+        padding: 10px 12px;
+    }
+    
+    .sign-in-btn {
+        padding: 12px;
+        font-size: 15px;
+    }
+}
+
+/* Landscape mobile adjustments */
+@media (max-height: 600px) and (orientation: landscape) {
+    .login-container {
+        min-height: auto;
+        margin: 10px;
+    }
+    
+    .login-form-section {
+        padding: 20px;
+    }
+    
+    .logo-section {
+        padding: 20px;
+        min-height: 150px;
+    }
+    
+    .brand-name {
+        font-size: 24px;
+    }
+    
+    .brand-tagline {
+        font-size: 12px;
+    }
+    
+    .logo-icon {
+        font-size: 50px;
+    }
+}
+
+/* Custom Error Messages */
+.error-message {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.error-message.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.error-message.fade-out {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.5s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes greenGlow {
+    from {
+        text-shadow: 0 10px 30px rgba(102, 126, 234, 0.2), 0 0 20px rgba(102, 126, 234, 0.3);
+    }
+    to {
+        text-shadow: 0 10px 30px rgba(102, 126, 234, 0.2), 0 0 40px rgba(102, 126, 234, 0.6);
+    }
+}
+
+/* Focus states for accessibility */
+.sign-in-btn:focus,
+.forgot-password:focus,
+.signup-link:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Registration Modal Styles */
+.registration-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.registration-modal.show {
+    display: flex;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    position: relative;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    animation: slideInUp 0.3s ease-out;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 32px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.modal-header h3 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    background-color: #f8f9fa;
+}
+
+.close-btn svg {
+    width: 20px;
+    height: 20px;
+    color: #6c757d;
+}
+
+.modal-body {
+    padding: 32px;
+}
+
+.modal-description {
+    font-size: 16px;
+    color: #6c757d;
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.role-selection {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.role-btn {
+    flex: 1;
+    max-width: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 24px;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.role-btn:hover {
+    background: #667eea;
+    border-color: #667eea;
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(102, 126, 234, 0.2);
+}
+
+.role-btn:hover .role-icon {
+    color: white;
+}
+
+.role-btn:hover span {
+    color: white;
+}
+
+.role-icon {
+    width: 48px;
+    height: 48px;
+    color: #667eea;
+    margin-bottom: 16px;
+    transition: color 0.3s ease;
+}
+
+.role-btn span {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    transition: color 0.3s ease;
+}
+
+/* Modal Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .modal-header {
+        padding: 20px 24px;
+    }
+    
+    .modal-body {
+        padding: 24px;
+    }
+    
+    .modal-description {
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+    
+    .role-selection {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .role-btn {
+        max-width: none;
+        padding: 24px 20px;
+    }
+    
+    .role-icon {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 12px;
+    }
+    
+    .role-btn span {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-header {
+        padding: 16px 20px;
+    }
+    
+    .modal-header h3 {
+        font-size: 20px;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .role-btn {
+        padding: 20px 16px;
+    }
+    
+    .role-icon {
+        width: 36px;
+        height: 36px;
+    }
+}

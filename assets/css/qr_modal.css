@@ -1,0 +1,349 @@
+/* QR Success Modal Styles */
+.qr-success-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 10001;
+}
+
+.qr-success-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.modal-content {
+    position: relative;
+    background: white;
+    border-radius: 16px;
+    max-width: 500px;
+    width: 90%;
+    height: auto;
+    max-height: 85vh;
+    overflow: visible;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    background: none;
+    color: #060606;
+    padding: 24px 24px 20px;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+    color: #6b7280;
+}
+
+.close-btn:hover {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+    font-family: 'Montserrat', sans-serif;
+    max-height: calc(85vh - 120px);
+}
+
+.success-content {
+    display: grid;
+    gap: 24px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.qr-section {
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.qr-container {
+    display: inline-block;
+    padding: 0;
+    background: #f0f0f0;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+    max-width: 100%;
+}
+
+.qr-code {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.qr-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f9fafb;
+    border: 2px dashed #d1d5db;
+    border-radius: 4px;
+    color: #9ca3af;
+    font-size: 3rem;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.qr-description {
+    margin: 24px 0 0 0;
+    color: #6b7280;
+    font-size: 0.875rem;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.student-info-section {
+    font-family: 'Montserrat', sans-serif;
+}
+
+.student-info-section h4 {
+    margin: 0 0 16px 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.info-grid {
+    display: grid;
+    gap: 12px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.info-item {
+    padding: 16px 20px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.info-item label {
+    display: block;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 4px;
+    font-size: 0.875rem;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.info-item span {
+    color: #1f2937;
+    font-weight: 400;
+    font-size: 0.95rem;
+    word-break: break-word;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.modal-footer {
+    padding: 20px 24px;
+    background: #f8fafc;
+    border-top: 1px solid #e5e7eb;
+    border-radius: 0 0 16px 16px;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.btn {
+    padding: 14px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Montserrat', sans-serif;
+    min-width: 120px;
+}
+
+.btn-download {
+    background: #060606;
+    color: #ffffff !important;
+}
+
+.btn-download:hover {
+    background: #050505;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+}
+
+.btn i {
+    font-size: 1rem;
+}
+
+/* Animation for modal appearance */
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.qr-success-modal.show .modal-content {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+/* Focus styles for accessibility */
+.btn:focus,
+.close-btn:focus {
+    outline: 2px solid #060606;
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .modal-content {
+        border: 2px solid #000;
+    }
+    
+    .info-item {
+        border: 1px solid #666;
+    }
+    
+    .qr-container {
+        border: 2px solid #666;
+    }
+}
+
+/* Hide scrollbar while maintaining scrollability */
+.modal-body::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: transparent;
+}
+
+.modal-body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Responsive Design for QR Modal */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        max-width: 450px;
+        margin: 20px auto;
+    }
+    
+    .qr-container {
+        width: 180px;
+        height: 180px;
+    }
+    
+    .qr-description {
+        font-size: 0.8rem;
+        margin: 20px 0 0 0;
+    }
+    
+    .modal-content {
+        padding: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        width: 95%;
+        max-width: 380px;
+        margin: 15px auto;
+    }
+    
+    .qr-container {
+        width: 160px;
+        height: 160px;
+    }
+    
+    .qr-description {
+        font-size: 0.75rem;
+        margin: 16px 0 0 0;
+    }
+    
+    .modal-content {
+        padding: 14px;
+    }
+    
+    .modal-header h3 {
+        font-size: 1.2rem;
+    }
+    
+    .student-info-section h4 {
+        font-size: 1rem;
+    }
+    
+    .info-item label {
+        font-size: 0.8rem;
+    }
+    
+    .info-item span {
+        font-size: 0.75rem;
+    }
+}
+
+/* Override any absolute positioning within modal */
+.modal-body * {
+    position: relative !important;
+}

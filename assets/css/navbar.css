@@ -1,0 +1,1671 @@
+/* Navbar Styles - ClassTrack Student Dashboard */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #F2F3F4;
+    padding-top: 60px; /* Account for fixed navbar */
+    transition: margin-left 0.3s ease;
+}
+
+/* Main Navbar - Minimalist Design */
+.navbar {
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 1020;
+    height: 60px; /* Slim, fixed height */
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.navbar .container-fluid {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Minimalist Icon Button */
+.btn-icon {
+    background: none;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: #495057;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.btn-icon:hover {
+    background-color: #f8f9fa;
+    color: #2c3e50;
+    transform: scale(1.05);
+}
+
+.btn-icon:focus {
+    outline: none;
+    background-color: #f1f3f4;
+}
+
+.btn-icon:active {
+    transform: scale(0.95);
+}
+
+/* Larger Icon Button Variant */
+.btn-icon-large {
+    background: none;
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    color: #495057;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.btn-icon-large:hover {
+    background-color: #f8f9fa;
+    color: #2c3e50;
+    transform: scale(1.05);
+}
+
+.btn-icon-large:focus {
+    outline: none;
+    background-color: #f1f3f4;
+}
+
+.btn-icon-large:active {
+    transform: scale(0.95);
+}
+
+/* Menu Toggle Bounce Animation */
+#menuToggle {
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+#menuToggle:hover {
+    transform: scale(1.05) rotate(5deg);
+}
+
+#menuToggle:active {
+    transform: scale(0.95) rotate(-5deg);
+}
+
+/* Bounce keyframes for extra emphasis */
+@keyframes menuBounce {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.1) rotate(5deg); }
+    75% { transform: scale(1.1) rotate(-5deg); }
+}
+
+/* Navbar Brand - Minimalist */
+.navbar-brand {
+    color: #2c3e50 !important;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-family: 'Montserrat', sans-serif;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+}
+
+.navbar-brand:hover {
+    color: #667eea !important;
+    transform: translateY(-1px);
+}
+
+.navbar-brand i {
+    font-size: 1.3rem;
+    color: #667eea;
+    margin-right: 0.5rem;
+}
+
+/* Profile Picture Styling */
+.btn-icon img {
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e9ecef;
+    transition: all 0.2s ease;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    max-width: 40px;
+    max-height: 40px;
+    aspect-ratio: 1/1;
+}
+
+.btn-icon:hover img {
+    border-color: #667eea;
+}
+
+/* Account Avatar for Modals */
+.account-avatar {
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e9ecef;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    aspect-ratio: 1/1;
+}
+
+/* Active Status Indicator */
+.badge.bg-success {
+    background-color: #28a745 !important;
+    border: 2px solid #ffffff;
+    box-shadow: 0 1px 3px rgba(40, 167, 69, 0.5);
+}
+
+/* Ensure green indicator is a perfect circle */
+.badge.rounded-circle.bg-success {
+    border-radius: 50% !important;
+    width: 12px !important;
+    height: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Modal Styles */
+.modal-content {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
+    padding: 1.5rem;
+}
+
+.modal-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.btn-close {
+    filter: brightness(0) invert(1);
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.btn-close:hover {
+    opacity: 1;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    outline: none;
+}
+
+.form-control::placeholder {
+    color: #adb5bd;
+    font-style: italic;
+}
+
+.modal-footer {
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border: none;
+    border-radius: 25px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    body {
+        padding-top: 60px; /* Match new navbar height */
+    }
+    
+    .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1040;
+        height: 60px; /* Maintain consistent height */
+    }
+    
+    .navbar-brand {
+        font-size: 1.1rem; /* Slightly smaller on mobile */
+    }
+    
+    .navbar-brand i {
+        font-size: 1.2rem;
+    }
+    
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+    
+    .btn-icon-large {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+    
+    .btn-icon img {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+        max-width: 32px;
+        max-height: 32px;
+        aspect-ratio: 1/1;
+    }
+    
+    .account-avatar {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        max-width: 32px !important;
+        max-height: 32px !important;
+        aspect-ratio: 1/1;
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        padding: 0 0.75rem;
+    }
+    
+    .navbar-brand {
+        font-size: 1rem;
+    }
+    
+    .navbar-brand i {
+        font-size: 1.1rem;
+        margin-right: 0.4rem;
+    }
+    
+    .btn-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 0.9rem;
+    }
+    
+    .btn-icon-large {
+        width: 36px;
+        height: 36px;
+        font-size: 1.1rem;
+    }
+    
+    .btn-icon img {
+        width: 30px;
+        height: 30px;
+        min-width: 30px;
+        min-height: 30px;
+        max-width: 30px;
+        max-height: 30px;
+        aspect-ratio: 1/1;
+    }
+    
+    .account-avatar {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        max-width: 30px !important;
+        max-height: 30px !important;
+        aspect-ratio: 1/1;
+    }
+}
+
+@media (max-width: 576px) {
+    .navbar-brand span {
+        display: none;
+    }
+    
+    .btn-primary span {
+        display: none;
+    }
+    
+    .btn-primary {
+        padding: 0.4rem 0.8rem;
+        min-width: auto;
+    }
+    
+    .me-3 {
+        margin-right: 0.5rem !important;
+    }
+}
+
+/* Plus Dropdown Menu */
+.dropdown-plus {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu-plus {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    min-width: 200px;
+    z-index: 1050;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.dropdown-menu-plus.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item-plus {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.dropdown-item-plus:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item-plus:hover {
+    background-color: #f8f9fa;
+    color: #2c3e50;
+    transform: translateX(2px);
+}
+
+.dropdown-item-plus i {
+    font-size: 16px;
+    color: #667eea;
+    width: 20px;
+    text-align: center;
+}
+
+.dropdown-item-plus:hover i {
+    color: #5a67d8;
+}
+
+/* Arrow for dropdown */
+.dropdown-menu-plus::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: 20px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid #ffffff;
+}
+
+.dropdown-menu-plus::after {
+    content: '';
+    position: absolute;
+    top: -9px;
+    right: 19px;
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 9px solid #e9ecef;
+    z-index: -1;
+}
+
+/* Plus button rotation animation when dropdown is open */
+#plusDropdownToggle.active i {
+    transform: rotate(45deg);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Role-based visibility classes (for future implementation) */
+.dropdown-item-plus.hidden {
+    display: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .dropdown-menu-plus {
+        right: -10px;
+        min-width: 180px;
+    }
+    
+    .dropdown-item-plus {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+    
+    .dropdown-menu-plus::before,
+    .dropdown-menu-plus::after {
+        right: 15px;
+    }
+}
+
+@media (max-width: 576px) {
+    .dropdown-menu-plus {
+        right: -20px;
+        min-width: 160px;
+    }
+    
+    .dropdown-item-plus {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    .dropdown-menu-plus::before,
+    .dropdown-menu-plus::after {
+        right: 10px;
+    }
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+    transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+/* Create Class Modal - Matching Existing Modal Style */
+.modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal {
+    border: none !important;
+    border-radius: 15px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+    font-family: 'Montserrat', sans-serif !important;
+    background: #ffffff !important;
+    overflow: hidden !important;
+}
+
+/* Create Class Modal Header */
+.modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .create-class-header {
+    padding: 32px 32px 24px 32px !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .create-class-title {
+    font-size: 26px !important;
+    font-weight: 500 !important;
+    color: #202124 !important;
+    margin: 0 !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+/* Create Class Form Section */
+.modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-section {
+    padding: 0 32px 24px 32px !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-card {
+    background: #f8f9fa !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-label {
+    display: block !important;
+    font-weight: 500 !important;
+    color: #202124 !important;
+    font-size: 16px !important;
+    margin-bottom: 8px !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-control {
+    width: 100% !important;
+    height: 48px !important;
+    border: 1px solid #dadce0 !important;
+    border-radius: 6px !important;
+    padding: 0 12px !important;
+    font-size: 16px !important;
+    font-family: 'Montserrat', sans-serif !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    background: #ffffff !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-control:focus {
+    outline: none !important;
+    border-color: #1a73e8 !important;
+    box-shadow: 0 1px 6px rgba(26, 115, 232, 0.2) !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-control::placeholder {
+    color: #80868b !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .text-danger {
+    color: #dc3545 !important;
+}
+
+/* Create Class Button States */
+.modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .btn-create {
+    background: transparent !important;
+    border: none !important;
+    color: #80868b;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    padding: 8px 24px !important;
+    font-family: 'Montserrat', sans-serif !important;
+    transition: color 0.2s ease !important;
+    cursor: not-allowed !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .btn-create.enabled {
+    color: #1a73e8 !important;
+    cursor: pointer !important;
+}
+
+/* Create Class Modal Responsive Design */
+@media (max-width: 640px) {
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .create-class-header,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-section {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .create-class-header {
+        padding-top: 20px;
+        padding-bottom: 16px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-section {
+        padding-bottom: 16px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .modal-footer-actions {
+        padding: 16px 20px 20px 20px;
+        gap: 8px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .btn-cancel,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .btn-create {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-card {
+        padding: 16px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .create-class-title {
+        font-size: 22px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .create-class-header,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-section {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .create-class-header {
+        padding-top: 15px;
+        padding-bottom: 8px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-section {
+        padding-bottom: 8px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .modal-footer-actions {
+        padding: 8px 15px 15px 15px;
+        gap: 8px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .btn-cancel,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .btn-create {
+        padding: 10px;
+        font-size: 14px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .create-class-title {
+        font-size: 18px !important;
+        line-height: 1.2 !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-card {
+        padding: 12px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-label {
+        font-size: 14px !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-control {
+        height: 44px !important;
+        font-size: 14px !important;
+    }
+}
+
+@media (max-width: 360px) {
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .create-class-header,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-section {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .create-class-header {
+        padding-top: 12px;
+        padding-bottom: 6px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-section {
+        padding-bottom: 6px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .modal-footer-actions {
+        padding: 6px 12px 12px 12px;
+        gap: 6px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .btn-cancel,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .btn-create {
+        padding: 8px;
+        font-size: 13px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .create-class-title {
+        font-size: 16px !important;
+        line-height: 1.2 !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-card {
+        padding: 10px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-label {
+        font-size: 13px !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .form-control {
+        height: 40px !important;
+        font-size: 13px !important;
+    }
+}
+
+/* Create Subject Modal - Matching Join Modal Style */
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .create-subject-header {
+    padding: 32px 32px 24px 32px !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .create-subject-title {
+    font-size: 26px !important;
+    font-weight: 500 !important;
+    color: #202124 !important;
+    margin: 0 !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+/* Information Section */
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-section {
+    padding: 0 32px 24px 32px !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-card {
+    background: #fef7e0 !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+    border-left: 4px solid #fbbc04 !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-title {
+    font-weight: 500 !important;
+    color: #202124 !important;
+    font-size: 16px !important;
+    margin-bottom: 12px !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-list {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 0 16px 0 !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-list li {
+    color: #5f6368 !important;
+    font-size: 14px !important;
+    margin-bottom: 8px !important;
+    padding-left: 20px !important;
+    position: relative !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-list li:before {
+    content: "•" !important;
+    position: absolute !important;
+    left: 8px !important;
+    color: #5f6368 !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-list li:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Agreement Section */
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .agreement-section {
+    padding: 0 32px 24px 32px !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .agreement-card {
+    background: #f8f9fa !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .agreement-label {
+    display: flex !important;
+    align-items: flex-start !important;
+    cursor: pointer !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .agreement-checkbox {
+    margin-right: 12px !important;
+    margin-top: 2px !important;
+    width: 16px !important;
+    height: 16px !important;
+    cursor: pointer !important;
+    accent-color: #1a73e8 !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .agreement-checkbox:checked {
+    accent-color: #1a73e8 !important;
+}
+
+/* Continue Button - Cursor States (High Specificity ID Selectors) */
+#createSubjectModal #continueBtn:not(.enabled),
+#createSubjectModal #continueBtn.disabled {
+    cursor: not-allowed !important;
+}
+
+#createSubjectModal #continueBtn.enabled {
+    cursor: pointer !important;
+}
+
+/* Continue Button - Disabled State (higher specificity) */
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .btn-continue:not(.enabled),
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .btn-continue.disabled {
+    background: transparent !important;
+    border: none !important;
+    color: #80868b;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    padding: 8px 24px !important;
+    transition: color 0.2s ease !important;
+    font-family: 'Montserrat', sans-serif !important;
+    opacity: 0.6 !important;
+}
+
+/* Continue Button - Enabled State (higher specificity) */
+.modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .btn-continue.enabled {
+    background: transparent !important;
+    border: none !important;
+    color: #1a73e8 !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    padding: 8px 24px !important;
+    transition: color 0.2s ease !important;
+    font-family: 'Montserrat', sans-serif !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+}
+
+/* Create Subject Modal Responsive Design */
+@media (max-width: 640px) {
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .create-subject-header,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .account-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .agreement-section {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .create-subject-header {
+        padding-top: 20px;
+        padding-bottom: 16px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .account-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .agreement-section {
+        padding-bottom: 16px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .modal-footer-actions {
+        padding: 16px 20px 20px 20px;
+        gap: 8px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .btn-cancel,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .btn-continue {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .account-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+        padding: 16px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .create-subject-title {
+        font-size: 22px !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-card {
+        padding: 16px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .agreement-card {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .create-subject-header,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .account-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .agreement-section {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .create-subject-header {
+        padding-top: 15px;
+        padding-bottom: 8px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .account-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .agreement-section {
+        padding-bottom: 8px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .modal-footer-actions {
+        padding: 8px 15px 15px 15px;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .btn-cancel,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .btn-continue {
+        padding: 10px;
+        font-size: 14px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .create-subject-title {
+        font-size: 18px !important;
+        line-height: 1.2 !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .account-card {
+        padding: 10px;
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .account-avatar {
+        width: 32px !important;
+        height: 32px !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .account-name,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .account-email {
+        font-size: 13px !important;
+        line-height: 1.2 !important;
+        word-wrap: break-word;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-card {
+        padding: 12px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-title {
+        font-size: 14px !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-list li {
+        font-size: 12px !important;
+        line-height: 1.3 !important;
+        margin-bottom: 6px !important;
+        word-wrap: break-word;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .agreement-card {
+        padding: 12px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .agreement-label span {
+        font-size: 12px !important;
+        line-height: 1.3 !important;
+    }
+}
+
+@media (max-width: 360px) {
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .create-subject-header,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .account-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .agreement-section {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .create-subject-header {
+        padding-top: 12px;
+        padding-bottom: 6px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .account-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .agreement-section {
+        padding-bottom: 6px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .modal-footer-actions {
+        padding: 6px 12px 12px 12px;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .btn-cancel,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .btn-continue {
+        padding: 8px;
+        font-size: 13px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .create-subject-title {
+        font-size: 16px !important;
+        line-height: 1.2 !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .account-card {
+        padding: 8px;
+        gap: 6px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .account-avatar {
+        width: 28px !important;
+        height: 28px !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .account-name,
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .account-email {
+        font-size: 12px !important;
+        line-height: 1.1 !important;
+        word-wrap: break-word;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-card {
+        padding: 10px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-title {
+        font-size: 13px !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .information-list li {
+        font-size: 11px !important;
+        line-height: 1.2 !important;
+        margin-bottom: 4px !important;
+        word-wrap: break-word;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .agreement-card {
+        padding: 10px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.create-subject-modal .agreement-label span {
+        font-size: 11px !important;
+        line-height: 1.2 !important;
+    }
+}
+
+/* Join Class Modal - Google Classroom Style */
+.modal.fade .modal-dialog.modal-custom {
+    max-width: 560px !important;
+    width: 100% !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal {
+    border: none !important;
+    border-radius: 15px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+    font-family: 'Montserrat', sans-serif !important;
+    background: #ffffff !important;
+    overflow: hidden !important;
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Prevent body scroll when modal is open - Fix for subjects page scrollbar issue */
+body.modal-open {
+    overflow: hidden !important;
+    height: 100vh !important;
+}
+
+/* Fix for subjects page main content when modal is open */
+body.modal-open .main-content {
+    min-height: auto !important;
+    height: auto !important;
+}
+
+/* Additional fix - prevent modal content from causing page scroll */
+.modal-open .modal {
+    overflow: hidden !important;
+}
+
+/* Ensure modal backdrop doesn't cause scroll */
+.modal-open .modal-backdrop {
+    overflow: hidden !important;
+}
+
+/* Force modal to not exceed viewport */
+.modal-open .modal-dialog {
+    max-height: calc(100vh - 2rem) !important;
+    overflow-y: auto !important;
+}
+
+/* Ensure modal content fits within viewport */
+.modal-open .modal-content {
+    max-height: calc(100vh - 2rem) !important;
+    overflow-y: auto !important;
+}
+
+/* Modal fade animation */
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out !important;
+    transform: translate(0, -50px) !important;
+    opacity: 0 !important;
+}
+
+.modal.show .modal-dialog {
+    transform: translate(0, 0) !important;
+    opacity: 1 !important;
+}
+
+/* Header */
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .join-class-header {
+    padding: 32px 32px 24px 32px !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .join-class-title {
+    font-size: 26px !important;
+    font-weight: 500 !important;
+    color: #202124 !important;
+    margin: 0 !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+/* Account Section */
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-section {
+    padding: 0 32px 24px 32px !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-card {
+    background: #f1f3f4 !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-info {
+    flex: 1 !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-name {
+    font-weight: 500 !important;
+    color: #202124 !important;
+    font-size: 16px !important;
+    margin-bottom: 4px !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-email {
+    color: #5f6368 !important;
+    font-size: 14px !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-switch-account {
+    background: transparent !important;
+    border: 1px solid #dadce0 !important;
+    border-radius: 15px !important;
+    padding: 8px 16px !important;
+    color: #1a73e8 !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-switch-account:hover {
+    background-color: #f8f9fa !important;
+    border-color: #1a73e8 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Class Code Section */
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-section {
+    padding: 0 32px 24px 32px !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-label {
+    display: block !important;
+    font-weight: 500 !important;
+    color: #202124 !important;
+    font-size: 16px !important;
+    margin-bottom: 8px !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-description {
+    color: #5f6368 !important;
+    font-size: 14px !important;
+    margin-bottom: 16px !important;
+    line-height: 1.4 !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-input {
+    width: 100% !important;
+    height: 48px !important;
+    border: 1px solid #dadce0 !important;
+    border-radius: 6px !important;
+    padding: 0 12px !important;
+    font-size: 16px !important;
+    font-family: 'Montserrat', sans-serif !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    background: #ffffff !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-input:focus {
+    outline: none !important;
+    border-color: #1a73e8 !important;
+    box-shadow: 0 1px 6px rgba(26, 115, 232, 0.2) !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-input::placeholder {
+    color: #80868b !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+/* Help Section */
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-section {
+    padding: 0 32px 32px 32px !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-title {
+    font-weight: 500 !important;
+    color: #202124 !important;
+    font-size: 14px !important;
+    margin-bottom: 12px !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-list {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 0 16px 0 !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-list li {
+    color: #5f6368 !important;
+    font-size: 14px !important;
+    margin-bottom: 8px !important;
+    padding-left: 20px !important;
+    position: relative !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-list li:before {
+    content: "•" !important;
+    position: absolute !important;
+    left: 8px !important;
+    color: #5f6368 !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-additional {
+    color: #5f6368 !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-link {
+    color: #1a73e8 !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-link:hover {
+    text-decoration: underline !important;
+}
+
+/* Footer Actions */
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .modal-footer-actions {
+    padding: 16px 32px 32px 32px !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 12px !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-cancel {
+    background: transparent !important;
+    border: none !important;
+    color: #5f6368 !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    padding: 8px 24px !important;
+    cursor: pointer !important;
+    border-radius: 6px !important;
+    transition: background-color 0.2s ease !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-cancel:hover {
+    background-color: #f1f3f4 !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-join {
+    background: transparent !important;
+    border: none !important;
+    color: #80868b;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    padding: 8px 24px !important;
+    transition: color 0.2s ease !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+/* Override for enabled state - higher specificity */
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-join.enabled {
+    color: #1a73e8 !important;
+    cursor: pointer !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-join.enabled:hover {
+    cursor: pointer !important;
+}
+
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-join.disabled {
+    background: transparent !important;
+    color: #80868b !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
+}
+
+/* Ensure cursor stays not-allowed on hover */
+.modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-join.disabled:hover {
+    cursor: not-allowed !important;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    .modal.fade .modal-dialog.modal-custom {
+        max-width: 90%;
+        margin: 20px auto;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .join-class-header,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-section {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .join-class-header {
+        padding-top: 20px;
+        padding-bottom: 16px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-section {
+        padding-bottom: 16px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-section {
+        padding-bottom: 20px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .modal-footer-actions {
+        padding: 16px 20px 20px 20px;
+        gap: 8px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-cancel,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-join {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+        padding: 16px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-switch-account {
+        align-self: stretch;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .join-class-title {
+        font-size: 22px !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-input {
+        height: 44px !important;
+        font-size: 16px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal.fade .modal-dialog.modal-custom {
+        max-width: 95%;
+        margin: 5px auto;
+        max-height: 98vh;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal {
+        max-height: 98vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px 15px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .join-class-header,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-section {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .join-class-header {
+        padding-top: 15px;
+        padding-bottom: 8px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-section {
+        padding-bottom: 8px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-section {
+        padding-bottom: 10px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .modal-footer-actions {
+        padding: 8px 15px 15px 15px;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-cancel,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-join {
+        padding: 10px;
+        font-size: 14px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .join-class-title {
+        font-size: 18px !important;
+        line-height: 1.2 !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-card {
+        padding: 10px;
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-avatar {
+        width: 32px !important;
+        height: 32px !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-name,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-email {
+        font-size: 13px !important;
+        line-height: 1.2 !important;
+        word-wrap: break-word;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-input {
+        height: 36px !important;
+        font-size: 14px !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-label,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-description {
+        font-size: 13px !important;
+        line-height: 1.3 !important;
+        word-wrap: break-word;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-title {
+        font-size: 13px !important;
+        line-height: 1.3 !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-list li {
+        font-size: 12px !important;
+        line-height: 1.3 !important;
+        margin-bottom: 6px !important;
+        word-wrap: break-word;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-switch-account {
+        font-size: 12px !important;
+        padding: 6px 12px !important;
+    }
+}
+
+@media (max-width: 360px) {
+    .modal.fade .modal-dialog.modal-custom {
+        max-width: 92%;
+        margin: 3px auto;
+        max-height: 99vh;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal {
+        max-height: 99vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px 12px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .join-class-header,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-section {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .join-class-header {
+        padding-top: 12px;
+        padding-bottom: 6px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-section,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-section {
+        padding-bottom: 6px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-section {
+        padding-bottom: 8px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .modal-footer-actions {
+        padding: 6px 12px 12px 12px;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-cancel,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-join {
+        padding: 8px;
+        font-size: 13px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .join-class-title {
+        font-size: 16px !important;
+        line-height: 1.2 !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-card {
+        padding: 8px;
+        gap: 6px;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-avatar {
+        width: 28px !important;
+        height: 28px !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-name,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .account-email {
+        font-size: 12px !important;
+        line-height: 1.1 !important;
+        word-wrap: break-word;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-input {
+        height: 32px !important;
+        font-size: 13px !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-label,
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .class-code-description {
+        font-size: 12px !important;
+        line-height: 1.2 !important;
+        word-wrap: break-word;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-title {
+        font-size: 12px !important;
+        line-height: 1.2 !important;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .help-list li {
+        font-size: 11px !important;
+        line-height: 1.2 !important;
+        margin-bottom: 4px !important;
+        word-wrap: break-word;
+    }
+    
+    .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-switch-account {
+        font-size: 11px !important;
+        padding: 5px 10px !important;
+    }
+}

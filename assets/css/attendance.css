@@ -1,0 +1,726 @@
+/* Attendance Page Styles - ClassTrack Student Dashboard */
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #f1f3f4;
+    color: #3c4043;
+    line-height: 1.6;
+}
+
+/* Allow main content to have smooth transitions */
+.main-content {
+    min-height: calc(100vh - 60px); /* Full height minus navbar */
+    background: #f1f3f4;
+    padding: 2rem 3rem; /* Increased right padding for more space */
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; /* Synchronized with sidebar */
+    will-change: margin-left; /* Optimize for animation performance */
+    z-index: 1; /* Below sidebar and navbar */
+    position: relative;
+    margin-left: 70px; /* Match collapsed sidebar width */
+}
+
+/* Mobile responsive adjustments for main content */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 1rem;
+        padding-top: 4rem; /* Reduced padding for mobile */
+        margin-left: 0; /* No margin on mobile */
+        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Keep transition for consistency */
+    }
+}
+
+@media (max-width: 576px) {
+    .main-content {
+        padding: 0.75rem;
+        padding-top: 3.5rem; /* Further reduced for small mobile */
+        margin-left: 0; /* No margin on small mobile */
+        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Keep transition for consistency */
+    }
+}
+
+/* Attendance Header */
+.attendance-header {
+    margin-bottom: 2rem;
+}
+
+.btn-back {
+    background: none;
+    border: none;
+    color: #5f6368;
+    font-size: 20px;
+    padding: 8px;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+    background: #e8eaed;
+    color: #202124;
+}
+
+.page-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #202124;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.page-subtitle {
+    font-size: 16px;
+    color: #5f6368;
+    margin: 4px 0 0 0;
+}
+
+/* Filter Section */
+.filter-section {
+    margin-bottom: 2rem;
+}
+
+.filter-container {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+.filter-header {
+    margin-bottom: 20px;
+}
+
+.filter-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #202124;
+    margin: 0;
+}
+
+.filter-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    align-items: end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+    margin-bottom: 8px;
+}
+
+.filter-select {
+    height: 44px;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 14px;
+    font-family: 'Montserrat', sans-serif;
+    background: white;
+    color: #202124;
+    transition: all 0.2s ease;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #1a73e8;
+    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+}
+
+.btn-filter-apply,
+.btn-filter-clear {
+    height: 44px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'Montserrat', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-filter-apply {
+    background: #060606;
+    color: white;
+}
+
+.btn-filter-clear {
+    background: #f1f3f4;
+    color: #5f6368;
+}
+
+.btn-filter-clear:hover {
+    background: #e8eaed;
+    color: #202124;
+}
+
+/* Percentage Metrics Section */
+.percentage-section {
+    margin-bottom: 2rem;
+}
+
+.percentage-container {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+.percentage-header {
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.percentage-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #202124;
+    margin: 0 0 8px 0;
+}
+
+.percentage-subtitle {
+    font-size: 14px;
+    color: #5f6368;
+    margin: 0;
+}
+
+.percentage-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.percentage-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.percentage-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.present-card {
+    border-left: 4px solid #28a745;
+}
+
+.absent-card {
+    border-left: 4px solid #dc3545;
+}
+
+.late-card {
+    border-left: 4px solid #ffc107;
+}
+
+.overall-card {
+    border-left: 4px solid #17a2b8;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.percentage-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.present-card .percentage-icon {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.absent-card .percentage-icon {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.late-card .percentage-icon {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.overall-card .percentage-icon {
+    background: rgba(23, 162, 184, 0.1);
+    color: #17a2b8;
+}
+
+.percentage-content {
+    flex: 1;
+}
+
+.percentage-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #5f6368;
+    margin-bottom: 4px;
+}
+
+.percentage-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #202124;
+    margin-bottom: 12px;
+    line-height: 1;
+}
+
+.percentage-bar-container {
+    width: 100%;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.percentage-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.8s ease-out;
+    position: relative;
+}
+
+.percentage-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.present-bar {
+    background: linear-gradient(90deg, #28a745, #34ce57);
+}
+
+.absent-bar {
+    background: linear-gradient(90deg, #dc3545, #e4606d);
+}
+
+.late-bar {
+    background: linear-gradient(90deg, #ffc107, #ffcd39);
+}
+
+.overall-bar {
+    background: linear-gradient(90deg, #17a2b8, #20c997);
+}
+
+.percentage-detail {
+    font-size: 12px;
+    color: #5f6368;
+}
+
+.performance-summary {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e9ecef;
+}
+
+.summary-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.summary-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.summary-icon.excellent {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    color: #f39c12;
+}
+
+.summary-content {
+    flex: 1;
+}
+
+.summary-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #5f6368;
+    margin-bottom: 4px;
+}
+
+.summary-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: #202124;
+}
+
+/* Records Section */
+.records-section {
+    margin-bottom: 2rem;
+}
+
+.records-container {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+.records-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e8eaed;
+}
+
+.records-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #202124;
+    margin: 0;
+}
+
+.records-count {
+    font-size: 14px;
+    color: #5f6368;
+    background: #f1f3f4;
+    padding: 4px 12px;
+    border-radius: 16px;
+}
+
+/* Attendance List */
+.attendance-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.attendance-record {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid #e8eaed;
+    border-radius: 12px;
+    background: white;
+    transition: all 0.3s ease;
+    position: relative;
+    opacity: 1;
+    transform: scale(1);
+}
+
+.attendance-record:hover {
+    border-color: #dadce0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.record-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 8px;
+    flex-shrink: 0;
+}
+
+.date-day {
+    font-size: 20px;
+    font-weight: 600;
+    color: #202124;
+    line-height: 1;
+}
+
+.date-month {
+    font-size: 12px;
+    color: #5f6368;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+.record-details {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.record-info {
+    flex: 1;
+}
+
+.record-date-full {
+    font-size: 16px;
+    font-weight: 500;
+    color: #202124;
+    margin: 0 0 4px 0;
+}
+
+.record-time {
+    font-size: 14px;
+    color: #5f6368;
+    margin: 0 0 4px 0;
+}
+
+.record-subject {
+    font-size: 14px;
+    color: #3c4043;
+    margin: 0;
+}
+
+.record-status {
+    flex-shrink: 0;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'Montserrat', sans-serif;
+    white-space: nowrap;
+}
+
+.status-present {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.status-absent {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.status-late {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+/* Empty State */
+.empty-records {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-icon {
+    font-size: 48px;
+    color: #9aa0a6;
+    margin-bottom: 16px;
+}
+
+.empty-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #202124;
+    margin: 0 0 8px 0;
+}
+
+.empty-message {
+    font-size: 14px;
+    color: #5f6368;
+    margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 24px;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+    }
+    
+    .filter-controls {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .btn-filter-apply,
+    .btn-filter-clear {
+        width: 100%;
+    }
+    
+    /* Percentage Metrics Responsive */
+    .percentage-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .percentage-card {
+        padding: 16px;
+    }
+    
+    .percentage-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    
+    .percentage-value {
+        font-size: 24px;
+    }
+    
+    .percentage-bar-container {
+        height: 6px;
+    }
+    
+    .summary-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+    }
+    
+    .records-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .attendance-record {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .record-details {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .record-status {
+        align-self: flex-end;
+    }
+}
+
+@media (max-width: 576px) {
+    .attendance-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .filter-container,
+    .records-container,
+    .percentage-container {
+        padding: 16px;
+    }
+    
+    .attendance-record {
+        padding: 12px;
+    }
+    
+    .attendance-list {
+        gap: 16px;
+    }
+    
+    .record-date {
+        min-width: 50px;
+        padding: 6px;
+    }
+    
+    .date-day {
+        font-size: 18px;
+    }
+    
+    .date-month {
+        font-size: 11px;
+    }
+    
+    /* Small mobile adjustments */
+    .percentage-card {
+        padding: 14px;
+    }
+    
+    .percentage-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+    
+    .percentage-value {
+        font-size: 22px;
+    }
+    
+    .percentage-header {
+        margin-bottom: 24px;
+    }
+    
+    .summary-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+}
+
+
+/* Tablet specific styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .percentage-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+    }
+    
+    .filter-controls {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .attendance-list {
+        gap: 18px;
+    }
+}
+
+
+/* Loading state */
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #1a73e8;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
