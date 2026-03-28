@@ -4,39 +4,112 @@
         <!-- Sidebar Navigation Menu -->
         <nav class="sidebar-nav">
             <ul class="sidebar-menu">
-                <!-- Dashboard -->
-                <li class="sidebar-item">
-                    <a href="../student/dashboard.php" class="sidebar-link active" data-page="dashboard">
-                        <i class="bi bi-house-door sidebar-icon"></i>
-                        <span class="sidebar-text">Dashboard</span>
-                    </a>
-                </li>
+                <?php
+                // Get current user role from session
+                $userRole = $_SESSION['user_role'] ?? null;
                 
-                <!-- Subjects Enrolled -->
-                <li class="sidebar-item">
-                    <a href="../student/subjects.php" class="sidebar-link" data-page="subjects">
-                        <i class="bi bi-book sidebar-icon"></i>
-                        <span class="sidebar-text">Subjects Enrolled</span>
-                    </a>
-                </li>
+                // Student Menu
+                if ($userRole === 'Student'):
+                ?>
+                    <!-- Dashboard -->
+                    <li class="sidebar-item">
+                        <a href="../student/dashboard.php" class="sidebar-link active" data-page="dashboard">
+                            <i class="bi bi-house-door sidebar-icon"></i>
+                            <span class="sidebar-text">Dashboard</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Subjects Enrolled -->
+                    <li class="sidebar-item">
+                        <a href="../student/subjects.php" class="sidebar-link" data-page="subjects">
+                            <i class="bi bi-book sidebar-icon"></i>
+                            <span class="sidebar-text">Subjects Enrolled</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Attendance History -->
+                    <li class="sidebar-item">
+                        <a href="../student/attendance_history.php" class="sidebar-link" data-page="attendance-history">
+                            <i class="bi bi-graph-up sidebar-icon"></i>
+                            <span class="sidebar-text">Attendance History</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Settings -->
+                    <li class="sidebar-item">
+                        <a href="../settings_page/settings.php" class="sidebar-link" data-page="settings">
+                            <i class="bi bi-gear sidebar-icon"></i>
+                            <span class="sidebar-text">Settings</span>
+                        </a>
+                    </li>
                 
-                <!-- Attendance History -->
-                <li class="sidebar-item">
-                    <a href="../student/attendance_history.php" class="sidebar-link" data-page="attendance-history">
-                        <i class="bi bi-graph-up sidebar-icon"></i>
-                        <span class="sidebar-text">Attendance History</span>
-                    </a>
-                </li>
+                <?php
+                // Teacher Menu
+                elseif ($userRole === 'Teacher'):
+                ?>
+                    <!-- My Class -->
+                    <li class="sidebar-item">
+                        <a href="../teacher/dashboard.php" class="sidebar-link active" data-page="dashboard">
+                            <i class="bi bi-people sidebar-icon"></i>
+                            <span class="sidebar-text">My Class</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Attendance Session History -->
+                    <li class="sidebar-item">
+                        <a href="../teacher/attendance_history.php" class="sidebar-link" data-page="attendance-history">
+                            <i class="bi bi-clock-history sidebar-icon"></i>
+                            <span class="sidebar-text">Attendance Session History</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Generated Reports -->
+                    <li class="sidebar-item">
+                        <a href="../teacher/reports.php" class="sidebar-link" data-page="reports">
+                            <i class="bi bi-file-text sidebar-icon"></i>
+                            <span class="sidebar-text">Generated Reports</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Settings -->
+                    <li class="sidebar-item">
+                        <a href="../settings_page/settings.php" class="sidebar-link" data-page="settings">
+                            <i class="bi bi-gear sidebar-icon"></i>
+                            <span class="sidebar-text">Settings</span>
+                        </a>
+                    </li>
                 
-                <!-- Settings -->
-                <li class="sidebar-item">
-                    <a href="../settings_page/settings.php" class="sidebar-link" data-page="settings">
-                        <i class="bi bi-gear sidebar-icon"></i>
-                        <span class="sidebar-text">Settings</span>
-                    </a>
-                </li>
+                <?php
+                // Administrator Menu
+                elseif ($userRole === 'Administrator'):
+                ?>
+                    <!-- Dashboard -->
+                    <li class="sidebar-item">
+                        <a href="../admin/dashboard.php" class="sidebar-link active" data-page="dashboard">
+                            <i class="bi bi-speedometer2 sidebar-icon"></i>
+                            <span class="sidebar-text">Dashboard</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Manage Users / Roles -->
+                    <li class="sidebar-item">
+                        <a href="../admin/users.php" class="sidebar-link" data-page="users">
+                            <i class="bi bi-person-gear sidebar-icon"></i>
+                            <span class="sidebar-text">Manage Users / Roles</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Settings -->
+                    <li class="sidebar-item">
+                        <a href="../settings_page/settings.php" class="sidebar-link" data-page="settings">
+                            <i class="bi bi-gear sidebar-icon"></i>
+                            <span class="sidebar-text">Settings</span>
+                        </a>
+                    </li>
                 
-                <!-- Log Out -->
+                <?php endif; ?>
+                
+                <!-- Log Out (Common for all roles) -->
                 <li class="sidebar-item">
                     <a href="#" class="sidebar-link" data-page="logout">
                         <i class="bi bi-box-arrow-right sidebar-icon"></i>
