@@ -10,9 +10,70 @@ document.addEventListener('DOMContentLoaded', function() {
     const otpInput = document.getElementById('otp');
     const emailInput = document.getElementById('email');
 
-    // Toast elements - use the standard toast container
-    const toast = document.getElementById('otp-toast');
-    const toastClose = document.getElementById('toastClose');
+    // Toast functionality - using the same implementation as navbar.js
+    function showToast(message, type = 'success') {
+        console.log('showToast called with message:', message, 'type:', type);
+        
+        const toastContainer = document.getElementById('toast-container');
+        console.log('Toast container found:', !!toastContainer);
+        console.log('Toast container element:', toastContainer);
+        
+        if (!toastContainer) {
+            console.error('Toast container not found!');
+            return;
+        }
+        
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        console.log('Created toast element with class:', toast.className);
+        
+        // Create icon based on type
+        const iconSvg = type === 'success' 
+            ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
+            : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+        
+        toast.innerHTML = `
+            <div class="toast-icon">
+                ${iconSvg}
+            </div>
+            <div class="toast-content">
+                <div class="toast-title">${type === 'success' ? 'Success' : 'Error'}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        `;
+        
+        console.log('Toast inner HTML set');
+        console.log('Toast HTML:', toast.innerHTML);
+        
+        // Add to container
+        toastContainer.appendChild(toast);
+        console.log('Toast added to container');
+        console.log('Container children count:', toastContainer.children.length);
+        
+        // Add close functionality
+        const closeBtn = toast.querySelector('.toast-close');
+        closeBtn.addEventListener('click', () => {
+            toast.remove();
+        });
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 5000);
+        
+        // Show animation
+        setTimeout(() => {
+            toast.classList.add('show');
+            console.log('Toast show class added');
+            console.log('Toast classes after adding show:', toast.className);
+        }, 100);
+    }
 
     // Form elements
     const forgotPasswordForm = document.querySelector('.forgot-password-form');
@@ -40,13 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Toast close functionality
-    if (toastClose) {
-        toastClose.addEventListener('click', function() {
-            hideToast();
-        });
-    }
-
+    
     // Send OTP functionality
     if (sendOtpBtn) {
         sendOtpBtn.addEventListener('click', function() {
@@ -102,36 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function showToast() {
-        if (toast) {
-            // Remove any existing show/hide classes
-            toast.classList.remove('show', 'hide');
-            
-            // Trigger reflow to restart animation
-            void toast.offsetWidth;
-            
-            // Show the toast
-            toast.classList.add('show');
-            
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                hideToast();
-            }, 5000);
-        }
-    }
-
-    function hideToast() {
-        if (toast && toast.classList.contains('show')) {
-            toast.classList.remove('show');
-            toast.classList.add('hide');
-            
-            // Remove hide class after animation completes
-            setTimeout(() => {
-                toast.classList.remove('hide');
-            }, 300);
-        }
-    }
-
+    
     // Form validation and submission
     if (forgotPasswordForm) {
         forgotPasswordForm.addEventListener('submit', function(e) {
@@ -277,11 +303,8 @@ document.addEventListener('DOMContentLoaded', function() {
             resetBtn.textContent = '✓ Password Reset!';
             resetBtn.style.backgroundColor = '#28a745';
 
-            // Update toast content for success message
-            updateToastMessage('Success', 'Password reset successfully! Redirecting to login.');
-            
-            // Show the toast
-            showToast();
+            // Show success toast using the new function
+            showToast('Password reset successfully! Redirecting to login.', 'success');
 
             // Reset button after showing success for 1.5 seconds
             setTimeout(() => {
@@ -296,21 +319,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1500);
     }
 
-    function updateToastMessage(title, message) {
-        if (toast) {
-            const titleElement = toast.querySelector('.toast-title');
-            const messageElement = toast.querySelector('.toast-message');
-            
-            if (titleElement) {
-                titleElement.textContent = title;
-            }
-            
-            if (messageElement) {
-                messageElement.textContent = message;
-            }
-        }
-    }
-
+    
     // AJAX Functions
     function sendOTPRequest(email) {
         const formData = new FormData();
@@ -330,8 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Remove loading class before starting countdown
                 sendOtpBtn.classList.remove('loading');
                 startOtpCountdown();
-                updateToastMessage('Success', data.message);
-                showToast();
+                showToast(data.message, 'success');
             } else {
                 // Reset button state on error
                 sendOtpBtn.disabled = false;
