@@ -3,7 +3,7 @@
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 10002;
+    z-index: 10002; scan the navbar.js to see how the toast notification function is implemented there
     pointer-events: none;
 }
 
@@ -108,6 +108,7 @@
     color: #6c757d;
     line-height: 1.4;
     word-wrap: break-word;
+    white-space: pre-line;
 }
 
 /* Toast Close Button */
