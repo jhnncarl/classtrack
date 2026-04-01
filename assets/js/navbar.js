@@ -31,12 +31,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to show toast notification
     function showToast(message, type = 'success') {
+        console.log('showToast called with message:', message, 'type:', type);
+        
         const toastContainer = document.getElementById('toast-container');
-        if (!toastContainer) return;
+        console.log('Toast container found:', !!toastContainer);
+        
+        if (!toastContainer) {
+            console.error('Toast container not found!');
+            return;
+        }
         
         // Create toast element
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
+        console.log('Created toast element with class:', toast.className);
         
         // Create icon based on type
         const iconSvg = type === 'success' 
@@ -56,8 +64,11 @@ document.addEventListener('DOMContentLoaded', function() {
             </button>
         `;
         
+        console.log('Toast inner HTML set');
+        
         // Add to container
         toastContainer.appendChild(toast);
+        console.log('Toast added to container');
         
         // Add close functionality
         const closeBtn = toast.querySelector('.toast-close');
@@ -75,6 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show animation
         setTimeout(() => {
             toast.classList.add('show');
+            console.log('Toast show class added');
         }, 100);
     }
     
@@ -189,23 +201,66 @@ document.addEventListener('DOMContentLoaded', function() {
                 sectionInput.disabled = true;
                 subjectInput.disabled = true;
                 
-                // Placeholder for future class creation logic
-                console.log('Create Class - All fields filled, proceeding with creation');
+                // Get schedule input value
+                const scheduleInput = document.getElementById('scheduleInput');
+                const schedule = scheduleInput ? scheduleInput.value.trim() : '';
                 
-                // Close modal after a short delay
-                setTimeout(() => {
-                    // Show success toast after creation is complete
-                    showToast('Class created successfully!', 'success');
+                // Prepare form data
+                const classData = {
+                    className: classNameInput.value.trim(),
+                    section: sectionInput.value.trim(),
+                    subject: subjectInput.value.trim(),
+                    schedule: schedule
+                };
+                
+                console.log('Creating class with data:', classData);
+                console.log('Sending request to: /classtrack/api/create_class.php');
+                
+                // Send AJAX request to create class
+                fetch('/classtrack/api/create_class.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(classData)
+                })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Response data:', data);
                     
-                    const modal = document.getElementById('createClassModal');
-                    if (modal) {
-                        const bootstrapModal = bootstrap.Modal.getInstance(modal);
-                        if (bootstrapModal) {
-                            bootstrapModal.hide();
-                        }
-                    }
+                    // Reset loading state
                     resetCreateClassModal();
-                }, 1500);
+                    
+                    if (data.success) {
+                        // Show success toast with subject code - split into two lines
+                        showToast('Class created successfully! Class code: ' + data.data.subjectCode, 'success');
+                        
+                        // Close modal after a short delay
+                        setTimeout(() => {
+                            const modal = document.getElementById('createClassModal');
+                            if (modal) {
+                                const bootstrapModal = bootstrap.Modal.getInstance(modal);
+                                if (bootstrapModal) {
+                                    bootstrapModal.hide();
+                                }
+                            }
+                        }, 1000);
+                    } else {
+                        // Show error toast
+                        showToast(data.message || 'Failed to create class', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error creating class:', error);
+                    console.error('Error details:', error.message);
+                    console.error('Error stack:', error.stack);
+                    resetCreateClassModal();
+                    showToast('An error occurred. Please try again.', 'error');
+                });
             }
         });
         
@@ -267,7 +322,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (createClassBtn) {
             createClassBtn.innerHTML = 'Create';
             createClassBtn.style.pointerEvents = '';
+            createClassBtn.style.cursor = '';
+            createClassBtn.style.color = '';
+            createClassBtn.style.opacity = '';
         }
+        
+        // Also reset schedule input if it exists
+        const scheduleInput = document.getElementById('scheduleInput');
+        if (scheduleInput) {
+            scheduleInput.value = '';
+            scheduleInput.disabled = false;
+        }
+        
         updateCreateClassButton();
         console.log('Create Class modal reset to original state');
     }

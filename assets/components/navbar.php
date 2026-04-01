@@ -190,10 +190,31 @@ if ($isLoggedIn && (!isset($_SESSION['user_profile_path']) || empty($_SESSION['u
                     <!-- Account Section -->
                     <div class="account-section" style="padding: 0 32px 24px 32px !important;">
                         <div class="account-card" style="background: #f1f3f4 !important; border-radius: 12px !important; padding: 20px !important; display: flex !important; align-items: center !important; gap: 16px !important;">
-                            <img src="https://picsum.photos/seed/student/40/40.jpg" alt="Profile" class="account-avatar" style="width: 40px !important; height: 40px !important; border-radius: 50% !important; object-fit: cover !important;">
+                            <?php 
+                            $profilePath = $_SESSION['user_profile_path'] ?? null;
+                            if ($profilePath && !empty($profilePath)) {
+                                // Ensure proper path resolution from web root with classtrack prefix
+                                $fullPath = '/classtrack/' . ltrim($profilePath, '/');
+                                echo '<img src="' . htmlspecialchars($fullPath) . '" alt="Profile" class="account-avatar rounded-circle">';
+                            } else {
+                                 echo '<i class="bi bi-person-circle" style="font-size: 40px; color: #9b9b9b;"></i>';
+                            }
+                            ?>
                             <div class="account-info" style="flex: 1 !important;">
-                                <div class="account-name" style="font-weight: 500 !important; color: #202124 !important; font-size: 16px !important; margin-bottom: 4px !important; font-family: 'Montserrat', sans-serif !important;">Demo Teacher</div>
-                                <div class="account-email" style="color: #5f6368 !important; font-size: 14px !important; font-family: 'Montserrat', sans-serif !important;">demo.teacher@classtrack.edu</div>
+                                <div class="account-name" style="font-weight: 500 !important; color: #202124 !important; font-size: 16px !important; margin-bottom: 4px !important; font-family: 'Montserrat', sans-serif !important;">
+                                    <?php 
+                                    $displayName = 'Demo Teacher';
+                                    if (isset($_SESSION['user_first_name']) && isset($_SESSION['user_last_name'])) {
+                                        $displayName = htmlspecialchars($_SESSION['user_first_name'] . ' ' . $_SESSION['user_last_name']);
+                                    } elseif (isset($_SESSION['user_first_name'])) {
+                                        $displayName = htmlspecialchars($_SESSION['user_first_name']);
+                                    }
+                                    echo $displayName;
+                                    ?>
+                                </div>
+                                <div class="account-email" style="color: #5f6368 !important; font-size: 14px !important; font-family: 'Montserrat', sans-serif !important;">
+                                    <?php echo isset($_SESSION['user_email']) ? htmlspecialchars($_SESSION['user_email']) : 'demo.teacher@classtrack.edu'; ?>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -293,13 +314,10 @@ if ($isLoggedIn && (!isset($_SESSION['user_profile_path']) || empty($_SESSION['u
         </div>
     </div>
 
-    <!-- Toast Notification Component -->
-    <?php include 'toast.php'; ?>
-
     <script>
         // Pass user role to JavaScript
         window.currentUserRole = <?php echo json_encode($isLoggedIn ? $userRole : null); ?>;
     </script>
-    <link rel="stylesheet" href="/classtrack/assets/css/toast.css">
+    <link rel="stylesheet" href="/classtrack/assets/css/toast.css?v=4">
     <link rel="stylesheet" href="/classtrack/assets/css/navbar.css?v=18">
-    <script src="/classtrack/assets/js/navbar.js?v=26"></script>
+    <script src="/classtrack/assets/js/navbar.js"></script>
