@@ -335,7 +335,7 @@ function setupSignOutModal() {
                 }
                 
                 // Show success toast notification
-                showNotification('You have been successfully signed out.', 'success', 'Sign Out Successful');
+                showNotification('You have been successfully signed out.', 'success');
                 
                 // Wait for toast to show before redirecting
                 setTimeout(() => {
