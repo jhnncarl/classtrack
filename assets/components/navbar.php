@@ -319,5 +319,5 @@ if ($isLoggedIn && (!isset($_SESSION['user_profile_path']) || empty($_SESSION['u
         window.currentUserRole = <?php echo json_encode($isLoggedIn ? $userRole : null); ?>;
     </script>
     <link rel="stylesheet" href="/classtrack/assets/css/toast.css?v=4">
-    <link rel="stylesheet" href="/classtrack/assets/css/navbar.css?v=18">
+    <link rel="stylesheet" href="/classtrack/assets/css/navbar.css?v=20">
     <script src="/classtrack/assets/js/navbar.js"></script>

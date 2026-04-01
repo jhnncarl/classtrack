@@ -1394,6 +1394,8 @@ body.modal-open .main-content {
         margin: 20px auto;
         max-height: 90vh;
         overflow-y: auto;
+        padding-left: 16px;
+        padding-right: 16px;
     }
     
     .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal {
@@ -1461,6 +1463,8 @@ body.modal-open .main-content {
         max-width: 95%;
         margin: 5px auto;
         max-height: 98vh;
+        padding-left: 12px;
+        padding-right: 12px;
     }
     
     .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal {
@@ -1569,6 +1573,8 @@ body.modal-open .main-content {
         max-width: 92%;
         margin: 3px auto;
         max-height: 99vh;
+        padding-left: 8px;
+        padding-right: 8px;
     }
     
     .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal {
