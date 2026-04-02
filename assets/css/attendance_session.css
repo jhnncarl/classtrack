@@ -1,0 +1,1079 @@
+/* Attendance Session Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #f1f3f4;
+    min-height: 100vh;
+    color: #333;
+}
+
+/* Session Container */
+.session-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header Section */
+.session-header {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.class-info h1.session-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #060606;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-back-inline {
+    background: none;
+    border: none;
+    color: #060606;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-back-inline:hover {
+    background-color: #f0f0f0;
+}
+
+.session-details {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 14px;
+    color: #666;
+}
+
+.class-code {
+    font-weight: 600;
+    color: #060606;
+    background: #f0f0f0;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.separator {
+    color: #999;
+}
+
+.student-count {
+    color: #666;
+}
+
+/* Main Session Layout */
+.session-main {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.session-layout {
+    display: flex;
+    gap: 24px;
+    align-items: stretch; /* This ensures equal height */
+    min-height: 500px; /* Set fixed minimum height for the entire layout */
+}
+
+/* Card Base Styles */
+.session-status,
+.student-info-section,
+.controls-section {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+/* Left Column Styles */
+.left-column {
+    flex: 2; /* Takes 2/3 of the space */
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-height: 100%; /* Fill the layout height */
+}
+
+.session-status {
+    padding: 24px;
+}
+
+.status-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status-indicator.active {
+    color: #28a745;
+}
+
+.status-indicator.paused {
+    color: #ffc107;
+}
+
+.pulse-dot {
+    width: 12px;
+    height: 12px;
+    background: #28a745;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.paused .pulse-dot {
+    background: #ffc107;
+    animation: none;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+    }
+}
+
+.status-text {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.session-time {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+    font-size: 14px;
+}
+
+#sessionTimer {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: #060606;
+}
+
+
+/* Right Column Styles */
+.right-column {
+    flex: 1; /* Takes 1/3 of the space */
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-height: 100%; /* Fill the layout height */
+}
+
+.student-info-section {
+    padding: 24px;
+    flex: 1; /* Take remaining space */
+    display: flex;
+    flex-direction: column;
+    min-height: 400px; /* Ensure consistent height */
+}
+
+.student-info-card {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100%;
+}
+
+.student-info-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.student-info-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #060606;
+    margin: 0;
+}
+
+.student-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    background: #f8f9fa;
+    color: #666;
+}
+
+.student-info-content {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    flex: 1; /* Take remaining space */
+    overflow-y: auto; /* Add scrollbar when content overflows */
+    min-height: 300px; /* Maintain consistent height */
+}
+
+/* Center content only when no student data */
+.student-info-content:has(.no-student-placeholder) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Normal display when student data is present */
+.student-info-content:not(:has(.no-student-placeholder)) {
+    display: block;
+}
+
+/* Custom scrollbar styling */
+.student-info-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.student-info-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.student-info-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.student-info-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.no-student-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #666;
+    min-height: 160px;
+}
+
+.no-student-placeholder i {
+    font-size: 48px;
+    color: #adb5bd;
+}
+
+.no-student-placeholder p {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.no-student-placeholder small {
+    font-size: 14px;
+    color: #999;
+}
+
+
+/* Controls Section */
+.controls-section {
+    padding: 24px;
+    margin-top: auto; /* Pushes controls to bottom when space allows */
+}
+
+.controls-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.control-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.btn-control {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-control.pause {
+    background: #ffc107;
+    color: #212529;
+}
+
+.btn-control.pause:hover {
+    background: #e0a800;
+}
+
+.btn-control.end {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-control.end:hover {
+    background: #c82333;
+}
+
+/* Stats Section */
+.stats-section {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    border-left: 4px solid;
+}
+
+.stat-card.present {
+    border-left-color: #28a745;
+}
+
+.stat-card.absent {
+    border-left-color: #dc3545;
+}
+
+.stat-card.pending {
+    border-left-color: #ffc107;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.stat-card.present .stat-icon {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.stat-card.absent .stat-icon {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.stat-card.pending .stat-icon {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.stat-info {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 24px;
+    font-weight: 700;
+    color: #060606;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #666;
+    margin-top: 4px;
+}
+
+/* Camera Scanner Specific Styles */
+.camera-scanner {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    flex: 1; /* Take remaining space in left column */
+    display: flex;
+    flex-direction: column;
+}
+
+.scanner-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.scanner-header h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #060606;
+    margin: 0 0 8px 0;
+}
+
+.scanner-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.camera-preview {
+    width: 100%;
+    max-width: 400px;
+    height: 300px;
+    aspect-ratio: 1;
+    background: #000;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    position: relative;
+    overflow: hidden;
+}
+
+.camera-preview video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+    z-index: 1;
+}
+
+.scanner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.scanner-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+}
+
+.scanner-frame {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70%;
+    max-width: 250px;
+    aspect-ratio: 1;
+    border: 2px solid #060606;
+    border-radius: 16px;
+    background: transparent;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.scanner-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #060606, transparent);
+    animation: scanLine 2s linear infinite;
+    z-index: 4;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.scanner-line.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+
+@keyframes scannerPulse {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.05);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.scanner-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #060606, transparent);
+    animation: scanLine 2s linear infinite;
+}
+
+@keyframes scannerGlow {
+    0%, 100% {
+        border-color: #060606;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 20px rgba(6, 6, 6, 0.3);
+    }
+    50% {
+        border-color: #333;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5), 0 0 30px rgba(6, 6, 6, 0.5);
+    }
+}
+
+@keyframes scanLine {
+    0% {
+        top: 0;
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        top: 100%;
+        opacity: 0;
+    }
+}
+
+#cameraPlaceholder {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+}
+
+#cameraPlaceholder i {
+    font-size: 48px;
+    color: #666;
+    margin: 0;
+}
+
+#cameraPlaceholder p {
+    margin: 0;
+    font-size: 14px;
+    color: #999;
+    line-height: 1.4;
+}
+
+.scanner-instructions {
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.btn-enable-camera {
+    background: #060606;
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-enable-camera:hover {
+    background: #333;
+}
+
+.scanner-status {
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    margin-top: 16px;
+}
+
+/* Student Details Styles */
+.student-details {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.student-avatar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+}
+
+.student-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: transparent;
+    color: #9b9b9b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 80px;
+    font-weight: 600;
+    margin: 0 auto;
+    aspect-ratio: 1;
+}
+
+.student-basic-info h4 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #060606;
+    margin: 0 0 4px 0;
+}
+
+.student-id {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6c757d;
+    background: #e9ecef;
+    padding: 6px 16px;
+    border-radius: 16px;
+    border: 1px solid #dee2e6;
+    text-align: center;
+}
+
+.student-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.meta-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.meta-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.meta-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+    text-align: right;
+}
+
+/* Student status badge scanned state */
+.student-status-badge.scanned {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+/* Enhanced Student Placeholder Styles */
+.student-placeholder-enhanced {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 24px 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+    min-height: 220px;
+    justify-content: center;
+    width: 100%;
+}
+
+.placeholder-profile-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.placeholder-profile-icon {
+    width: 64px;
+    height: 64px;
+    background: #e9ecef;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-size: 32px;
+    border: 2px solid #dee2e6;
+    aspect-ratio: 1;
+}
+
+.placeholder-student-id {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6c757d;
+    background: #e9ecef;
+    padding: 6px 16px;
+    border-radius: 16px;
+    border: 1px solid #dee2e6;
+    text-align: center;
+}
+
+.placeholder-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 300px;
+}
+
+.placeholder-field {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.field-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.field-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+}
+
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .session-container {
+        padding: 16px;
+    }
+    
+    .session-layout {
+        flex-direction: column;
+        gap: 20px;
+        align-items: stretch; /* Maintain equal height in mobile */
+    }
+    
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .session-details {
+        flex-wrap: wrap;
+    }
+    
+    .camera-preview {
+        max-width: 350px;
+        height: 350px;
+        aspect-ratio: 1;
+    }
+    
+    /* Tablet responsive styles */
+    .student-avatar {
+        width: 75px;
+        height: 75px;
+        font-size: 30px;
+        aspect-ratio: 1;
+    }
+    
+    .placeholder-profile-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 30px;
+        aspect-ratio: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .session-container {
+        padding: 12px;
+    }
+    
+    .session-layout {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .left-column,
+    .right-column {
+        flex: 1; /* Equal width on mobile */
+    }
+    
+    .student-info-section {
+        flex: 1; /* Take remaining space on mobile */
+        min-height: 300px; /* Maintain consistent height on mobile */
+    }
+    
+    .session-header {
+        padding: 20px;
+    }
+    
+    .class-info h1.session-title {
+        font-size: 24px;
+    }
+    
+    .session-details {
+        font-size: 13px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .camera-preview {
+        max-width: 100%;
+        height: 300px;
+        aspect-ratio: 1;
+        width: 100%;
+        max-height: 300px;
+    }
+    
+    #cameraPlaceholder i {
+        font-size: 40px;
+    }
+    
+    #cameraPlaceholder p {
+        font-size: 13px;
+    }
+    
+    .scanner-frame {
+        width: 80%;
+        max-width: 200px;
+        height: 80%;
+        aspect-ratio: 1;
+    }
+    
+    .control-buttons {
+        flex-direction: row;
+    }
+    
+    .btn-control {
+        flex: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .session-container {
+        padding: 8px;
+    }
+    
+    .session-header {
+        padding: 16px;
+    }
+    
+    .class-info h1.session-title {
+        font-size: 20px;
+    }
+    
+    .session-status,
+    .student-info-section,
+    .controls-section,
+    .stats-section {
+        padding: 16px;
+    }
+    
+    .student-info-content {
+        padding: 16px;
+        min-height: 250px;
+        max-height: 300px; /* Limit height on mobile */
+    }
+    
+    .camera-preview {
+        height: 280px;
+        aspect-ratio: 1;
+        width: 100%;
+        max-height: 280px;
+    }
+    
+    #cameraPlaceholder {
+        padding: 16px;
+        gap: 10px;
+    }
+    
+    #cameraPlaceholder i {
+        font-size: 36px;
+    }
+    
+    #cameraPlaceholder p {
+        font-size: 12px;
+    }
+    
+    .scanner-frame {
+        width: 85%;
+        max-width: 180px;
+        height: 85%;
+        aspect-ratio: 1;
+    }
+    
+    .info-value {
+        text-align: left;
+    }
+    
+    /* Responsive student avatar */
+    .student-avatar {
+        width: 70px;
+        height: 70px;
+        font-size: 28px;
+    }
+    
+    .placeholder-profile-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 28px;
+    }
+}
+
+/* Utility Classes */
+.text-center {
+    text-align: center;
+}
+
+.mb-0 {
+    margin-bottom: 0;
+}
+
+.mt-2 {
+    margin-top: 8px;
+}
+
+.hidden {
+    display: none;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* End Session Modal Styles */
+.end-session-content {
+    text-align: center;
+    padding: 20px;
+}
+
+.end-session-icon {
+    font-size: 48px;
+    color: #dc3545;
+    margin-bottom: 16px;
+}
+
+.end-session-content h6 {
+    color: #060606;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.end-session-content p {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 0;
+}
+
+/* Responsive Modal Styles */
+@media (max-width: 576px) {
+    .modal-dialog {
+        margin: 10px;
+    }
+    
+    .end-session-icon {
+        font-size: 36px;
+        margin-bottom: 12px;
+    }
+    
+    .end-session-content h6 {
+        font-size: 18px;
+    }
+    
+    .end-session-content p {
+        font-size: 13px;
+    }
+}
