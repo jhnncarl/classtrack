@@ -158,6 +158,6 @@ if ($auth->isLoggedIn()) {
     <!-- Toast Notification Component -->
     <?php require_once '../assets/components/toast.php'; ?>
     
-    <script src="../assets/js/login.js?v=5"></script>
+    <script src="../assets/js/login.js?v=6"></script>
 </body>
 </html>

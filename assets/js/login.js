@@ -48,10 +48,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const teacherBtn = document.getElementById('teacherBtn');
 
     // Toast elements - use the standard toast container
-    const toast = document.getElementById('otp-toast');
-    const toastClose = document.getElementById('toastClose');
-    console.log('Login - Toast element found:', toast); // Debug
-    console.log('Login - Toast close button found:', toastClose); // Debug
+    const toastContainer = document.getElementById('toast-container');
+    console.log('Login - Toast container found:', toastContainer); // Debug
 
     // Form elements
     const loginForm = document.querySelector('.login-form');
@@ -120,13 +118,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Toast close functionality
-    if (toastClose) {
-        toastClose.addEventListener('click', function() {
-            hideToast();
-        });
-    }
-
     // Helper functions for toast notifications
     function determineToastType(message) {
         if (message.includes('Account not found') || message.includes('check your email')) {
@@ -163,117 +154,102 @@ document.addEventListener('DOMContentLoaded', function() {
     // Toast functions
     function showToast(title, message, type = 'error') {
         console.log('showToast called with:', title, message, type); // Debug
-        console.log('Toast element found:', toast); // Debug
+        console.log('Toast container found:', toastContainer); // Debug
         
-        if (toast) {
-            // Update toast content
-            updateToastMessage(title, message);
-            
-            // Update toast type
-            toast.className = `toast toast-${type}`;
-            console.log('Toast class updated to:', toast.className); // Debug
-            
-            // Update icon based on type
-            updateToastIcon(type);
-            
-            // Remove any existing show/hide classes
-            toast.classList.remove('show', 'hide');
-            
-            // Trigger reflow to restart animation
-            void toast.offsetWidth;
-            
-            // Show the toast
-            toast.classList.add('show');
-            console.log('Toast show class added, current classes:', toast.className); // Debug
-            
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                hideToast();
-            }, 5000);
-        } else {
-            console.error('Toast element not found!'); // Debug
+        if (!toastContainer) {
+            console.error('Toast container not found!');
+            return;
         }
+        
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        console.log('Created toast element with class:', toast.className);
+        
+        // Create icon based on type
+        let iconSvg = '';
+        switch(type) {
+            case 'success':
+                iconSvg = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                `;
+                break;
+            case 'error':
+                iconSvg = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                `;
+                break;
+            case 'warning':
+                iconSvg = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                `;
+                break;
+            default:
+                iconSvg = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                `;
+        }
+        
+        toast.innerHTML = `
+            <div class="toast-icon">
+                ${iconSvg}
+            </div>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        `;
+        
+        console.log('Toast inner HTML set');
+        
+        // Add to container
+        toastContainer.appendChild(toast);
+        console.log('Toast added to container');
+        
+        // Add close functionality
+        const closeBtn = toast.querySelector('.toast-close');
+        closeBtn.addEventListener('click', () => {
+            toast.remove();
+        });
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 5000);
+        
+        // Show animation
+        setTimeout(() => {
+            toast.classList.add('show');
+            console.log('Toast show class added');
+        }, 100);
     }
     
     // Fallback function for showLoginToast (in case of old references)
     function showLoginToast(title, message, type = 'error') {
         showToast(title, message, type);
-    }
-
-    function hideToast() {
-        if (toast && toast.classList.contains('show')) {
-            toast.classList.remove('show');
-            toast.classList.add('hide');
-            
-            // Remove hide class after animation completes
-            setTimeout(() => {
-                toast.classList.remove('hide');
-            }, 300);
-        }
-    }
-
-    function updateToastMessage(title, message) {
-        if (toast) {
-            const titleElement = toast.querySelector('.toast-title');
-            const messageElement = toast.querySelector('.toast-message');
-            
-            if (titleElement) {
-                titleElement.textContent = title;
-            }
-            
-            if (messageElement) {
-                messageElement.textContent = message;
-            }
-        }
-    }
-
-    function updateToastIcon(type) {
-        if (toast) {
-            const iconContainer = toast.querySelector('.toast-icon');
-            
-            if (iconContainer) {
-                let iconSvg = '';
-                
-                switch(type) {
-                    case 'success':
-                        iconSvg = `
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                            </svg>
-                        `;
-                        break;
-                    case 'error':
-                        iconSvg = `
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="15" y1="9" x2="9" y2="15"></line>
-                                <line x1="9" y1="9" x2="15" y2="15"></line>
-                            </svg>
-                        `;
-                        break;
-                    case 'warning':
-                        iconSvg = `
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                                <line x1="12" y1="9" x2="12" y2="13"></line>
-                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                            </svg>
-                        `;
-                        break;
-                    default:
-                        iconSvg = `
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="16" x2="12" y2="12"></line>
-                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                            </svg>
-                        `;
-                }
-                
-                iconContainer.innerHTML = iconSvg;
-            }
-        }
     }
 
     // Form validation and submission
