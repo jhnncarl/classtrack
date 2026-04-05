@@ -96,7 +96,7 @@ if (!$currentClass) {
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="../assets/css/attendance_session.css?v=15">
+    <link rel="stylesheet" href="../assets/css/attendance_session.css?v=17">
     <link rel="stylesheet" href="../assets/css/toast.css">
 </head>
 <body>
@@ -120,6 +120,9 @@ if (!$currentClass) {
                         <span class="student-count"><?php echo $currentClass['students']; ?> <?php echo $currentClass['students'] == 1 ? 'Student' : 'Students'; ?></span>
                     </div>
                 </div>
+                <button class="btn-settings-header" onclick="showGracePeriodModal()" title="Attendance Settings">
+                    <i class="bi bi-gear"></i>
+                </button>
             </div>
         </header>
 
@@ -293,6 +296,52 @@ if (!$currentClass) {
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-danger" id="confirmEndSessionBtn">
                         <i class="bi bi-stop-circle"></i> End Session
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grace Period Settings Modal -->
+    <div class="modal fade" id="gracePeriodModal" tabindex="-1" aria-labelledby="gracePeriodModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="gracePeriodModalLabel">
+                        <i class="bi bi-gear"></i> Attendance Settings
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="settings-content">
+                        <div class="setting-item">
+                            <label for="gracePeriodSelect" class="form-label">
+                                <i class="bi bi-clock"></i> Grace Period
+                            </label>
+                            <p class="text-muted small">Students will be marked "Present" if they scan within this time after session starts</p>
+                            <select class="form-select" id="gracePeriodSelect">
+                                <option value="5">5 minutes</option>
+                                <option value="10">10 minutes</option>
+                                <option value="15" selected>15 minutes</option>
+                                <option value="20">20 minutes</option>
+                                <option value="30">30 minutes</option>
+                            </select>
+                        </div>
+                        <div class="setting-item mt-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="autoLateCheck" checked>
+                                <label class="form-check-label" for="autoLateCheck">
+                                    <i class="bi bi-clock-history"></i> Enable automatic late marking
+                                </label>
+                            </div>
+                            <p class="text-muted small">Automatically mark students as "Late" after grace period</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveGracePeriodSettings()" style="background: #060606; border-color: #060606;">
+                        <i class="bi bi-check-lg"></i> Save Settings
                     </button>
                 </div>
             </div>

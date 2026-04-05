@@ -4,6 +4,10 @@ let absentCount = 0;
 let lateCount = 0;
 let totalStudents = 0;
 
+// Grace period settings
+let gracePeriod = 15; // Default 15 minutes
+let autoLateEnabled = true;
+
 // Attendance Session JavaScript - ClassTrack Teacher Dashboard
 
 let sessionTimer = null;
@@ -520,6 +524,32 @@ function validateStudentWithServer(studentNumber) {
 
 // Record attendance in database
 function recordAttendance(studentId, studentData = null) {
+    // Calculate attendance status based on grace period
+    let attendanceStatus = 'Present';
+    
+    if (autoLateEnabled) {
+        // Get session start time from sessionStorage
+        const sessionStartTime = sessionStorage.getItem('sessionStartTime');
+        if (sessionStartTime) {
+            const currentTime = Date.now();
+            const sessionStart = parseInt(sessionStartTime);
+            const elapsedMinutes = Math.floor((currentTime - sessionStart) / 60000);
+            
+            console.log('Late detection calculation:');
+            console.log('- Session start time:', new Date(sessionStart).toLocaleTimeString());
+            console.log('- Current time:', new Date(currentTime).toLocaleTimeString());
+            console.log('- Elapsed minutes:', elapsedMinutes);
+            console.log('- Grace period:', gracePeriod);
+            
+            if (elapsedMinutes > gracePeriod) {
+                attendanceStatus = 'Late';
+                console.log('Student marked as LATE');
+            } else {
+                console.log('Student marked as PRESENT (within grace period)');
+            }
+        }
+    }
+    
     fetch('../api/attendance_session_api.php', {
         method: 'POST',
         headers: {
@@ -529,7 +559,7 @@ function recordAttendance(studentId, studentData = null) {
             action: 'record_attendance',
             session_id: sessionId,
             student_id: studentId,
-            attendance_status: 'Present'
+            attendance_status: attendanceStatus
         })
     })
     .then(response => response.json())
@@ -540,7 +570,13 @@ function recordAttendance(studentId, studentData = null) {
             console.log('Playing success sound for successful recording');
             playSuccessSound();
             showToast('Attendance recorded successfully', 'success');
-            markPresent();
+            
+            // Update attendance counts based on status
+            if (attendanceStatus === 'Late') {
+                markLate();
+            } else {
+                markPresent();
+            }
             
             // Update student info with attendance status
             if (studentData) {
@@ -551,7 +587,7 @@ function recordAttendance(studentId, studentData = null) {
                     year: studentData.year,
                     email: studentData.email,
                     profile_picture: studentData.profile_picture,
-                    attendance_status: 'Present'
+                    attendance_status: attendanceStatus
                 });
             }
             
@@ -592,14 +628,25 @@ function updateStudentInfo(student) {
     const studentInfoContent = document.getElementById('studentInfoContent');
     const studentStatusBadge = document.getElementById('studentStatusBadge');
     
-    // Update status badge
-    studentStatusBadge.className = 'student-status-badge scanned';
+    // Status badge with late detection
+    const status = student.attendance_status || 'Present';
+    let statusIcon, statusClass;
+    
+    if (status === 'Late') {
+        statusIcon = 'bi-clock-history';
+        statusClass = 'student-status-badge late';
+    } else {
+        statusIcon = 'bi-person-check';
+        statusClass = 'student-status-badge present';
+    }
+    
+    studentStatusBadge.className = statusClass;
     studentStatusBadge.innerHTML = `
-        <i class="bi bi-person-check"></i>
-        <span>${student.attendance_status || 'Present'}</span>
+        <i class="bi ${statusIcon}"></i>
+        <span>${status}</span>
     `;
     
-    // Update student info content
+    // Student info content
     studentInfoContent.innerHTML = `
         <div class="student-details">
             <div class="student-avatar-section">
@@ -615,6 +662,10 @@ function updateStudentInfo(student) {
                 </div>
             </div>
             <div class="student-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Status</span>
+                    <span class="meta-value ${status === 'Late' ? 'status-late' : 'status-present'}">${status}</span>
+                </div>
                 <div class="meta-item">
                     <span class="meta-label">Course</span>
                     <span class="meta-value">${student.course}</span>
@@ -733,6 +784,7 @@ function showToast(message, type = 'success') {
 
 // Initialize session
 document.addEventListener('DOMContentLoaded', function() {
+    loadGracePeriodSettings(); // Load grace period settings first
     startTimer();
     initializeAttendanceCounts();
     setupSessionCleanup();
@@ -906,4 +958,54 @@ function closeSession() {
             console.error('Error closing session:', error);
         });
     }
+}
+
+// Grace Period Settings Functions
+function showGracePeriodModal() {
+    // Load current settings into modal
+    document.getElementById('gracePeriodSelect').value = gracePeriod;
+    document.getElementById('autoLateCheck').checked = autoLateEnabled;
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('gracePeriodModal'));
+    modal.show();
+}
+
+function saveGracePeriodSettings() {
+    // Get values from modal
+    const newGracePeriod = parseInt(document.getElementById('gracePeriodSelect').value);
+    const newAutoLateEnabled = document.getElementById('autoLateCheck').checked;
+    
+    // Update settings
+    gracePeriod = newGracePeriod;
+    autoLateEnabled = newAutoLateEnabled;
+    
+    // Save to sessionStorage
+    sessionStorage.setItem('gracePeriod', gracePeriod.toString());
+    sessionStorage.setItem('autoLateEnabled', autoLateEnabled.toString());
+    
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('gracePeriodModal'));
+    modal.hide();
+    
+    // Show success message
+    showToast('Settings saved successfully', 'success');
+    
+    console.log('Grace period settings updated:', { gracePeriod, autoLateEnabled });
+}
+
+// Load grace period settings from sessionStorage on initialization
+function loadGracePeriodSettings() {
+    const savedGracePeriod = sessionStorage.getItem('gracePeriod');
+    const savedAutoLateEnabled = sessionStorage.getItem('autoLateEnabled');
+    
+    if (savedGracePeriod) {
+        gracePeriod = parseInt(savedGracePeriod);
+    }
+    
+    if (savedAutoLateEnabled) {
+        autoLateEnabled = savedAutoLateEnabled === 'true';
+    }
+    
+    console.log('Grace period settings loaded:', { gracePeriod, autoLateEnabled });
 }
