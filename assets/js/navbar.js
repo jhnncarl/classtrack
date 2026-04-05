@@ -41,22 +41,33 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Determine toast type based on message content
+        let toastType = type;
+        if (message.includes('already enrolled') || message.includes('already joined')) {
+            toastType = 'info';
+        }
+        
         // Create toast element
         const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
+        toast.className = `toast toast-${toastType}`;
         console.log('Created toast element with class:', toast.className);
         
         // Create icon based on type
-        const iconSvg = type === 'success' 
-            ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
-            : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+        let iconSvg;
+        if (toastType === 'success') {
+            iconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+        } else if (toastType === 'info') {
+            iconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+        } else {
+            iconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+        }
         
         toast.innerHTML = `
             <div class="toast-icon">
                 ${iconSvg}
             </div>
             <div class="toast-content">
-                <div class="toast-title">${type === 'success' ? 'Success' : 'Error'}</div>
+                <div class="toast-title">${toastType === 'success' ? 'Success' : toastType === 'info' ? 'Info' : 'Error'}</div>
                 <div class="toast-message">${message}</div>
             </div>
             <button class="toast-close">
@@ -429,15 +440,36 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeCreateSubjectModal();
     }
     
-    // Function to simulate join class process
-    function simulateJoinClass(classCode) {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                // Temporary valid codes for testing
-                const validCodes = ['ABC123', 'TEST456', 'CLASS78', 'DEMO90', 'JOIN12'];
-                const isValid = validCodes.includes(classCode.toUpperCase());
-                resolve(isValid);
-            }, 2000); // 2 second delay to show loading
+    // Function to join class via API
+    function joinClassViaAPI(classCode) {
+        console.log('Attempting to join class with code:', classCode);
+        
+        return fetch('/classtrack/api/join_class.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ classCode: classCode })
+        })
+        .then(response => {
+            console.log('API Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('API Response data:', data);
+            return {
+                success: data.success,
+                message: data.message,
+                classInfo: data.data
+            };
+        })
+        .catch(error => {
+            console.error('Error joining class:', error);
+            return {
+                success: false,
+                message: 'Network error. Please try again.',
+                classInfo: null
+            };
         });
     }
     
@@ -553,35 +585,51 @@ document.addEventListener('DOMContentLoaded', function() {
             setLoadingState(true);
             
             try {
-                // Simulate join class process
-                const isJoinSuccessful = await simulateJoinClass(inputValue.toUpperCase());
+                // Join class via API
+                const joinResult = await joinClassViaAPI(inputValue.toUpperCase());
                 
-                // Reset loading state
-                setLoadingState(false);
-                
-                if (isJoinSuccessful) {
-                    // Show success toast
-                    showToast('Successfully joined the class!', 'success');
+                // Add 2-second delay before showing result
+                setTimeout(() => {
+                    // Reset loading state
+                    setLoadingState(false);
                     
-                    // Close modal and reset after a short delay
-                    setTimeout(() => {
-                        const modal = document.getElementById('joinClassModal');
-                        if (modal) {
-                            const bootstrapModal = bootstrap.Modal.getInstance(modal);
-                            if (bootstrapModal) {
-                                bootstrapModal.hide();
-                            }
+                    if (joinResult.success) {
+                        // Show success toast with class details
+                        const classInfo = joinResult.classInfo;
+                        let successMessage = 'Successfully joined ' + classInfo.subjectName;
+                        if (classInfo.className) {
+                            successMessage += ' - ' + classInfo.className;
                         }
-                        resetModal();
-                    }, 1500);
-                } else {
-                    // Show error toast
-                    showToast('Invalid class code. Please check and try again.', 'error');
-                }
+                        if (classInfo.sectionName) {
+                            successMessage += ' (' + classInfo.sectionName + ')';
+                        }
+                        showToast(successMessage, 'success');
+                        
+                        // Close modal and reset after a short delay
+                        setTimeout(() => {
+                            const modal = document.getElementById('joinClassModal');
+                            if (modal) {
+                                const bootstrapModal = bootstrap.Modal.getInstance(modal);
+                                if (bootstrapModal) {
+                                    bootstrapModal.hide();
+                                }
+                            }
+                            resetModal();
+                        }, 1500);
+                    } else {
+                        // Show error/info toast with server message
+                        showToast(joinResult.message, 'error');
+                    }
+                }, 2000); // 2-second delay
+                
             } catch (error) {
                 console.error('Error joining class:', error);
-                setLoadingState(false);
-                showToast('An error occurred. Please try again.', 'error');
+                
+                // Add 2-second delay before showing error
+                setTimeout(() => {
+                    setLoadingState(false);
+                    showToast('An error occurred. Please try again.', 'error');
+                }, 2000);
             }
         });
         
