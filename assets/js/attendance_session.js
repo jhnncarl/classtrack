@@ -1,3 +1,9 @@
+// Attendance tracking variables
+let presentCount = 0;
+let absentCount = 0;
+let lateCount = 0;
+let totalStudents = 0;
+
 // Attendance Session JavaScript - ClassTrack Teacher Dashboard
 
 let sessionTimer = null;
@@ -15,17 +21,86 @@ function goBack() {
 document.getElementById('confirmLeaveBtn').addEventListener('click', function() {
     const modal = bootstrap.Modal.getInstance(document.getElementById('confirmLeaveModal'));
     modal.hide();
-    window.location.href = 'class_view.php?class=<?php echo $classCode; ?>';
+    
+    // Close session before leaving
+    closeSession();
+    
+    // Redirect after a short delay to ensure session closure is processed
+    setTimeout(() => {
+        window.location.href = 'class_view.php?class=' + encodeURIComponent(classCode);
+    }, 500);
 });
 
 // Timer functions
 function startTimer() {
+    console.log('=== startTimer called ===');
+    console.log('Current sessionId:', sessionId);
+    
+    // Clean up any existing camera stream before starting timer (only if camera is active)
+    try {
+        const videoElement = document.getElementById('videoElement');
+        if (videoElement && videoElement.srcObject) {
+            const stream = videoElement.srcObject;
+            const tracks = stream.getTracks();
+            tracks.forEach(track => track.stop());
+            videoElement.srcObject = null;
+            console.log('Camera stream cleaned up on timer start');
+        }
+    } catch (error) {
+        console.log('Camera cleanup skipped:', error.message);
+    }
+    
+    // Restore timer state from sessionStorage if exists
+    const savedStartTime = sessionStorage.getItem('sessionStartTime');
+    const savedSessionId = sessionStorage.getItem('currentSessionId');
+    
+    console.log('SessionStorage data:');
+    console.log('- savedStartTime:', savedStartTime);
+    console.log('- savedSessionId:', savedSessionId);
+    console.log('- current sessionId:', sessionId);
+    console.log('- sessionId comparison:', savedSessionId == sessionId);
+    
+    if (savedStartTime && savedSessionId == sessionId) {
+        // Calculate elapsed time since session started
+        const startTime = parseInt(savedStartTime);
+        const currentTime = Date.now();
+        const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+        
+        console.log('Timer calculation:');
+        console.log('- startTime:', startTime);
+        console.log('- currentTime:', currentTime);
+        console.log('- elapsedSeconds:', elapsedSeconds);
+        
+        // Set timer to elapsed time
+        sessionSeconds = elapsedSeconds;
+        updateTimerDisplay();
+        
+        console.log('Timer restored from sessionStorage:', 
+    String(Math.floor(elapsedSeconds / 3600)).padStart(2, '0') + ':' +
+    String(Math.floor((elapsedSeconds % 3600) / 60)).padStart(2, '0') + ':' +
+    String(elapsedSeconds % 60).padStart(2, '0')
+);
+    } else {
+        // Save new session start time
+        sessionStorage.setItem('sessionStartTime', Date.now().toString());
+        sessionStorage.setItem('currentSessionId', sessionId);
+        console.log('New session timer started');
+        console.log('- Saved startTime:', Date.now().toString());
+        console.log('- Saved sessionId:', sessionId);
+    }
+    
     sessionTimer = setInterval(() => {
         if (!isPaused) {
             sessionSeconds++;
             updateTimerDisplay();
+            // Save current time periodically
+            if (sessionSeconds % 10 === 0) { // Save every 10 seconds
+                sessionStorage.setItem('sessionStartTime', (Date.now() - (sessionSeconds * 1000)).toString());
+            }
         }
     }, 1000);
+    
+    console.log('Timer started, current sessionSeconds:', sessionSeconds);
 }
 
 function updateTimerDisplay() {
@@ -85,12 +160,11 @@ function enableCamera() {
     }
 }
 
-function disableCamera() {
+function stopCamera() {
     const videoElement = document.getElementById('videoElement');
     const cameraPlaceholder = document.getElementById('cameraPlaceholder');
     const scannerOverlay = document.getElementById('scannerOverlay');
     const enableBtn = document.getElementById('enableCameraBtn');
-    const scannerStatus = document.getElementById('scannerStatus');
     
     // Stop camera stream
     if (videoElement.srcObject) {
@@ -98,6 +172,7 @@ function disableCamera() {
         const tracks = stream.getTracks();
         tracks.forEach(track => track.stop());
         videoElement.srcObject = null;
+        console.log('Camera stream stopped');
     }
     
     videoElement.style.display = 'none';
@@ -105,6 +180,11 @@ function disableCamera() {
     scannerOverlay.style.display = 'none';
     enableBtn.innerHTML = '<i class="bi bi-camera-video"></i> Enable Camera';
     enableBtn.onclick = enableCamera;
+}
+
+function disableCamera() {
+    stopCamera();
+    const scannerStatus = document.getElementById('scannerStatus');
     scannerStatus.textContent = 'Camera ready / waiting for scan';
     showToast('Camera disabled', 'info');
     
@@ -132,10 +212,12 @@ function initAudioContext() {
 
 // Generate error sound
 function playErrorSound() {
+    console.log('playErrorSound called');
     const currentTime = Date.now();
     const timeSinceLastSound = currentTime - lastErrorSoundTime;
     
     if (timeSinceLastSound < ERROR_SOUND_COOLDOWN) {
+        console.log('Error sound blocked by cooldown');
         return; // Prevent rapid triggering
     }
     
@@ -168,6 +250,7 @@ function playErrorSound() {
 
 // Generate success sound
 function playSuccessSound() {
+    console.log('playSuccessSound called');
     initAudioContext();
     
     if (!audioContext) return;
@@ -285,21 +368,21 @@ function processQRCode(code) {
     
     qrScanner = code.data;
     
-    // Simulate validation (replace with actual validation logic)
+    // Validate QR code format
     const isValidQRCode = validateQRCode(code.data);
     
     if (isValidQRCode) {
-        // Valid QR code - process attendance
+        // Valid QR code format - process attendance
         console.log('Valid QR Code detected:', code.data);
-        playSuccessSound();
         simulateStudentCheckIn();
         
         // Reset after processing
         setTimeout(() => {
             qrScanner = null;
-        }, 2000);
+            resetStudentInfo();
+        }, 5000);
     } else {
-        // Invalid QR code - play error sound and show toast
+        // Invalid QR code format - play error sound and show toast
         console.log('Invalid QR Code detected:', code.data);
         playErrorSound();
         showErrorToast();
@@ -319,19 +402,9 @@ function validateQRCode(qrData) {
         
         // Check if QR data contains required fields
         if (studentData && studentData.student_number) {
-            // Simulate validation - replace with actual database checks
-            const validStudentNumbers = [
-                '2022-31425',
-                '2022-31559', 
-                '2022-94362',
-                '2022-28791',
-                '2022-45328',
-                '2022-67419',
-                '2022-89234',
-                '2022-12847'
-            ];
-            
-            return validStudentNumbers.includes(studentData.student_number);
+            // Store student data for later use
+            window.currentStudentData = studentData;
+            return true; // Always return true, validation will be done server-side
         }
         
         return false;
@@ -356,6 +429,9 @@ function pauseSession() {
     isPaused = !isPaused;
     const pauseBtn = document.querySelector('.btn-control.pause');
     const statusIndicator = document.querySelector('.status-indicator');
+    
+    // Update session status in database
+    updateSessionStatus(isPaused ? 'Paused' : 'Active');
     
     if (isPaused) {
         pauseBtn.innerHTML = '<i class="bi bi-play-circle"></i> Resume Session';
@@ -383,38 +459,136 @@ document.getElementById('confirmEndSessionBtn').addEventListener('click', functi
     const modal = bootstrap.Modal.getInstance(document.getElementById('confirmEndSessionModal'));
     modal.hide();
     
+    // Close session in database
+    closeSession();
+    
     clearInterval(sessionTimer);
     showToast('Session ended successfully', 'success');
+    
+    // Redirect after a short delay to ensure session closure is processed
     setTimeout(() => {
-        window.location.href = 'class_view.php?class=<?php echo $classCode; ?>';
-    }, 2000);
+        window.location.href = 'class_view.php?class=' + encodeURIComponent(classCode);
+    }, 1000);
 });
 
 // Simulate student check-ins
 function simulateStudentCheckIn() {
-    const students = [
-        { name: 'John Smith', id: '2022-31425', course: 'Computer Science', year: '3rd Year', email: 'john.smith@university.edu' },
-        { name: 'Jane Doe', id: '2022-31559', course: 'Computer Science', year: '3rd Year', email: 'jane.doe@university.edu' },
-        { name: 'Mike Johnson', id: '2022-94362', course: 'Computer Science', year: '3rd Year', email: 'mike.johnson@university.edu' },
-        { name: 'Sarah Williams', id: '2022-28791', course: 'Computer Science', year: '3rd Year', email: 'sarah.williams@university.edu' },
-        { name: 'David Brown', id: '2022-45328', course: 'Computer Science', year: '3rd Year', email: 'david.brown@university.edu' },
-        { name: 'Emily Davis', id: '2022-67419', course: 'Computer Science', year: '3rd Year', email: 'emily.davis@university.edu' },
-        { name: 'Chris Wilson', id: '2022-89234', course: 'Computer Science', year: '3rd Year', email: 'chris.wilson@university.edu' },
-        { name: 'Lisa Anderson', id: '2022-12847', course: 'Computer Science', year: '3rd Year', email: 'lisa.anderson@university.edu' }
-    ];
+    // Use the stored student data from QR scan
+    const studentData = window.currentStudentData;
     
-    const randomStudent = students[Math.floor(Math.random() * students.length)];
+    if (!studentData || !studentData.student_number) {
+        console.error('No student data available');
+        return;
+    }
     
-    // Update student information section
-    updateStudentInfo(randomStudent);
-    
-    // Automatically reset student info after displaying
-    setTimeout(() => {
-        resetStudentInfo();
-    }, 3000);
+    // Validate student and get information from server
+    validateStudentWithServer(studentData.student_number);
+}
+
+// Validate student with server and get student information
+function validateStudentWithServer(studentNumber) {
+    fetch('../api/attendance_session_api.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            action: 'validate_student',
+            student_number: studentNumber,
+            subject_id: subjectId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Student is valid - record attendance in database
+            recordAttendance(data.student.id, data.student);
+        } else {
+            // Student not found or not enrolled - play error sound
+            playErrorSound();
+            console.error('Student validation failed:', data.message);
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        // Network or server error - play error sound
+        playErrorSound();
+        console.error('Error validating student:', error);
+        showToast('Error validating student', 'error');
+    });
+}
+
+// Record attendance in database
+function recordAttendance(studentId, studentData = null) {
+    fetch('../api/attendance_session_api.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            action: 'record_attendance',
+            session_id: sessionId,
+            student_id: studentId,
+            attendance_status: 'Present'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Record attendance response:', data);
+        if (data.success) {
+            // Attendance recorded successfully - play success sound, show toast, and update UI
+            console.log('Playing success sound for successful recording');
+            playSuccessSound();
+            showToast('Attendance recorded successfully', 'success');
+            markPresent();
+            
+            // Update student info with attendance status
+            if (studentData) {
+                updateStudentInfo({
+                    name: studentData.name,
+                    id: studentData.student_number,
+                    course: studentData.course,
+                    year: studentData.year,
+                    email: studentData.email,
+                    profile_picture: studentData.profile_picture,
+                    attendance_status: 'Present'
+                });
+            }
+            
+            console.log('Attendance recorded with ID:', data.record_id);
+        } else {
+            // Failed to record attendance - play error sound
+            console.log('Playing error sound for failed recording:', data.message);
+            playErrorSound();
+            console.error('Failed to record attendance:', data.message);
+            
+            // Check if this is a duplicate scan and show as info instead of error
+            if (data.message.includes('already recorded')) {
+                showToast(data.message, 'info');
+            } else {
+                showToast(data.message, 'error');
+            }
+            
+            // Reset student info since attendance wasn't recorded
+            setTimeout(() => {
+                resetStudentInfo();
+            }, 2000);
+        }
+    })
+    .catch(error => {
+        // Network or server error - play error sound
+        playErrorSound();
+        console.error('Error recording attendance:', error);
+        showToast('Error recording attendance', 'error');
+        // Reset student info since attendance wasn't recorded
+        setTimeout(() => {
+            resetStudentInfo();
+        }, 2000);
+    });
 }
 
 function updateStudentInfo(student) {
+    console.log('updateStudentInfo called with:', student);
     const studentInfoContent = document.getElementById('studentInfoContent');
     const studentStatusBadge = document.getElementById('studentStatusBadge');
     
@@ -422,14 +596,19 @@ function updateStudentInfo(student) {
     studentStatusBadge.className = 'student-status-badge scanned';
     studentStatusBadge.innerHTML = `
         <i class="bi bi-person-check"></i>
-        <span>Student Scanned</span>
+        <span>${student.attendance_status || 'Present'}</span>
     `;
     
     // Update student info content
     studentInfoContent.innerHTML = `
         <div class="student-details">
             <div class="student-avatar-section">
-                <div class="student-avatar"><i class="bi bi-person-circle"></i></div>
+                <div class="student-avatar">
+                    ${student.profile_picture 
+                        ? `<img src="../${student.profile_picture}" alt="${student.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">` 
+                        : '<i class="bi bi-person-circle"></i>'
+                    }
+                </div>
                 <div class="student-basic-info">
                     <h4>${student.name}</h4>
                     <div class="student-id">ID: ${student.id}</div>
@@ -455,6 +634,8 @@ function updateStudentInfo(student) {
             </div>
         </div>
     `;
+    
+    console.log('Student info updated, attendance_status:', student.attendance_status);
 }
 
 
@@ -498,16 +679,25 @@ function showToast(message, type = 'success') {
     console.log('Created toast element with class:', toast.className);
     
     // Create icon based on type
-    const iconSvg = type === 'success' 
-        ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
-        : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+    let iconSvg, toastTitle;
+    
+    if (type === 'success') {
+        iconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+        toastTitle = 'Success';
+    } else if (type === 'info') {
+        iconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+        toastTitle = 'Info';
+    } else {
+        iconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+        toastTitle = 'Error';
+    }
     
     toast.innerHTML = `
         <div class="toast-icon">
             ${iconSvg}
         </div>
         <div class="toast-content">
-            <div class="toast-title">${type === 'success' ? 'Success' : 'Error'}</div>
+            <div class="toast-title">${toastTitle}</div>
             <div class="toast-message">${message}</div>
         </div>
         <button class="toast-close">
@@ -544,4 +734,176 @@ function showToast(message, type = 'success') {
 // Initialize session
 document.addEventListener('DOMContentLoaded', function() {
     startTimer();
+    initializeAttendanceCounts();
+    setupSessionCleanup();
 });
+
+// Setup automatic session cleanup
+function setupSessionCleanup() {
+    // Don't close session automatically - only close when user explicitly ends session
+    // This prevents session closure on browser refresh/tab switching
+    
+    console.log('Session cleanup setup complete - sessions will only close when explicitly ended by user');
+}
+
+// Track session state
+let isSessionClosed = false;
+let sessionHiddenTime = null;
+
+// Initialize attendance counts
+function initializeAttendanceCounts() {
+    totalStudents = parseInt(document.getElementById('lateCount').textContent);
+    
+    // Restore attendance counts from sessionStorage if exists
+    const savedSessionId = sessionStorage.getItem('currentSessionId');
+    const savedCounts = sessionStorage.getItem('attendanceCounts');
+    
+    if (savedCounts && savedSessionId == sessionId) {
+        const counts = JSON.parse(savedCounts);
+        presentCount = counts.present || 0;
+        absentCount = counts.absent || 0;
+        lateCount = counts.late || 0;
+        
+        console.log('Attendance counts restored:', { presentCount, absentCount, lateCount });
+    } else {
+        presentCount = 0;
+        absentCount = 0;
+        lateCount = 0;
+        
+        console.log('New attendance counts initialized');
+    }
+    
+    updateAttendanceDisplay();
+}
+
+// Save attendance counts to sessionStorage
+function saveAttendanceCounts() {
+    const counts = {
+        present: presentCount,
+        absent: absentCount,
+        late: lateCount
+    };
+    sessionStorage.setItem('attendanceCounts', JSON.stringify(counts));
+}
+
+// Update attendance display
+function updateAttendanceDisplay() {
+    document.getElementById('presentCount').textContent = presentCount;
+    document.getElementById('absentCount').textContent = absentCount;
+    document.getElementById('lateCount').textContent = lateCount;
+}
+
+// Mark student as present
+function markPresent() {
+    if (lateCount > 0) {
+        lateCount--;
+    } else if (absentCount > 0) {
+        absentCount--;
+    }
+    presentCount++;
+    updateAttendanceDisplay();
+    saveAttendanceCounts();
+}
+
+// Mark student as late
+function markLate() {
+    if (presentCount > 0) {
+        presentCount--;
+    } else if (absentCount > 0) {
+        absentCount--;
+    }
+    lateCount++;
+    updateAttendanceDisplay();
+    saveAttendanceCounts();
+}
+
+// Mark student as absent
+function markAbsent() {
+    if (presentCount > 0) {
+        presentCount--;
+    } else if (lateCount > 0) {
+        lateCount--;
+    }
+    absentCount++;
+    updateAttendanceDisplay();
+    saveAttendanceCounts();
+}
+
+// Session management functions
+function updateSessionStatus(status) {
+    if (!sessionId) return;
+    
+    fetch('../api/attendance_session_api.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            action: 'update_status',
+            session_id: sessionId,
+            status: status
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            console.error('Failed to update session status:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error updating session status:', error);
+    });
+}
+
+function closeSession() {
+    console.log('closeSession called');
+    console.log('Session ID:', sessionId);
+    console.log('Is session closed:', isSessionClosed);
+    
+    if (!sessionId || isSessionClosed) {
+        console.log('Exiting closeSession - no session ID or already closed');
+        return;
+    }
+    
+    isSessionClosed = true;
+    console.log('Marking session as closed');
+    
+    // Clear sessionStorage when session ends
+    sessionStorage.removeItem('sessionStartTime');
+    sessionStorage.removeItem('currentSessionId');
+    sessionStorage.removeItem('attendanceCounts');
+    console.log('SessionStorage cleared');
+    
+    // Use fetch for normal requests, sendBeacon for page unload
+    const data = JSON.stringify({
+        action: 'close_session',
+        session_id: sessionId
+    });
+    
+    console.log('Sending close request with data:', data);
+    
+    if (navigator.sendBeacon) {
+        const success = navigator.sendBeacon('../api/attendance_session_api.php', data);
+        console.log('SendBeacon result:', success);
+    } else {
+        console.log('SendBeacon not supported, using fetch fallback');
+        // Fallback for older browsers
+        fetch('../api/attendance_session_api.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: data
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Close session response:', data);
+            if (!data.success) {
+                console.error('Failed to close session:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error closing session:', error);
+        });
+    }
+}

@@ -31,6 +31,7 @@ try {
 
 // Get subject data from database
 $currentClass = null;
+$session_id = null;
 if ($teacher_id && $classCode) {
     try {
         $stmt = $db->prepare("SELECT SubjectID, SubjectCode, SubjectName, ClassName, SectionName, Schedule FROM subjects WHERE TeacherID = ? AND SubjectCode = ?");
@@ -43,13 +44,31 @@ if ($teacher_id && $classCode) {
             $stmt->execute([$subject_data['SubjectID']]);
             $student_count = $stmt->fetch()['student_count'];
             
+            // Check if there's an active session for today, if not create one
+            $stmt = $db->prepare("SELECT SessionID FROM attendancesessions WHERE SubjectID = ? AND SessionDate = CURDATE() AND Status = 'Active'");
+            $stmt->execute([$subject_data['SubjectID']]);
+            $existing_session = $stmt->fetch();
+            
+            error_log("Session Check - SubjectID: " . $subject_data['SubjectID'] . ", Existing session: " . ($existing_session ? $existing_session['SessionID'] : 'None'));
+            
+            if (!$existing_session) {
+                // Create new attendance session
+                $stmt = $db->prepare("INSERT INTO attendancesessions (SubjectID, SessionDate, StartTime, Status) VALUES (?, CURDATE(), CURTIME(), 'Active')");
+                $stmt->execute([$subject_data['SubjectID']]);
+                $session_id = $db->lastInsertId();
+                error_log("New session created with ID: " . $session_id);
+            } else {
+                $session_id = $existing_session['SessionID'];
+                error_log("Using existing session with ID: " . $session_id);
+            }
+            
             // Convert to expected format
             $currentClass = [
                 'title' => $subject_data['SubjectName'],
                 'section' => $subject_data['ClassName'] . ' - ' . $subject_data['SectionName'],
                 'students' => $student_count,
                 'schedule' => $subject_data['Schedule'] ?? 'Not specified',
-                'room' => 'Room 251' // Default room, can be added to database later
+                'session_id' => $session_id
             ];
         }
     } catch(PDOException $e) {
@@ -98,7 +117,7 @@ if (!$currentClass) {
                         <span class="separator">•</span>
                         <span class="class-section"><?php echo htmlspecialchars($currentClass['section']); ?></span>
                         <span class="separator">•</span>
-                        <span class="student-count"><?php echo $currentClass['students']; ?> Students</span>
+                        <span class="student-count"><?php echo $currentClass['students']; ?> <?php echo $currentClass['students'] == 1 ? 'Student' : 'Students'; ?></span>
                     </div>
                 </div>
             </div>
@@ -220,8 +239,8 @@ if (!$currentClass) {
                             <i class="bi bi-clock-history"></i>
                         </div>
                         <div class="stat-info">
-                            <div class="stat-number" id="pendingCount"><?php echo $currentClass['students']; ?></div>
-                            <div class="stat-label">Pending</div>
+                            <div class="stat-number" id="lateCount"><?php echo $currentClass['students']; ?></div>
+                            <div class="stat-label">Late</div>
                         </div>
                     </div>
                 </div>
@@ -285,6 +304,12 @@ if (!$currentClass) {
     <!-- QR Code Scanner Library -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <!-- Custom JavaScript -->
-    <script src="../assets/js/attendance_session.js?v=16"></script>
+    <script>
+        // Pass session data to JavaScript
+        const sessionId = <?php echo json_encode($session_id); ?>;
+        const subjectId = <?php echo json_encode($subject_data['SubjectID'] ?? null); ?>;
+        const classCode = <?php echo json_encode($classCode); ?>;
+    </script>
+    <script src="../assets/js/attendance_session.js?v=40"></script>
 </body>
 </html>
