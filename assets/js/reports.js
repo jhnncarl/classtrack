@@ -1,82 +1,317 @@
 document.addEventListener('DOMContentLoaded', function() {
-    initializeAutoFilter();
+    initializeSubjectSelection();
+    initializeFilters();
 });
 
-function applyFilters() {
-    const subjectFilter = document.getElementById('subjectFilter');
-    const monthFilter = document.getElementById('monthFilter');
+function initializeReportGeneration() {
+    // Placeholder for report generation initialization if needed in the future
+    console.log('Report generation initialized');
+}
+
+function initializeSubjectSelection() {
+    const subjectSelect = document.getElementById('subjectSelect');
+    const generateBtn = document.querySelector('.btn-generate-summary');
     
-    const subject = subjectFilter ? subjectFilter.value : '';
-    const month = monthFilter ? monthFilter.value : '';
+    if (subjectSelect && generateBtn) {
+        subjectSelect.addEventListener('change', function() {
+            generateBtn.disabled = !this.value;
+        });
+    }
+}
+
+function generateSubjectReport() {
+    const subjectSelect = document.getElementById('subjectSelect');
+    const subjectId = subjectSelect.value;
     
-    const sessionItems = document.querySelectorAll('.session-item');
-    let visibleCount = 0;
+    if (!subjectId) {
+        showToast('Please select a subject first', 'error');
+        return;
+    }
     
-    sessionItems.forEach(item => {
-        let showItem = true;
-        const subjectName = item.querySelector('.session-subject').textContent.toLowerCase();
-        const dateText = item.querySelector('.session-date').textContent;
-        
-        if (subject && subject !== 'all') {
-            const selectedOption = document.querySelector(`#subjectFilter option[value="${subject}"]`);
-            if (selectedOption) {
-                const selectedSubjectText = selectedOption.textContent.toLowerCase();
-                const selectedSubjectName = selectedSubjectText.split(' - ')[0].trim();
-                
-                if (!subjectName.includes(selectedSubjectName)) {
-                    showItem = false;
-                }
+    clearAllToasts();
+    showToast('Loading subject report...', 'info');
+    
+    fetch(`../api/get_subject_attendance_report.php?subject_id=${subjectId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displaySubjectReport(data);
+                clearAllToasts();
+                showToast('Report loaded successfully!', 'success');
+            } else {
+                throw new Error(data.message || 'Failed to load report');
             }
-        }
+        })
+        .catch(error => {
+            console.error('Error loading subject report:', error);
+            clearAllToasts();
+            showToast('Failed to load report. Please try again.', 'error');
+        });
+}
+
+function displaySubjectReport(data) {
+    const reportSection = document.getElementById('subjectReportSection');
+    const reportContainer = reportSection.querySelector('.report-container');
+    
+    const subjectInfo = data.subject_info;
+    const summary = data.summary;
+    const students = data.student_stats;
+    
+    let html = `
+        <div class="report-header">
+            <div class="report-title">
+                <h4>${subjectInfo.SubjectName} - Attendance Report</h4>
+                <p class="text-muted">${subjectInfo.ClassName} - ${subjectInfo.SectionName} | ${subjectInfo.SubjectCode}</p>
+            </div>
+            <div class="report-actions">
+                <button class="btn-download-pdf" onclick="downloadSubjectPDF(${subjectInfo.SubjectID})">
+                    <i class="bi bi-file-earmark-pdf me-2"></i>Download PDF
+                </button>
+            </div>
+        </div>
         
-        if (month && month !== 'all' && showItem) {
-            const itemDate = new Date(dateText);
-            const itemMonth = itemDate.toISOString().slice(0, 7);
-            if (itemMonth !== month) {
-                showItem = false;
-            }
-        }
+        <div class="report-summary">
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <div class="card-value">${data.total_sessions}</div>
+                    <div class="card-label">Total Sessions</div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-value">${summary.total_students}</div>
+                    <div class="card-label">Total Students</div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-value">${summary.total_present}</div>
+                    <div class="card-label">Total Present</div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-value">${summary.total_late}</div>
+                    <div class="card-label">Total Late</div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-value">${summary.overall_attendance_rate}%</div>
+                    <div class="card-label">Overall Attendance Rate</div>
+                </div>
+            </div>
+        </div>
         
-        item.style.display = showItem ? 'flex' : 'none';
-        if (showItem) visibleCount++;
+        <div class="students-table-container">
+            <h5>Student Attendance Details</h5>
+            <div class="students-table-wrapper">
+                <table class="students-table">
+                    <thead>
+                        <tr>
+                            <th>Student Number</th>
+                            <th>Name</th>
+                            <th>Present</th>
+                            <th>Late</th>
+                            <th>Absent</th>
+                            <th>Attendance %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+    
+    students.forEach(student => {
+        const attendanceClass = student.AttendancePercentage >= 75 ? 'good' : 
+                              student.AttendancePercentage >= 50 ? 'warning' : 'poor';
+        
+        html += `
+            <tr>
+                <td>${student.StudentNumber}</td>
+                <td>${student.StudentName}</td>
+                <td>${student.PresentCount}</td>
+                <td>${student.LateCount}</td>
+                <td>${student.AbsentCount}</td>
+                <td><span class="attendance-badge ${attendanceClass}">${student.AttendancePercentage}%</span></td>
+            </tr>
+        `;
     });
     
-    // Show/hide empty state message
-    const emptyState = document.querySelector('.empty-state');
-    if (emptyState) {
-        emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+    html += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    
+    reportContainer.innerHTML = html;
+    reportSection.style.display = 'block';
+    
+    // Smooth scroll to report
+    reportSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function downloadSubjectPDF(subjectId) {
+    window.location.href = `../api/generate_subject_report_pdf.php?subject_id=${subjectId}`;
+}
+
+function initializeFilters() {
+    // Debug: Check if filter elements exist
+    const filterSubject = document.getElementById('filterSubject');
+    const filterDateFrom = document.getElementById('filterDateFrom');
+    const filterDateTo = document.getElementById('filterDateTo');
+    
+    console.log('Filter elements found:', {
+        filterSubject: !!filterSubject,
+        filterDateFrom: !!filterDateFrom,
+        filterDateTo: !!filterDateTo
+    });
+    
+    // Set filter values from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    let hasUrlFilters = false;
+    
+    if (urlParams.get('subject') && filterSubject) {
+        filterSubject.value = urlParams.get('subject');
+        hasUrlFilters = true;
     }
+    
+    if (urlParams.get('date_from') && filterDateFrom) {
+        filterDateFrom.value = urlParams.get('date_from');
+        hasUrlFilters = true;
+    }
+    
+    if (urlParams.get('date_to') && filterDateTo) {
+        filterDateTo.value = urlParams.get('date_to');
+        hasUrlFilters = true;
+    }
+    
+    // Add event listeners for automatic filtering
+    if (filterSubject) {
+        filterSubject.addEventListener('change', function() {
+            console.log('Subject filter changed');
+            applyFilters();
+        });
+    }
+    
+    if (filterDateFrom) {
+        filterDateFrom.addEventListener('change', function() {
+            console.log('Date From filter changed');
+            applyFilters();
+        });
+    }
+    
+    if (filterDateTo) {
+        filterDateTo.addEventListener('change', function() {
+            console.log('Date To filter changed');
+            applyFilters();
+        });
+    }
+    
+    console.log('Filter event listeners added. Has URL filters:', hasUrlFilters);
+    
+    // If URL filters exist, apply them to show filtered data
+    if (hasUrlFilters) {
+        setTimeout(() => applyFilters(), 100); // Small delay to ensure DOM is ready
+    }
+}
+
+function applyFilters() {
+    console.log('applyFilters() called');
+    
+    const subject = document.getElementById('filterSubject').value;
+    const dateFrom = document.getElementById('filterDateFrom').value;
+    const dateTo = document.getElementById('filterDateTo').value;
+    
+    console.log('Filter values:', { subject, dateFrom, dateTo });
+    
+    // Send AJAX request
+    const formData = new FormData();
+    formData.append('action', 'filter_reports');
+    if (subject) formData.append('subject', subject);
+    if (dateFrom) formData.append('date_from', dateFrom);
+    if (dateTo) formData.append('date_to', dateTo);
+    
+    console.log('Sending AJAX request...');
+    
+    fetch('reports.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log('Response received:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+            updateSessionsList(data.reports);
+        } else {
+            console.error('Filter error:', data.message || 'Failed to filter records');
+        }
+    })
+    .catch(error => {
+        console.error('Error filtering records:', error);
+    });
+}
+
+function updateSessionsList(reports) {
+    const sessionsList = document.querySelector('.sessions-list');
+    
+    if (!reports || reports.length === 0) {
+        sessionsList.innerHTML = `
+            <div class="empty-state-container">
+                <div class="empty-state-message">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <h3 class="empty-state-title">No Records Found</h3>
+                    <p class="empty-state-description">No attendance records match your current filters. Try adjusting your filter criteria.</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    reports.forEach(report => {
+        html += `
+            <div class="session-item">
+                <div class="session-info">
+                    <h4 class="session-subject">${report.SubjectName}</h4>
+                    <p class="session-date">${new Date(report.SessionDate).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    })}</p>
+                </div>
+                <button class="btn-generate-report" onclick="generateReport(${report.SessionID})">
+                    <i class="bi bi-file-earmark-pdf me-2"></i>Session Report
+                </button>
+            </div>
+        `;
+    });
+    
+    sessionsList.innerHTML = html;
 }
 
 function clearFilters() {
-    const subjectFilter = document.getElementById('subjectFilter');
-    const monthFilter = document.getElementById('monthFilter');
+    // Clear all filter inputs
+    document.getElementById('filterSubject').value = '';
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
     
-    if (subjectFilter) {
-        subjectFilter.value = 'all';
-    }
+    // Send AJAX request to get all records
+    const formData = new FormData();
+    formData.append('action', 'filter_reports');
     
-    if (monthFilter) {
-        monthFilter.value = 'all';
-    }
-    
-    const sessionItems = document.querySelectorAll('.session-item');
-    sessionItems.forEach(item => {
-        item.style.display = 'flex';
+    fetch('reports.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateSessionsList(data.reports);
+        } else {
+            console.error('Clear error:', data.message || 'Failed to clear filters');
+        }
+    })
+    .catch(error => {
+        console.error('Error clearing filters:', error);
     });
-}
-
-function initializeAutoFilter() {
-    const subjectFilter = document.getElementById('subjectFilter');
-    const monthFilter = document.getElementById('monthFilter');
-    
-    if (subjectFilter) {
-        subjectFilter.addEventListener('change', applyFilters);
-    }
-    
-    if (monthFilter) {
-        monthFilter.addEventListener('change', applyFilters);
-    }
 }
 
 function generateReport(sessionId) {

@@ -39,12 +39,38 @@ if ($teacher_id) {
     }
 }
 
+// Get filter parameters
+$filter_subject = $_GET['subject'] ?? '';
+$filter_date_from = $_GET['date_from'] ?? '';
+$filter_date_to = $_GET['date_to'] ?? '';
+
 // Get attendance reports data
 $reports = [];
 if ($teacher_id && !empty($subjects)) {
     try {
         $subject_ids = array_column($subjects, 'SubjectID');
         $placeholders = str_repeat('?,', count($subject_ids) - 1) . '?';
+        
+        // Build WHERE conditions
+        $where_conditions = ["asess.SubjectID IN ($placeholders)"];
+        $params = $subject_ids;
+        
+        if (!empty($filter_subject)) {
+            $where_conditions[] = "asess.SubjectID = ?";
+            $params[] = $filter_subject;
+        }
+        
+        if (!empty($filter_date_from)) {
+            $where_conditions[] = "asess.SessionDate >= ?";
+            $params[] = $filter_date_from;
+        }
+        
+        if (!empty($filter_date_to)) {
+            $where_conditions[] = "asess.SessionDate <= ?";
+            $params[] = $filter_date_to;
+        }
+        
+        $where_clause = implode(' AND ', $where_conditions);
         
         $stmt = $db->prepare("
             SELECT 
@@ -58,23 +84,98 @@ if ($teacher_id && !empty($subjects)) {
                 s.SubjectName,
                 s.ClassName,
                 s.SectionName,
-                COUNT(a.RecordID) as total_students,
-                SUM(CASE WHEN a.AttendanceStatus = 'Present' THEN 1 ELSE 0 END) as present_count,
-                SUM(CASE WHEN a.AttendanceStatus = 'Late' THEN 1 ELSE 0 END) as late_count,
-                SUM(CASE WHEN a.AttendanceStatus IS NULL THEN 1 ELSE 0 END) as absent_count
+                COUNT(DISTINCT ar.RecordID) as present_count,
+                0 as late_count,
+                COUNT(DISTINCT ar.RecordID) as total_students
             FROM attendancesessions asess
-            JOIN subjects s ON asess.SubjectID = s.SubjectID
-            LEFT JOIN attendancerecords a ON asess.SessionID = a.SessionID
-            WHERE asess.SubjectID IN ($placeholders)
+            LEFT JOIN attendancerecords ar ON asess.SessionID = ar.SessionID AND ar.AttendanceStatus IN ('Present', 'Late')
+            LEFT JOIN subjects s ON asess.SubjectID = s.SubjectID
+            WHERE $where_clause
             GROUP BY asess.SessionID, asess.SubjectID, asess.SessionDate, asess.StartTime, asess.EndTime, asess.Status,
                      s.SubjectCode, s.SubjectName, s.ClassName, s.SectionName
             ORDER BY asess.SessionDate DESC, asess.StartTime DESC
         ");
-        $stmt->execute($subject_ids);
+        $stmt->execute($params);
         $reports = $stmt->fetchAll();
     } catch(PDOException $e) {
         error_log("Error getting reports: " . $e->getMessage());
     }
+}
+
+// Handle AJAX filter requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'filter_reports') {
+    header('Content-Type: application/json');
+    
+    $filter_subject = $_POST['subject'] ?? '';
+    $filter_date_from = $_POST['date_from'] ?? '';
+    $filter_date_to = $_POST['date_to'] ?? '';
+    
+    $reports = [];
+    if ($teacher_id && !empty($subjects)) {
+        try {
+            $subject_ids = array_column($subjects, 'SubjectID');
+            $placeholders = str_repeat('?,', count($subject_ids) - 1) . '?';
+            
+            // Build WHERE conditions
+            $where_conditions = ["asess.SubjectID IN ($placeholders)"];
+            $params = $subject_ids;
+            
+            if (!empty($filter_subject)) {
+                $where_conditions[] = "asess.SubjectID = ?";
+                $params[] = $filter_subject;
+            }
+            
+            if (!empty($filter_date_from)) {
+                $where_conditions[] = "asess.SessionDate >= ?";
+                $params[] = $filter_date_from;
+            }
+            
+            if (!empty($filter_date_to)) {
+                $where_conditions[] = "asess.SessionDate <= ?";
+                $params[] = $filter_date_to;
+            }
+            
+            if (!empty($filter_status)) {
+                $where_conditions[] = "asess.Status = ?";
+                $params[] = $filter_status;
+            }
+            
+            $where_clause = implode(' AND ', $where_conditions);
+            
+            $stmt = $db->prepare("
+                SELECT 
+                    asess.SessionID,
+                    asess.SubjectID,
+                    asess.SessionDate,
+                    asess.StartTime,
+                    asess.EndTime,
+                    asess.Status,
+                    s.SubjectCode,
+                    s.SubjectName,
+                    s.ClassName,
+                    s.SectionName,
+                    COUNT(DISTINCT ar.RecordID) as present_count,
+                    0 as late_count,
+                    COUNT(DISTINCT ar.RecordID) as total_students
+                FROM attendancesessions asess
+                LEFT JOIN attendancerecords ar ON asess.SessionID = ar.SessionID AND ar.AttendanceStatus IN ('Present', 'Late')
+                LEFT JOIN subjects s ON asess.SubjectID = s.SubjectID
+                WHERE $where_clause
+                GROUP BY asess.SessionID, asess.SubjectID, asess.SessionDate, asess.StartTime, asess.EndTime, asess.Status,
+                         s.SubjectCode, s.SubjectName, s.ClassName, s.SectionName
+                ORDER BY asess.SessionDate DESC, asess.StartTime DESC
+            ");
+            $stmt->execute($params);
+            $reports = $stmt->fetchAll();
+            
+            echo json_encode(['success' => true, 'reports' => $reports]);
+        } catch(PDOException $e) {
+            echo json_encode(['success' => false, 'message' => 'Database error']);
+        }
+    } else {
+        echo json_encode(['success' => false, 'message' => 'No subjects found']);
+    }
+    exit;
 }
 
 $teacher_name = $user_name;
@@ -85,7 +186,7 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClassTrack - Generated Reports</title>
+    <title>ClassTrack - Attendance Reports</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -97,7 +198,7 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/navbar.css">
     <link rel="stylesheet" href="../assets/css/sidebar.css">
-    <link rel="stylesheet" href="../assets/css/reports.css?v=1">
+    <link rel="stylesheet" href="../assets/css/reports.css?v=4">
     <link rel="stylesheet" href="../assets/css/toast.css">
     
     <!-- Inline script to prevent sidebar flicker -->
@@ -142,7 +243,39 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
     <main class="main-content">
         <div class="container-fluid reports-container">
             
-            <!-- Filter Attendance Records -->
+            <!-- Subject Selection -->
+            <div class="subject-selection-section">
+                <div class="selection-container">
+                    <div class="selection-header">
+                        <h3 class="selection-title">Select Subject for Report</h3>
+                    </div>
+                    <div class="selection-controls">
+                        <div class="selection-group">
+                            <label for="subjectSelect" class="selection-label">Choose Subject</label>
+                            <select id="subjectSelect" class="selection-select">
+                                <option value="">-- Select a Subject --</option>
+                                <?php foreach ($subjects as $subject): ?>
+                                <option value="<?php echo $subject['SubjectID']; ?>">
+                                    <?php echo htmlspecialchars($subject['SubjectName'] . ' - ' . $subject['SubjectCode'] . ' (' . $subject['ClassName'] . ' - ' . $subject['SectionName'] . ')'); ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <button class="btn-generate-summary" onclick="generateSubjectReport()" disabled>
+                            <i class="bi bi-bar-chart-line me-2"></i>Generate Subject Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Subject Report Results -->
+            <div class="subject-report-section" id="subjectReportSection" style="display: none;">
+                <div class="report-container">
+                    <!-- Report content will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Filter Section -->
             <div class="filter-section">
                 <div class="filter-container">
                     <div class="filter-header">
@@ -150,36 +283,25 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
                     </div>
                     <div class="filter-controls">
                         <div class="filter-group">
-                            <label for="subjectFilter" class="filter-label">Subject</label>
-                            <select id="subjectFilter" class="filter-select">
-                                <option value="all">All Subjects</option>
+                            <label for="filterSubject" class="filter-label">Subject</label>
+                            <select class="filter-select" id="filterSubject">
+                                <option value="">All Subjects</option>
                                 <?php foreach ($subjects as $subject): ?>
                                 <option value="<?php echo $subject['SubjectID']; ?>">
-                                    <?php echo htmlspecialchars($subject['SubjectName']); ?>
+                                    <?php echo htmlspecialchars($subject['SubjectName'] . ' - ' . $subject['SubjectCode']); ?>
                                 </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="filter-group">
-                            <label for="monthFilter" class="filter-label">Month</label>
-                            <select id="monthFilter" class="filter-select">
-                                <option value="all">All Months</option>
-                                <?php 
-                                // Generate month options for the last 6 months
-                                $months = [];
-                                for ($i = 0; $i < 6; $i++) {
-                                    $date = new DateTime();
-                                    $date->modify("-$i month");
-                                    $monthValue = $date->format('Y-m');
-                                    $monthLabel = $date->format('F Y');
-                                    $months[$monthValue] = $monthLabel;
-                                }
-                                foreach ($months as $value => $label): ?>
-                                <option value="<?php echo $value; ?>"><?php echo $label; ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                            <label for="filterDateFrom" class="filter-label">From Date</label>
+                            <input type="date" class="form-control" id="filterDateFrom">
                         </div>
-                        <button class="btn-filter-apply" onclick="applyFilters()">
+                        <div class="filter-group">
+                            <label for="filterDateTo" class="filter-label">To Date</label>
+                            <input type="date" class="form-control" id="filterDateTo">
+                        </div>
+                                                <button class="btn-filter-apply" onclick="applyFilters()">
                             <i class="bi bi-funnel me-2"></i>Apply Filters
                         </button>
                         <button class="btn-filter-clear" onclick="clearFilters()">
@@ -189,10 +311,11 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
                 </div>
             </div>
             
-            <!-- Reports Table -->
+            <!-- Attendance Records Section -->
             <div class="reports-section">
                 <div class="section-header">
                     <h3>Attendance Records</h3>
+                    <p class="section-subtitle">Generate reports for specific attendance sessions</p>
                 </div>
 
                 <!-- Sessions List -->
@@ -203,7 +326,7 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
                                 <div class="empty-state-icon">
                                     <i class="bi bi-file-text"></i>
                                 </div>
-                                <h3 class="empty-state-title">No Reports Found</h3>
+                                <h3 class="empty-state-title">No Sessions Found</h3>
                                 <p class="empty-state-description">No attendance sessions have been conducted yet. Go to your dashboard and start an attendance session for any of your classes to generate reports.</p>
                             </div>
                         </div>
@@ -215,23 +338,10 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
                                 <p class="session-date"><?php echo date('F d, Y', strtotime($report['SessionDate'])); ?></p>
                             </div>
                             <button class="btn-generate-report" onclick="generateReport(<?php echo $report['SessionID']; ?>)">
-                                Generate Report
+                                <i class="bi bi-file-earmark-pdf me-2"></i>Session Report
                             </button>
                         </div>
                         <?php endforeach; ?>
-                        
-                        <!-- Empty state for filtered results -->
-                        <div class="empty-state" style="display: none;">
-                            <div class="empty-state-container">
-                                <div class="empty-state-message">
-                                    <div class="empty-state-icon">
-                                        <i class="bi bi-search"></i>
-                                    </div>
-                                    <h3 class="empty-state-title">No Sessions Found</h3>
-                                    <p class="empty-state-description">No attendance sessions match your current filter criteria. Try adjusting your filters to see different results.</p>
-                                </div>
-                            </div>
-                        </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -273,15 +383,6 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
                                 <label for="filterDateTo">Date To</label>
                                 <input type="date" class="form-control" id="filterDateTo">
                             </div>
-                            <div class="form-group">
-                                <label for="filterStatus">Status</label>
-                                <select class="form-select" id="filterStatus">
-                                    <option value="">All Status</option>
-                                    <option value="Active">Active</option>
-                                    <option value="Completed">Completed</option>
-                                    <option value="Paused">Paused</option>
-                                </select>
-                            </div>
                         </div>
                     </form>
                 </div>
@@ -296,6 +397,6 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JavaScript -->
-    <script src="../assets/js/reports.js?v=5"></script>
+    <script src="../assets/js/reports.js?v=7"></script>
 </body>
 </html>
