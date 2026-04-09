@@ -13,63 +13,69 @@ $user_name = isset($_SESSION['user_first_name']) && isset($_SESSION['user_last_n
     (isset($_SESSION['user_first_name']) ? $_SESSION['user_first_name'] : 'Teacher');
 $user_role = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : 'Teacher';
 
-// Sample data for demonstration (not connected to database)
-$sample_sessions = [
-    [
-        'SessionID' => 1,
-        'SubjectID' => 101,
-        'SubjectName' => 'Advanced Web Development',
-        'SubjectCode' => 'CS-301',
-        'ClassName' => 'BSIT 3A',
-        'SectionName' => 'Morning',
-        'SessionDate' => '2026-04-08',
-        'StartTime' => '09:00:00',
-        'EndTime' => '10:00:00',
-        'Status' => 'Completed',
-        'total_students' => 25,
-        'present_count' => 22,
-        'late_count' => 2,
-        'absent_count' => 1
-    ],
-    [
-        'SessionID' => 2,
-        'SubjectID' => 102,
-        'SubjectName' => 'Database Management Systems',
-        'SubjectCode' => 'CS-302',
-        'ClassName' => 'BSIT 3B',
-        'SectionName' => 'Afternoon',
-        'SessionDate' => '2026-04-07',
-        'StartTime' => '13:00:00',
-        'EndTime' => '14:00:00',
-        'Status' => 'Completed',
-        'total_students' => 30,
-        'present_count' => 28,
-        'late_count' => 1,
-        'absent_count' => 1
-    ],
-    [
-        'SessionID' => 3,
-        'SubjectID' => 103,
-        'SubjectName' => 'Software Engineering',
-        'SubjectCode' => 'CS-303',
-        'ClassName' => 'BSIT 4A',
-        'SectionName' => 'Morning',
-        'SessionDate' => '2026-04-06',
-        'StartTime' => '10:00:00',
-        'EndTime' => '11:00:00',
-        'Status' => 'Active',
-        'total_students' => 28,
-        'present_count' => 15,
-        'late_count' => 3,
-        'absent_count' => 10
-    ]
-];
+// Include database configuration
+require_once '../config/database.php';
 
-$sample_subjects = [
-    ['SubjectID' => 101, 'SubjectName' => 'Advanced Web Development', 'SubjectCode' => 'CS-301'],
-    ['SubjectID' => 102, 'SubjectName' => 'Database Management Systems', 'SubjectCode' => 'CS-302'],
-    ['SubjectID' => 103, 'SubjectName' => 'Software Engineering', 'SubjectCode' => 'CS-303']
-];
+// Get teacher ID from session
+$user_id = $_SESSION['user_id'];
+
+// Get attendance sessions from database for this teacher
+try {
+    // Get TeacherID from teachers table
+    $teacher_stmt = $db->prepare("SELECT t.TeacherID FROM teachers t JOIN users u ON t.UserID = u.UserID WHERE u.UserID = ? AND u.Role = 'Teacher'");
+    $teacher_stmt->execute([$user_id]);
+    $teacher_data = $teacher_stmt->fetch(PDO::FETCH_ASSOC);
+    $teacher_id = $teacher_data ? $teacher_data['TeacherID'] : null;
+    
+    if (!$teacher_id) {
+        throw new Exception('Teacher not found');
+    }
+    
+    // Query to get sessions with subject information and attendance statistics
+    $query = "SELECT 
+                s.SessionID,
+                s.SubjectID,
+                s.SessionDate,
+                s.StartTime,
+                s.EndTime,
+                s.Status,
+                sub.SubjectName,
+                sub.SubjectCode,
+                sub.ClassName,
+                sub.SectionName,
+                (SELECT COUNT(*) FROM enrollments e WHERE e.SubjectID = s.SubjectID) as total_students,
+                (SELECT COUNT(*) FROM attendancerecords ar WHERE ar.SessionID = s.SessionID AND ar.AttendanceStatus = 'Present') as present_count,
+                (SELECT COUNT(*) FROM attendancerecords ar WHERE ar.SessionID = s.SessionID AND ar.AttendanceStatus = 'Late') as late_count,
+                (SELECT COUNT(*) FROM attendancerecords ar WHERE ar.SessionID = s.SessionID AND ar.AttendanceStatus = 'Absent') as absent_count
+              FROM attendancesessions s
+              JOIN subjects sub ON s.SubjectID = sub.SubjectID
+              WHERE sub.TeacherID = ?
+              ORDER BY s.SessionDate DESC, s.StartTime DESC";
+    
+    $stmt = $db->prepare($query);
+    $stmt->execute([$teacher_id]);
+    $sessions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Get subjects for this teacher
+    $subject_query = "SELECT SubjectID, SubjectName, SubjectCode FROM subjects WHERE TeacherID = ? ORDER BY SubjectName";
+    $subject_stmt = $db->prepare($subject_query);
+    $subject_stmt->execute([$teacher_id]);
+    $subjects = $subject_stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+} catch(PDOException $e) {
+    error_log("Database Error: " . $e->getMessage());
+    $sessions = [];
+    $subjects = [];
+} catch(Exception $e) {
+    error_log("Error: " . $e->getMessage());
+    $sessions = [];
+    $subjects = [];
+}
+
+// Helper function to map database status to display status
+function mapStatus($status) {
+    return $status === 'Closed' ? 'Completed' : $status;
+}
 
 $teacher_name = $user_name;
 $user_initials = strtoupper(substr($teacher_name, 0, 2));
@@ -91,7 +97,7 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/navbar.css">
     <link rel="stylesheet" href="../assets/css/sidebar.css">
-    <link rel="stylesheet" href="../assets/css/attendance_session_history.css?v=38">
+    <link rel="stylesheet" href="../assets/css/attendance_session_history.css">
     <link rel="stylesheet" href="../assets/css/toast.css">
     
     <!-- Inline script to prevent sidebar flicker -->
@@ -147,7 +153,7 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
                             <label for="subjectFilter" class="filter-label">Subject</label>
                             <select id="subjectFilter" class="filter-select">
                                 <option value="all">All Subjects</option>
-                                <?php foreach ($sample_subjects as $subject): ?>
+                                <?php foreach ($subjects as $subject): ?>
                                 <option value="<?php echo $subject['SubjectID']; ?>">
                                     <?php echo htmlspecialchars($subject['SubjectName']); ?>
                                 </option>
@@ -160,7 +166,6 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
                                 <option value="all">All Status</option>
                                 <option value="Active">Active</option>
                                 <option value="Completed">Completed</option>
-                                <option value="Paused">Paused</option>
                             </select>
                         </div>
                         <div class="filter-group">
@@ -200,7 +205,7 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
 
                 <!-- Sessions List -->
                 <div class="sessions-list" id="listView">
-                    <?php if (empty($sample_sessions)): ?>
+                    <?php if (empty($sessions)): ?>
                         <div class="empty-state-container">
                             <div class="empty-state-message">
                                 <div class="empty-state-icon">
@@ -211,8 +216,8 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
                             </div>
                         </div>
                     <?php else: ?>
-                        <?php foreach ($sample_sessions as $session): ?>
-                        <div class="session-item" data-subject-id="<?php echo $session['SubjectID']; ?>" data-status="<?php echo $session['Status']; ?>" data-date="<?php echo $session['SessionDate']; ?>">
+                        <?php foreach ($sessions as $session): ?>
+                        <div class="session-item" data-subject-id="<?php echo $session['SubjectID']; ?>" data-status="<?php echo mapStatus($session['Status']); ?>" data-date="<?php echo $session['SessionDate']; ?>">
                             <div class="session-info">
                                 <h4 class="session-subject"><?php echo htmlspecialchars($session['SubjectName']); ?></h4>
                                 <p class="session-details">
@@ -227,7 +232,7 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
                                 </div>
                             </div>
                             <div class="session-actions">
-                                <span class="status-badge <?php echo strtolower($session['Status']); ?>"><?php echo $session['Status']; ?></span>
+                                <span class="status-badge <?php echo strtolower(mapStatus($session['Status'])); ?>"><?php echo mapStatus($session['Status']); ?></span>
                                 <button class="btn-view-details" onclick="viewSessionDetails(<?php echo $session['SessionID']; ?>)">
                                     <i class="bi bi-eye me-2"></i>View Details
                                 </button>
@@ -421,6 +426,6 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
     <!-- Chart.js for circular graph -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Custom JavaScript -->
-    <script src="../assets/js/attendance_session_history.js?v=7"></script>
+    <script src="../assets/js/attendance_session_history.js"></script>
 </body>
 </html>

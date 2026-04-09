@@ -195,6 +195,51 @@ body {
 /* ===== SESSIONS LIST VIEW ===== */
 .sessions-list {
     padding: 16px;
+    max-height: calc(5 * 108px + 32px); /* 5 items height + padding */
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* ===== FOOTER FADE EFFECT ===== */
+.footer-fade {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(to top, #f1f3f4, transparent);
+    z-index: 10;
+    pointer-events: none;
+    opacity: var(--footer-fade-opacity, 0);
+    transition: opacity 0.3s ease;
+}
+
+.footer-fade.visible {
+    opacity: 1;
+}
+
+/* Responsive footer fade */
+@media (max-width: 768px) {
+    .footer-fade {
+        height: 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .footer-fade {
+        height: 30px;
+    }
+}
+
+/* Hide scrollbar while maintaining scroll functionality */
+.sessions-list::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Edge */
+}
+
+.sessions-list {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
 }
 
 .session-item {
@@ -867,6 +912,7 @@ body {
     
     .sessions-list {
         padding: 12px;
+        max-height: calc(5 * 140px + 24px); /* Adjusted for mobile item height */
     }
     
     .session-item {
@@ -953,6 +999,7 @@ body {
     
     .sessions-list {
         padding: 8px;
+        max-height: calc(5 * 120px + 16px); /* Further adjusted for small mobile */
     }
     
     .session-item {

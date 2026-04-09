@@ -12,6 +12,9 @@ function initializeSessionHistory() {
     // Check if there are any sessions initially
     const listItems = document.querySelectorAll('#listView .session-item');
     window.hasSessionsInitially = listItems.length > 0;
+    
+    // Initialize scrollable behavior for sessions list
+    initializeScrollableList();
 }
 
 function setupEventListeners() {
@@ -108,6 +111,9 @@ function applyFilters() {
         }
     }
     
+    // Reinitialize scrollable list after filtering
+    initializeScrollableList();
+    
     // Filters applied without notification
 }
 
@@ -140,156 +146,141 @@ function clearFilters() {
         listEmptyState.parentElement.style.display = 'block';
     }
     
+    // Reinitialize scrollable list after clearing filters
+    initializeScrollableList();
+    
     // Filters cleared without notification
 }
 
-
-function showToast(message, type = 'info') {
-    // Check if toast container exists
-    let toastContainer = document.querySelector('.toast-container');
-    if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-        document.body.appendChild(toastContainer);
+function initializeScrollableList() {
+    const sessionsList = document.getElementById('listView');
+    if (!sessionsList) return;
+    
+    // Check if there are 5 or more session items
+    const sessionItems = sessionsList.querySelectorAll('.session-item');
+    
+    if (sessionItems.length >= 5) {
+        sessionsList.classList.add('scrollable');
+        
+        // Add scroll event listener for footer fade effect
+        sessionsList.addEventListener('scroll', handleFooterFade);
+        
+        // Create footer fade element if it doesn't exist
+        createFooterFade();
+        
+        // Initial fade check
+        handleFooterFade.call(sessionsList);
+    } else {
+        // Remove scrollable class if less than 5 items
+        sessionsList.classList.remove('scrollable');
+        sessionsList.removeEventListener('scroll', handleFooterFade);
+        removeFooterFade();
     }
-    
-    // Create toast element
-    const toastId = 'toast-' + Date.now();
-    const toastHtml = `
-        <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="toast-header">
-                <i class="bi bi-${getToastIcon(type)} me-2 text-${getToastColor(type)}"></i>
-                <strong class="me-auto">ClassTrack</strong>
-                <small>Just now</small>
-                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-            <div class="toast-body">
-                ${message}
-            </div>
-        </div>
-    `;
-    
-    // Add toast to container
-    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-    
-    // Initialize and show toast
-    const toastElement = document.getElementById(toastId);
-    const toast = new bootstrap.Toast(toastElement, {
-        autohide: true,
-        delay: 3000
-    });
-    toast.show();
-    
-    // Remove toast element after it's hidden
-    toastElement.addEventListener('hidden.bs.toast', function() {
-        toastElement.remove();
-    });
 }
 
-function getToastIcon(type) {
-    const icons = {
-        success: 'check-circle-fill',
-        error: 'exclamation-triangle-fill',
-        warning: 'exclamation-triangle-fill',
-        info: 'info-circle-fill'
-    };
-    return icons[type] || icons.info;
+function createFooterFade() {
+    // Remove existing footer fade if any
+    removeFooterFade();
+    
+    // Create footer fade element
+    const footerFade = document.createElement('div');
+    footerFade.className = 'footer-fade';
+    footerFade.id = 'footer-fade';
+    document.body.appendChild(footerFade);
 }
 
-function getToastColor(type) {
-    const colors = {
-        success: 'success',
-        error: 'danger',
-        warning: 'warning',
-        info: 'primary'
-    };
-    return colors[type] || colors.info;
+function removeFooterFade() {
+    const existingFooterFade = document.getElementById('footer-fade');
+    if (existingFooterFade) {
+        existingFooterFade.remove();
+    }
 }
+
+function handleFooterFade() {
+    const sessionsList = this;
+    const scrollTop = sessionsList.scrollTop;
+    const scrollHeight = sessionsList.scrollHeight;
+    const clientHeight = sessionsList.clientHeight;
+    
+    // Check if there's more content below (not at bottom)
+    const hasMoreContent = scrollTop < scrollHeight - clientHeight - 10;
+    
+    // Update footer fade visibility
+    const footerFade = document.getElementById('footer-fade');
+    if (footerFade) {
+        if (hasMoreContent) {
+            footerFade.classList.add('visible');
+            document.documentElement.style.setProperty('--footer-fade-opacity', '1');
+        } else {
+            footerFade.classList.remove('visible');
+            document.documentElement.style.setProperty('--footer-fade-opacity', '0');
+        }
+    }
+}
+
+
 
 // Session Details Modal Functions
-function viewSessionDetails(sessionId) {
-    // Find session data from the sample data
-    const sessionData = findSessionData(sessionId);
-    if (!sessionData) {
-        showToast('Session data not found', 'error');
-        return;
-    }
+async function viewSessionDetails(sessionId) {
+    try {
+        // Find session data from the database
+        const sessionData = await findSessionData(sessionId);
+        if (!sessionData) {
+            return;
+        }
 
-    // Update modal content with session data
-    updateModalContent(sessionData);
-    
-    // Show the modal
-    const modal = new bootstrap.Modal(document.getElementById('sessionDetailsModal'));
-    modal.show();
-    
-    // Initialize charts after modal is shown
-    modal._element.addEventListener('shown.bs.modal', function() {
-        initializeCharts(sessionData);
-    }, { once: true });
+        // Update modal content with session data
+        updateModalContent(sessionData);
+        
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('sessionDetailsModal'));
+        modal.show();
+        
+        // Initialize charts after modal is shown
+        modal._element.addEventListener('shown.bs.modal', function() {
+            initializeCharts(sessionData);
+        }, { once: true });
+        
+    } catch (error) {
+        console.error('Error viewing session details:', error);
+    }
 }
 
-function findSessionData(sessionId) {
-    // Sample session data (matching the PHP sample data)
-    const sessions = [
-        {
-            'SessionID': 1,
-            'SubjectID': 101,
-            'SubjectName': 'Advanced Web Development',
-            'SubjectCode': 'CS-301',
-            'ClassName': 'BSIT 3A',
-            'SectionName': 'Morning',
-            'SessionDate': '2026-04-08',
-            'StartTime': '09:00:00',
-            'EndTime': '10:00:00',
-            'Status': 'Completed',
-            'total_students' : 25,
-            'present_count' : 22,
-            'late_count' : 2,
-            'absent_count' : 1
-        },
-        {
-            'SessionID': 2,
-            'SubjectID': 102,
-            'SubjectName': 'Database Management Systems',
-            'SubjectCode': 'CS-302',
-            'ClassName': 'BSIT 3B',
-            'SectionName': 'Afternoon',
-            'SessionDate': '2026-04-07',
-            'StartTime': '13:00:00',
-            'EndTime': '14:00:00',
-            'Status': 'Completed',
-            'total_students' : 30,
-            'present_count' : 28,
-            'late_count' : 1,
-            'absent_count' : 1
-        },
-        {
-            'SessionID': 3,
-            'SubjectID': 103,
-            'SubjectName': 'Software Engineering',
-            'SubjectCode': 'CS-303',
-            'ClassName': 'BSIT 4A',
-            'SectionName': 'Morning',
-            'SessionDate': '2026-04-06',
-            'StartTime': '10:00:00',
-            'EndTime': '11:00:00',
-            'Status': 'Active',
-            'total_students' : 28,
-            'present_count' : 15,
-            'late_count' : 3,
-            'absent_count' : 10
+async function findSessionData(sessionId) {
+    try {
+        // Fetch session details from server
+        const response = await fetch(`../api/get_session_details.php?session_id=${sessionId}`);
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch session details');
         }
-    ];
-    
-    return sessions.find(session => session.SessionID === sessionId);
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            return data.session;
+        } else {
+            throw new Error(data.message || 'Session not found');
+        }
+        
+    } catch (error) {
+        console.error('Error fetching session data:', error);
+        return null;
+    }
 }
 
 function updateModalContent(sessionData) {
-    // Calculate percentages
+    // Calculate percentages with division by zero protection
     const total = sessionData.total_students;
-    const presentPercentage = Math.round((sessionData.present_count / total) * 100);
-    const latePercentage = Math.round((sessionData.late_count / total) * 100);
-    const absentPercentage = Math.round((sessionData.absent_count / total) * 100);
+    let presentPercentage = 0;
+    let latePercentage = 0;
+    let absentPercentage = 0;
+    
+    if (total > 0) {
+        presentPercentage = Math.round((sessionData.present_count / total) * 100);
+        latePercentage = Math.round((sessionData.late_count / total) * 100);
+        absentPercentage = Math.round((sessionData.absent_count / total) * 100);
+    }
     
     // Update desktop view elements
     document.getElementById('modalSubject').textContent = sessionData.SubjectName;
@@ -332,9 +323,24 @@ function updateModalContent(sessionData) {
 
 function initializeCharts(sessionData) {
     const total = sessionData.total_students;
-    const presentPercentage = Math.round((sessionData.present_count / total) * 100);
-    const latePercentage = Math.round((sessionData.late_count / total) * 100);
-    const absentPercentage = Math.round((sessionData.absent_count / total) * 100);
+    
+    // Handle division by zero and zero data
+    let presentPercentage = 0;
+    let latePercentage = 0;
+    let absentPercentage = 0;
+    
+    if (total > 0) {
+        presentPercentage = Math.round((sessionData.present_count / total) * 100);
+        latePercentage = Math.round((sessionData.late_count / total) * 100);
+        absentPercentage = Math.round((sessionData.absent_count / total) * 100);
+    }
+    
+    // If all values are 0, show a default chart with equal parts
+    if (presentPercentage === 0 && latePercentage === 0 && absentPercentage === 0) {
+        presentPercentage = 33;
+        latePercentage = 33;
+        absentPercentage = 34;
+    }
     
     // Destroy existing charts if they exist
     destroyExistingCharts();
