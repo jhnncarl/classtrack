@@ -84,6 +84,7 @@ try {
             SELECT 
                 COUNT(CASE WHEN ar.AttendanceStatus = 'Present' THEN 1 END) as present_count,
                 COUNT(CASE WHEN ar.AttendanceStatus = 'Late' THEN 1 END) as late_count,
+                COUNT(CASE WHEN ar.AttendanceStatus = 'Absent' THEN 1 END) as absent_count,
                 COUNT(ar.RecordID) as total_attended
             FROM attendancerecords ar
             JOIN attendancesessions sess ON ar.SessionID = sess.SessionID
@@ -94,10 +95,12 @@ try {
 
         $present_count = (int)$attendance_data['present_count'];
         $late_count = (int)$attendance_data['late_count'];
+        $absent_count = (int)$attendance_data['absent_count'];
         $total_attended = (int)$attendance_data['total_attended'];
         
-        // Calculate attendance percentage
-        $attendance_percentage = $total_sessions > 0 ? round(($total_attended / $total_sessions) * 100, 2) : 0;
+        // Calculate attendance percentage based on actual records only
+        $total_records = $present_count + $late_count + $absent_count;
+        $attendance_percentage = $total_records > 0 ? round((($present_count + $late_count) / $total_records) * 100, 2) : 0;
 
         $student_stats[] = [
             'StudentID' => $student['StudentID'],
@@ -111,7 +114,7 @@ try {
             'TotalAttended' => $total_attended,
             'TotalSessions' => $total_sessions,
             'AttendancePercentage' => $attendance_percentage,
-            'AbsentCount' => $total_sessions - $total_attended
+            'AbsentCount' => $absent_count
         ];
     }
 
