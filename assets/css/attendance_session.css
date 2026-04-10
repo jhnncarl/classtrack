@@ -34,6 +34,7 @@ body {
     justify-content: space-between;
 }
 
+
 .class-info h1.session-title {
     font-size: 28px;
     font-weight: 600;
@@ -42,6 +43,73 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Settings Button */
+.btn-settings {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    color: #495057;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-settings:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+    color: #060606;
+    transform: translateY(-1px);
+}
+
+.btn-settings:active {
+    transform: translateY(0);
+}
+
+.btn-settings i {
+    font-size: 18px;
+}
+
+/* Header Settings Button (Top Right Corner) */
+.btn-settings-header {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    color: #495057;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+}
+
+.btn-settings-header:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+    color: #060606;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-settings-header:active {
+    transform: translateY(0);
+}
+
+.btn-settings-header i {
+    font-size: 20px;
 }
 
 .btn-back-inline {
@@ -235,13 +303,31 @@ body {
     color: #666;
 }
 
+.student-status-badge.present {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.student-status-badge.late {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.student-status-badge.absent {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
 .student-info-content {
     background: #f8f9fa;
     border-radius: 12px;
     padding: 20px;
-    flex: 1; /* Take remaining space */
-    overflow-y: auto; /* Add scrollbar when content overflows */
-    min-height: 300px; /* Maintain consistent height */
+    flex: 1; 
+    overflow-y: auto; 
+    min-height: 300px; 
 }
 
 /* Center content only when no student data */
@@ -732,6 +818,21 @@ body {
     text-align: right;
 }
 
+.meta-value.status-present {
+    color: #155724;
+    font-weight: 700;
+}
+
+.meta-value.status-late {
+    color: #856404;
+    font-weight: 700;
+}
+
+.meta-value.status-absent {
+    color: #721c24;
+    font-weight: 700;
+}
+
 /* Student status badge scanned state */
 .student-status-badge.scanned {
     background: #d4edda;
@@ -831,9 +932,22 @@ body {
     }
     
     .header-content {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
         gap: 12px;
+    }
+    
+    .btn-settings-header {
+        width: 40px;
+        height: 40px;
+        position: relative;
+        top: auto;
+        right: auto;
+    }
+    
+    .btn-settings-header i {
+        font-size: 18px;
     }
     
     .session-details {
@@ -875,6 +989,32 @@ body {
     .left-column,
     .right-column {
         flex: 1; /* Equal width on mobile */
+    }
+    
+    .header-content {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+    
+    .class-info h1.session-title {
+        font-size: 20px;
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .btn-settings-header {
+        width: 36px;
+        height: 36px;
+        position: relative;
+        top: auto;
+        right: auto;
+        flex-shrink: 0;
+    }
+    
+    .btn-settings-header i {
+        font-size: 16px;
     }
     
     .student-info-section {
