@@ -96,7 +96,7 @@ if (!$currentClass) {
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="../assets/css/attendance_session.css?v=17">
+    <link rel="stylesheet" href="../assets/css/attendance_session.css?v=18">
     <link rel="stylesheet" href="../assets/css/toast.css">
 </head>
 <body>
@@ -118,6 +118,13 @@ if (!$currentClass) {
                         <span class="class-section"><?php echo htmlspecialchars($currentClass['section']); ?></span>
                         <span class="separator">•</span>
                         <span class="student-count"><?php echo $currentClass['students']; ?> <?php echo $currentClass['students'] == 1 ? 'Student' : 'Students'; ?></span>
+                        <span class="separator">•</span>
+                        <div class="connection-status-container">
+                            <div id="connectionStatus" class="connection-status online">
+                                <i class="bi bi-wifi"></i>
+                                <span>Online</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <button class="btn-settings-header" onclick="showGracePeriodModal()" title="Attendance Settings">
@@ -302,6 +309,33 @@ if (!$currentClass) {
         </div>
     </div>
 
+    <!-- WiFi Connection Warning Modal -->
+    <div class="modal fade" id="wifiWarningModal" tabindex="-1" aria-labelledby="wifiWarningModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="wifiWarningModalLabel">
+                        <i class="bi bi-wifi-off"></i> No Internet Connection
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="warning-content">
+                        <div class="warning-icon">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                        <h6>You are currently offline</h6>
+                        <p class="text-muted">Ending or leaving the session without an internet connection may cause data loss. Please connect to WiFi to ensure all attendance data is properly saved.</p>
+                        <div class="connection-status">
+                            <i class="bi bi-wifi-off"></i>
+                            <span>Offline Mode</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Grace Period Settings Modal -->
     <div class="modal fade" id="gracePeriodModal" tabindex="-1" aria-labelledby="gracePeriodModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -359,6 +393,6 @@ if (!$currentClass) {
         const subjectId = <?php echo json_encode($subject_data['SubjectID'] ?? null); ?>;
         const classCode = <?php echo json_encode($classCode); ?>;
     </script>
-    <script src="../assets/js/attendance_session.js?v=40"></script>
+    <script src="../assets/js/attendance_session.js?v=43"></script>
 </body>
 </html>

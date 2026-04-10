@@ -438,6 +438,74 @@ body {
     background: #c82333;
 }
 
+/* Connection Status Indicator */
+.connection-status-container {
+    display: flex;
+    align-items: center;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.connection-status.online {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    border-color: rgba(40, 167, 69, 0.2);
+}
+
+.connection-status.online i {
+    color: #28a745;
+}
+
+.connection-status.offline {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    border-color: rgba(255, 193, 7, 0.2);
+    animation: pulse-warning 2s infinite;
+}
+
+.connection-status.offline i {
+    color: #ffc107;
+}
+
+.connection-status.checking {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+    border-color: rgba(108, 117, 125, 0.2);
+}
+
+.connection-status.checking i {
+    color: #6c757d;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse-warning {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
 /* Stats Section */
 .stats-section {
     background: white;
@@ -1026,114 +1094,6 @@ body {
         padding: 20px;
     }
     
-    .class-info h1.session-title {
-        font-size: 24px;
-    }
-    
-    .session-details {
-        font-size: 13px;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-    
-    .camera-preview {
-        max-width: 100%;
-        height: 300px;
-        aspect-ratio: 1;
-        width: 100%;
-        max-height: 300px;
-    }
-    
-    #cameraPlaceholder i {
-        font-size: 40px;
-    }
-    
-    #cameraPlaceholder p {
-        font-size: 13px;
-    }
-    
-    .scanner-frame {
-        width: 80%;
-        max-width: 200px;
-        height: 80%;
-        aspect-ratio: 1;
-    }
-    
-    .control-buttons {
-        flex-direction: row;
-    }
-    
-    .btn-control {
-        flex: 1;
-    }
-}
-
-@media (max-width: 480px) {
-    .session-container {
-        padding: 8px;
-    }
-    
-    .session-header {
-        padding: 16px;
-    }
-    
-    .class-info h1.session-title {
-        font-size: 20px;
-    }
-    
-    .session-status,
-    .student-info-section,
-    .controls-section,
-    .stats-section {
-        padding: 16px;
-    }
-    
-    .student-info-content {
-        padding: 16px;
-        min-height: 250px;
-        max-height: 300px; /* Limit height on mobile */
-    }
-    
-    .camera-preview {
-        height: 280px;
-        aspect-ratio: 1;
-        width: 100%;
-        max-height: 280px;
-    }
-    
-    #cameraPlaceholder {
-        padding: 16px;
-        gap: 10px;
-    }
-    
-    #cameraPlaceholder i {
-        font-size: 36px;
-    }
-    
-    #cameraPlaceholder p {
-        font-size: 12px;
-    }
-    
-    .scanner-frame {
-        width: 85%;
-        max-width: 180px;
-        height: 85%;
-        aspect-ratio: 1;
-    }
-    
-    .info-value {
-        text-align: left;
-    }
-    
-    /* Responsive student avatar */
-    .student-avatar {
-        width: 70px;
-        height: 70px;
-        font-size: 28px;
-    }
     
     .placeholder-profile-icon {
         width: 56px;
@@ -1198,6 +1158,59 @@ body {
     margin-bottom: 0;
 }
 
+/* WiFi Warning Modal Styles */
+.warning-content {
+    text-align: center;
+    padding: 30px 0 20px 0;
+}
+
+.warning-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background-color: #ffc107;
+    border-radius: 50%;
+    margin: 0 auto 20px auto;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+.warning-icon i {
+    font-size: 40px;
+    color: #ffffff;
+}
+
+.warning-content h6 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.warning-content p {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.connection-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: #f8d7da;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #721c24;
+}
+
+.connection-status i {
+    font-size: 16px;
+}
+
 /* Responsive Modal Styles */
 @media (max-width: 576px) {
     .modal-dialog {
@@ -1214,6 +1227,23 @@ body {
     }
     
     .end-session-content p {
+        font-size: 13px;
+    }
+    
+    .warning-icon {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .warning-icon i {
+        font-size: 35px;
+    }
+    
+    .warning-content h6 {
+        font-size: 18px;
+    }
+    
+    .warning-content p {
         font-size: 13px;
     }
 }

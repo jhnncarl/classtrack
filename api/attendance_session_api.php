@@ -298,6 +298,13 @@ try {
             $response['already_recorded'] = count($recorded_students);
             break;
             
+        case 'ping':
+            // Simple ping endpoint for connectivity testing
+            $response['success'] = true;
+            $response['message'] = 'pong';
+            $response['timestamp'] = time();
+            break;
+            
         default:
             $response['message'] = 'Unknown action';
             break;
