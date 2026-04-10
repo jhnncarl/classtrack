@@ -96,7 +96,7 @@ if (!$currentClass) {
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="../assets/css/attendance_session.css?v=18">
+    <link rel="stylesheet" href="../assets/css/attendance_session.css">
     <link rel="stylesheet" href="../assets/css/toast.css">
 </head>
 <body>
