@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 28, 2026 at 03:32 AM
+-- Generation Time: Apr 09, 2026 at 03:13 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -32,8 +32,17 @@ CREATE TABLE `attendancerecords` (
   `SessionID` int(11) NOT NULL,
   `StudentID` int(11) NOT NULL,
   `ScanTime` datetime DEFAULT current_timestamp(),
-  `AttendanceStatus` enum('Present','Late') NOT NULL
+  `AttendanceStatus` enum('Present','Late','Absent') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `attendancerecords`
+--
+
+INSERT INTO `attendancerecords` (`RecordID`, `SessionID`, `StudentID`, `ScanTime`, `AttendanceStatus`) VALUES
+(20, 61, 68, '2026-04-07 17:51:28', 'Present'),
+(21, 62, 69, '2026-04-07 19:07:44', 'Present'),
+(22, 62, 68, '2026-04-07 19:07:56', 'Present');
 
 -- --------------------------------------------------------
 
@@ -50,6 +59,18 @@ CREATE TABLE `attendancesessions` (
   `Status` enum('Active','Closed') DEFAULT 'Active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `attendancesessions`
+--
+
+INSERT INTO `attendancesessions` (`SessionID`, `SubjectID`, `SessionDate`, `StartTime`, `EndTime`, `Status`) VALUES
+(59, 24, '2026-04-06', '19:43:09', '19:43:14', 'Closed'),
+(60, 19, '2026-04-07', '15:12:02', '15:12:06', 'Closed'),
+(61, 24, '2026-04-07', '17:50:52', '17:51:41', 'Closed'),
+(62, 24, '2026-04-07', '19:07:36', '19:08:05', 'Closed'),
+(63, 30, '2026-04-09', '08:28:16', '08:28:20', 'Closed'),
+(64, 19, '2026-04-09', '08:55:08', '08:55:12', 'Closed');
+
 -- --------------------------------------------------------
 
 --
@@ -62,6 +83,15 @@ CREATE TABLE `enrollments` (
   `SubjectID` int(11) NOT NULL,
   `DateEnrolled` date DEFAULT curdate()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `enrollments`
+--
+
+INSERT INTO `enrollments` (`EnrollmentID`, `StudentID`, `SubjectID`, `DateEnrolled`) VALUES
+(3, 69, 24, '2026-04-02'),
+(4, 69, 19, '2026-04-03'),
+(6, 68, 24, '2026-04-05');
 
 -- --------------------------------------------------------
 
@@ -77,6 +107,14 @@ CREATE TABLE `password_resets` (
   `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `password_resets`
+--
+
+INSERT INTO `password_resets` (`id`, `email`, `otp`, `expires_at`, `created_at`) VALUES
+(21, 'nudalojhoncarloe@gmail.com', '776822', '2026-04-01 14:11:04', '2026-04-01 14:06:04'),
+(22, 'rodmarcariza@gmail.com', '462481', '2026-04-01 14:11:22', '2026-04-01 14:06:22');
+
 -- --------------------------------------------------------
 
 --
@@ -91,6 +129,14 @@ CREATE TABLE `students` (
   `YearLevel` int(11) NOT NULL,
   `QRCodePath` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `students`
+--
+
+INSERT INTO `students` (`StudentID`, `UserID`, `StudentNumber`, `Course`, `YearLevel`, `QRCodePath`) VALUES
+(68, 73, '2022-31559', 'BSIT', 3, 'uploads/qrcodes/student_2022-31559_1774665399.png'),
+(69, 75, '2022-78960', 'BSIT', 3, 'uploads/qrcodes/Student_2022-78960.png');
 
 -- --------------------------------------------------------
 
@@ -108,6 +154,16 @@ CREATE TABLE `subjects` (
   `SectionName` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `subjects`
+--
+
+INSERT INTO `subjects` (`SubjectID`, `SubjectCode`, `SubjectName`, `TeacherID`, `Schedule`, `ClassName`, `SectionName`) VALUES
+(19, 'k7ceo3m2', 'Web Development', 6, 'Fri, 9:00AM - 11:00PM', 'IT101', '3B'),
+(24, 'xzxm0fb', 'App Development', 6, 'Monday, 9:00AM - 10:00AM', 'IT103', '3B'),
+(30, 'xq2edl', 'Test Subject for Join', 6, 'MWF 10:00-11:00', 'TEST101', '1A'),
+(31, 'nwn9ndpz', 'Data Mining', 6, 'Thursday, 1:00PM - 2:00PM', 'IT243', '3A');
+
 -- --------------------------------------------------------
 
 --
@@ -119,6 +175,13 @@ CREATE TABLE `teachers` (
   `UserID` int(11) NOT NULL,
   `Department` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `teachers`
+--
+
+INSERT INTO `teachers` (`TeacherID`, `UserID`, `Department`) VALUES
+(6, 74, 'Computer Studies');
 
 -- --------------------------------------------------------
 
@@ -137,6 +200,15 @@ CREATE TABLE `users` (
   `CreatedAt` timestamp NOT NULL DEFAULT current_timestamp(),
   `ProfilePicture` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`UserID`, `first_name`, `last_name`, `Email`, `PasswordHash`, `Role`, `AccountStatus`, `CreatedAt`, `ProfilePicture`) VALUES
+(73, 'Jhon Carlo', 'Nudalo', 'nudalojhoncarloe@gmail.com', '$2y$10$hz4hIzN9TQvVz9FtM1p26eu8/T0B9fz3H5aHFla4soZEsR3ebVFdu', 'Student', 'Active', '2026-03-28 02:36:36', 'uploads/profiles/profile_73_1775094155.jpg'),
+(74, 'Rodmarc', 'Villaflores', 'rodmarcariza@gmail.com', '$2y$10$qZfNgLyadHnWfPdMsj5qdu9s2OerEethR7XdKe7.liRN03xOMpVIG', 'Teacher', 'Active', '2026-03-28 05:56:07', 'uploads/profiles/profile_74_1774677821.jpg'),
+(75, 'Kean Andre', 'Maglasang', 'keanandre@gmail.com', '$2y$10$TPXXPAvk7wYdq1XBK72v9OgoJUkUq14lTV6Kxjps.QnAnxy0r0/cy', 'Student', 'Active', '2026-04-02 10:21:28', NULL);
 
 --
 -- Indexes for dumped tables
@@ -212,49 +284,49 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `attendancerecords`
 --
 ALTER TABLE `attendancerecords`
-  MODIFY `RecordID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `RecordID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `attendancesessions`
 --
 ALTER TABLE `attendancesessions`
-  MODIFY `SessionID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `SessionID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
 
 --
 -- AUTO_INCREMENT for table `enrollments`
 --
 ALTER TABLE `enrollments`
-  MODIFY `EnrollmentID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `EnrollmentID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `password_resets`
 --
 ALTER TABLE `password_resets`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `students`
 --
 ALTER TABLE `students`
-  MODIFY `StudentID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
+  MODIFY `StudentID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
 
 --
 -- AUTO_INCREMENT for table `subjects`
 --
 ALTER TABLE `subjects`
-  MODIFY `SubjectID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `SubjectID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `teachers`
 --
 ALTER TABLE `teachers`
-  MODIFY `TeacherID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `TeacherID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `UserID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
+  MODIFY `UserID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
 
 --
 -- Constraints for dumped tables
