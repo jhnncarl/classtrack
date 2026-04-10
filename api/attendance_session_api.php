@@ -208,6 +208,96 @@ try {
             }
             break;
             
+        case 'mark_absent_students':
+            $session_id = $input['session_id'] ?? null;
+            
+            error_log("Mark Absent Students Request - Session ID: " . $session_id);
+            
+            if (!$session_id) {
+                $response['message'] = 'Missing session ID';
+                break;
+            }
+            
+            // Get session and subject information
+            $stmt = $db->prepare("
+                SELECT asess.SessionID, asess.SubjectID, sub.SubjectName 
+                FROM attendancesessions asess
+                JOIN subjects sub ON asess.SubjectID = sub.SubjectID
+                WHERE asess.SessionID = ?
+            ");
+            $stmt->execute([$session_id]);
+            $session_info = $stmt->fetch();
+            
+            if (!$session_info) {
+                $response['success'] = false;
+                $response['message'] = 'Session not found';
+                break;
+            }
+            
+            // Get all enrolled students for this subject
+            $stmt = $db->prepare("
+                SELECT DISTINCT s.StudentID, s.StudentNumber, u.first_name, u.last_name
+                FROM students s
+                JOIN users u ON s.UserID = u.UserID
+                JOIN enrollments e ON s.StudentID = e.StudentID
+                WHERE e.SubjectID = ?
+            ");
+            $stmt->execute([$session_info['SubjectID']]);
+            $enrolled_students = $stmt->fetchAll();
+            
+            if (empty($enrolled_students)) {
+                $response['success'] = true;
+                $response['message'] = 'No students enrolled in this subject';
+                $response['marked_absent'] = 0;
+                break;
+            }
+            
+            // Get students who already have attendance records for this session
+            $enrolled_ids = array_column($enrolled_students, 'StudentID');
+            $placeholders = str_repeat('?,', count($enrolled_ids) - 1) . '?';
+            
+            $stmt = $db->prepare("
+                SELECT DISTINCT StudentID 
+                FROM attendancerecords 
+                WHERE SessionID = ? AND StudentID IN ($placeholders)
+            ");
+            $stmt->execute(array_merge([$session_id], $enrolled_ids));
+            $recorded_students = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            // Find students who don't have attendance records (mark as absent)
+            $absent_students = array_diff($enrolled_ids, $recorded_students);
+            $marked_count = 0;
+            
+            if (!empty($absent_students)) {
+                // Insert absent records for students who didn't scan
+                $values = [];
+                $params = [];
+                
+                foreach ($absent_students as $student_id) {
+                    $values[] = "(?, ?, NOW(), 'Absent')";
+                    $params[] = $session_id;
+                    $params[] = $student_id;
+                }
+                
+                $sql = "
+                    INSERT INTO attendancerecords (SessionID, StudentID, ScanTime, AttendanceStatus) 
+                    VALUES " . implode(',', $values) . "
+                ";
+                
+                $stmt = $db->prepare($sql);
+                $stmt->execute($params);
+                $marked_count = $stmt->rowCount();
+                
+                error_log("Mark Absent Students Success - Marked " . $marked_count . " students as absent for session " . $session_id);
+            }
+            
+            $response['success'] = true;
+            $response['message'] = "Successfully marked {$marked_count} students as absent";
+            $response['marked_absent'] = $marked_count;
+            $response['total_enrolled'] = count($enrolled_students);
+            $response['already_recorded'] = count($recorded_students);
+            break;
+            
         default:
             $response['message'] = 'Unknown action';
             break;

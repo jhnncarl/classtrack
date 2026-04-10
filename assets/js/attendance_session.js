@@ -907,6 +907,39 @@ function updateSessionStatus(status) {
     });
 }
 
+function markAbsentStudents() {
+    console.log('markAbsentStudents called for session:', sessionId);
+    
+    if (!sessionId) {
+        console.log('No session ID provided for marking absent students');
+        return;
+    }
+    
+    // Call API to mark absent students
+    fetch('../api/attendance_session_api.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            action: 'mark_absent_students',
+            session_id: sessionId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Mark absent students response:', data);
+        if (data.success) {
+            console.log(`Successfully marked ${data.marked_absent} students as absent`);
+        } else {
+            console.error('Failed to mark absent students:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error marking absent students:', error);
+    });
+}
+
 function closeSession() {
     console.log('closeSession called');
     console.log('Session ID:', sessionId);
@@ -919,6 +952,9 @@ function closeSession() {
     
     isSessionClosed = true;
     console.log('Marking session as closed');
+    
+    // First, mark absent students before closing the session
+    markAbsentStudents();
     
     // Clear sessionStorage when session ends
     sessionStorage.removeItem('sessionStartTime');
