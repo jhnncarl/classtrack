@@ -393,6 +393,6 @@ if (!$currentClass) {
         const subjectId = <?php echo json_encode($subject_data['SubjectID'] ?? null); ?>;
         const classCode = <?php echo json_encode($classCode); ?>;
     </script>
-    <script src="../assets/js/attendance_session.js?v=43"></script>
+    <script src="../assets/js/attendance_session.js"></script>
 </body>
 </html>
