@@ -4,6 +4,14 @@ let absentCount = 0;
 let lateCount = 0;
 let totalStudents = 0;
 
+// Global variables
+let sessionId = null;
+let subjectId = null;
+let classCode = null;
+let isOnline = navigator.onLine;
+let hasInitialLoad = false; // Track if initial load has completed
+let isFirstScan = true; // Track if this is the first scan
+
 // Grace period settings
 let gracePeriod = 15; // Default 15 minutes
 let autoLateEnabled = true;
@@ -21,18 +29,258 @@ let sessionTimer = null;
 let sessionSeconds = 0;
 let isPaused = false;
 
-// Navigation functions
-function goBack() {
-    // Check if offline and show WiFi warning first
-    if (!isOnline) {
-        const wifiModal = new bootstrap.Modal(document.getElementById('wifiWarningModal'));
-        wifiModal.show();
-        return;
+// Get session data from body data attributes
+// Variables are already declared globally at the top of the file
+
+// Initialize session data when DOM is loaded
+function initializeSessionData() {
+    const body = document.body;
+    sessionId = body.dataset.sessionId || null;
+    subjectId = body.dataset.subjectId || null;
+    classCode = body.dataset.classCode || null;
+    
+    console.log('Session data initialized:', { sessionId, subjectId, classCode });
+}
+
+// Show attendance list view (always shows attendance list)
+function toggleAttendanceList() {
+    const studentDetailsView = document.getElementById('studentDetailsView');
+    const attendanceListView = document.getElementById('attendanceListView');
+    
+    // Always show attendance list, hide student details
+    studentDetailsView.classList.add('hidden');
+    attendanceListView.classList.remove('hidden');
+    
+    // Update attendance table when showing the view
+    updateAttendanceTable();
+}
+
+// Fast update attendance table without loading indicator (for seamless updates)
+async function fastUpdateAttendanceTable() {
+    const tableBody = document.getElementById('attendanceTableBody');
+    const tableContainer = document.querySelector('.students-table-container');
+    
+    // Always show the table container to occupy full space
+    tableContainer.style.display = 'flex';
+    
+    // Get attendance records from API without showing loading
+    const attendanceRecords = await getAttendanceRecords();
+    
+    if (attendanceRecords.length === 0) {
+        // Show empty message in table with proper centering
+        tableBody.innerHTML = `
+            <tr class="empty-message">
+                <td colspan="4">
+                    <i class="bi bi-people"></i>
+                    No attendance records yet. Students will appear here when they scan their QR codes.
+                </td>
+            </tr>
+        `;
+    } else {
+        // Clear existing table content
+        tableBody.innerHTML = '';
+        
+        // Populate table with attendance records
+        attendanceRecords.forEach(record => {
+            const row = createAttendanceTableRow(record);
+            tableBody.appendChild(row);
+        });
+    }
+}
+
+// Update attendance table with current records
+async function updateAttendanceTable() {
+    const tableBody = document.getElementById('attendanceTableBody');
+    const tableContainer = document.querySelector('.students-table-container');
+    
+    // Always show the table container to occupy full space
+    tableContainer.style.display = 'flex';
+    
+    // Show loading only for initial load or first scan
+    const shouldShowLoading = !hasInitialLoad || isFirstScan;
+    
+    if (shouldShowLoading) {
+        // Show loading message in table with proper centering
+        tableBody.innerHTML = `
+            <tr class="loading-message">
+                <td colspan="4">
+                    <i class="bi bi-arrow-repeat"></i>
+                    Loading attendance records...
+                </td>
+            </tr>
+        `;
     }
     
-    // Show confirmation modal instead of alert
-    const modal = new bootstrap.Modal(document.getElementById('confirmLeaveModal'));
-    modal.show();
+    // Get attendance records from API
+    const attendanceRecords = await getAttendanceRecords();
+    
+    if (attendanceRecords.length === 0) {
+        // Show empty message in table with proper centering
+        tableBody.innerHTML = `
+            <tr class="empty-message">
+                <td colspan="4">
+                    <i class="bi bi-people"></i>
+                    No attendance records yet. Students will appear here when they scan their QR codes.
+                </td>
+            </tr>
+        `;
+    } else {
+        // Clear existing table content
+        tableBody.innerHTML = '';
+        
+        // Populate table with attendance records
+        attendanceRecords.forEach(record => {
+            const row = createAttendanceTableRow(record);
+            tableBody.appendChild(row);
+        });
+    }
+    
+    // Update state tracking
+    hasInitialLoad = true;
+    if (isFirstScan) {
+        isFirstScan = false;
+    }
+}
+
+// Get attendance records from API
+async function getAttendanceRecords() {
+    try {
+        if (!sessionId) {
+            console.warn('No session ID available for fetching attendance records');
+            return [];
+        }
+        
+        let onlineRecords = [];
+        
+        // Try to fetch online records
+        try {
+            const response = await fetch('../api/attendance_session_api.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'get_attendance_list',
+                    session_id: sessionId
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('Online attendance records fetched:', data.attendance_records);
+                onlineRecords = data.attendance_records || [];
+            } else {
+                console.error('Failed to fetch attendance records:', data.message);
+            }
+        } catch (error) {
+            console.error('Error fetching online attendance records:', error);
+        }
+        
+        const offlineRecords = getOfflineRecords();
+        
+        if (offlineRecords.length > 0) {
+            console.log('📱 Including offline records in table (offline records exist)');
+            
+            // Convert offline records to the same format as online records
+            const formattedOfflineRecords = offlineRecords
+                .filter(record => record.sessionId === sessionId && record.studentData)
+                .map(record => ({
+                    id: record.id, // Use offline record ID
+                    studentNumber: record.studentData.student_number,
+                    name: record.studentData.name,
+                    course: record.studentData.course,
+                    status: record.attendanceStatus || 'Present',
+                    time: new Date(record.timestamp).toLocaleTimeString(),
+                    isOffline: true // Flag to indicate this is an offline record
+                }));
+            
+            console.log('Formatted offline records for table:', formattedOfflineRecords);
+            
+            // Merge online and offline records, avoiding duplicates
+            const allRecords = [...onlineRecords];
+            
+            // Add offline records that aren't already in online records
+            formattedOfflineRecords.forEach(offlineRecord => {
+                const exists = allRecords.some(onlineRecord => 
+                    onlineRecord.studentNumber === offlineRecord.studentNumber
+                );
+                if (!exists) {
+                    allRecords.push(offlineRecord);
+                }
+            });
+            
+            console.log('Total records (online + offline):', allRecords);
+            return allRecords;
+        }
+        
+        return onlineRecords;
+    } catch (error) {
+        console.error('Error in getAttendanceRecords:', error);
+        return [];
+    }
+}
+
+// Create table row for attendance record
+function createAttendanceTableRow(record) {
+    const row = document.createElement('tr');
+    
+    const statusClass = record.status.toLowerCase();
+    const statusBadge = `<span class="status-badge ${statusClass}">${record.status}</span>`;
+    
+    // Add offline indicator if this is an offline record
+    const offlineIndicator = record.isOffline ? 
+        '<i class="bi bi-wifi-off" title="Scanned offline" style="color: #dc3545; margin-left: 5px;"></i>' : '';
+    
+    row.innerHTML = `
+        <td>${record.studentNumber}</td>
+        <td>${record.name}${offlineIndicator}</td>
+        <td>${record.course}</td>
+        <td>${statusBadge}</td>
+    `;
+    
+    return row;
+}
+
+// Add attendance record to table (call this when student scans)
+async function addAttendanceRecord(studentData, status) {
+    const record = {
+        studentNumber: studentData.id || studentData.studentNumber,
+        name: studentData.name,
+        course: studentData.course,
+        status: status
+    };
+    
+    await updateAttendanceTable();
+}
+
+// Helper function to check if currently in attendance list view
+function isInAttendanceListView() {
+    const attendanceListView = document.getElementById('attendanceListView');
+    return !attendanceListView.classList.contains('hidden');
+}
+
+// Show student details view (always shows student details)
+function showStudentDetails() {
+    const studentDetailsView = document.getElementById('studentDetailsView');
+    const attendanceListView = document.getElementById('attendanceListView');
+    
+    // Always show student details, hide attendance list
+    studentDetailsView.classList.remove('hidden');
+    attendanceListView.classList.add('hidden');
+}
+
+// Navigation functions
+function goBack(event) {
+    // Prevent triggering from keyboard navigation (arrow keys, space, enter)
+    if (event && (event.type === 'keydown' || event.type === 'keypress')) {
+        console.log('goBack triggered by keyboard, ignoring');
+        return false;
+    }
+    
+    // Use the shared confirmation modal function
+    showBackConfirmationModal();
+    return false;
 }
 
 // Handle confirmation button click
@@ -40,12 +288,26 @@ document.getElementById('confirmLeaveBtn').addEventListener('click', function() 
     const modal = bootstrap.Modal.getInstance(document.getElementById('confirmLeaveModal'));
     modal.hide();
     
+    // Set flag to prevent double modal trigger
+    window.isLeavingSession = true;
+    
     // Close session before leaving
     closeSession();
     
-    // Redirect after a short delay to ensure session closure is processed
+    // Navigate back using history API for consistency, then redirect as fallback
     setTimeout(() => {
-        window.location.href = 'class_view.php?class=' + encodeURIComponent(classCode);
+        // Try to go back in history first
+        if (window.history && history.length > 1) {
+            // Remove our state first to allow proper back navigation
+            history.back();
+            // Fallback redirect in case history back doesn't work
+            setTimeout(() => {
+                window.location.href = 'class_view.php?class=' + encodeURIComponent(classCode);
+            }, 1000);
+        } else {
+            // Fallback to direct redirect
+            window.location.href = 'class_view.php?class=' + encodeURIComponent(classCode);
+        }
     }, 500);
 });
 
@@ -68,9 +330,22 @@ function startTimer() {
         console.log('Camera cleanup skipped:', error.message);
     }
     
-    // Restore timer state from sessionStorage if exists
-    const savedStartTime = sessionStorage.getItem('sessionStartTime');
-    const savedSessionId = sessionStorage.getItem('currentSessionId');
+    // Try sessionStorage first, then localStorage as fallback
+    let savedStartTime = sessionStorage.getItem('sessionStartTime');
+    let savedSessionId = sessionStorage.getItem('currentSessionId');
+    
+    // Fallback to localStorage if sessionStorage is empty
+    if (!savedStartTime && !savedSessionId) {
+        console.log('SessionStorage empty, trying localStorage fallback...');
+        savedStartTime = localStorage.getItem('sessionStartTime');
+        savedSessionId = localStorage.getItem('currentSessionId');
+        
+        if (savedStartTime || savedSessionId) {
+            console.log('Found data in localStorage, migrating to sessionStorage...');
+            if (savedStartTime) sessionStorage.setItem('sessionStartTime', savedStartTime);
+            if (savedSessionId) sessionStorage.setItem('currentSessionId', savedSessionId);
+        }
+    }
     
     console.log('SessionStorage data:');
     console.log('- savedStartTime:', savedStartTime);
@@ -78,42 +353,90 @@ function startTimer() {
     console.log('- current sessionId:', sessionId);
     console.log('- sessionId comparison:', savedSessionId == sessionId);
     
-    if (savedStartTime && savedSessionId == sessionId) {
-        // Calculate elapsed time since session started
-        const startTime = parseInt(savedStartTime);
-        const currentTime = Date.now();
-        const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
-        
-        console.log('Timer calculation:');
-        console.log('- startTime:', startTime);
-        console.log('- currentTime:', currentTime);
-        console.log('- elapsedSeconds:', elapsedSeconds);
-        
-        // Set timer to elapsed time
-        sessionSeconds = elapsedSeconds;
-        updateTimerDisplay();
-        
-        console.log('Timer restored from sessionStorage:', 
-    String(Math.floor(elapsedSeconds / 3600)).padStart(2, '0') + ':' +
-    String(Math.floor((elapsedSeconds % 3600) / 60)).padStart(2, '0') + ':' +
-    String(elapsedSeconds % 60).padStart(2, '0')
-);
-    } else {
-        // Save new session start time
-        sessionStorage.setItem('sessionStartTime', Date.now().toString());
+    // Also save to localStorage as backup
+    if (savedStartTime) localStorage.setItem('sessionStartTime', savedStartTime);
+    if (savedSessionId) localStorage.setItem('currentSessionId', savedSessionId);
+    
+    // Enhanced timer restoration logic
+    let timerRestored = false;
+    
+    if (savedStartTime) {
+        if (savedSessionId == sessionId) {
+            // Perfect match - restore timer
+            const startTime = parseInt(savedStartTime);
+            const currentTime = Date.now();
+            const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+            
+            console.log('Timer calculation (from sessionStorage):');
+            console.log('- startTime:', startTime);
+            console.log('- currentTime:', currentTime);
+            console.log('- elapsedSeconds:', elapsedSeconds);
+            
+            // Set timer to elapsed time
+            sessionSeconds = elapsedSeconds;
+            updateTimerDisplay();
+            timerRestored = true;
+            
+            console.log('Timer restored from sessionStorage:', 
+        String(Math.floor(elapsedSeconds / 3600)).padStart(2, '0') + ':' +
+        String(Math.floor((elapsedSeconds % 3600) / 60)).padStart(2, '0') + ':' +
+        String(elapsedSeconds % 60).padStart(2, '0')
+    );
+            console.log('Session timer restored from previous session (likely after refresh)');
+        } else {
+            // Session ID mismatch but we have a start time - this might be a reopened session
+            console.log('Session ID mismatch detected, but start time exists');
+            console.log('- savedSessionId:', savedSessionId);
+            console.log('- current sessionId:', sessionId);
+            
+            if (savedSessionId) {
+                console.log('This appears to be a reopened session - attempting to restore timer');
+                const startTime = parseInt(savedStartTime);
+                const currentTime = Date.now();
+                const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+                
+                // Restore timer but update session ID
+                sessionSeconds = elapsedSeconds;
+                updateTimerDisplay();
+                sessionStorage.setItem('currentSessionId', sessionId); // Update session ID
+                localStorage.setItem('currentSessionId', sessionId); // Update session ID in localStorage too
+                timerRestored = true;
+                
+                console.log('Timer restored for reopened session:', 
+            String(Math.floor(elapsedSeconds / 3600)).padStart(2, '0') + ':' +
+            String(Math.floor((elapsedSeconds % 3600) / 60)).padStart(2, '0') + ':' +
+            String(elapsedSeconds % 60).padStart(2, '0')
+        );
+            }
+        }
+    }
+    
+    if (!timerRestored) {
+        // Start new timer from 00:00:00 when session becomes active or reopened
+        const activationStartTime = Date.now();
+        sessionStorage.setItem('sessionStartTime', activationStartTime.toString());
         sessionStorage.setItem('currentSessionId', sessionId);
-        console.log('New session timer started');
-        console.log('- Saved startTime:', Date.now().toString());
+        localStorage.setItem('sessionStartTime', activationStartTime.toString());
+        localStorage.setItem('currentSessionId', sessionId);
+        sessionSeconds = 0; // Start from 00:00:00
+        
+        console.log('New session timer started from activation time:');
+        console.log('- activationStartTime:', activationStartTime);
+        console.log('- sessionSeconds:', sessionSeconds);
         console.log('- Saved sessionId:', sessionId);
+        
+        updateTimerDisplay();
     }
     
     sessionTimer = setInterval(() => {
         if (!isPaused) {
             sessionSeconds++;
             updateTimerDisplay();
-            // Save current time periodically
+            // Save current time periodically to both sessionStorage and localStorage
             if (sessionSeconds % 10 === 0) { // Save every 10 seconds
-                sessionStorage.setItem('sessionStartTime', (Date.now() - (sessionSeconds * 1000)).toString());
+                const startTimeValue = (Date.now() - (sessionSeconds * 1000)).toString();
+                sessionStorage.setItem('sessionStartTime', startTimeValue);
+                localStorage.setItem('sessionStartTime', startTimeValue);
             }
         }
     }, 1000);
@@ -666,10 +989,10 @@ function validateStudentOffline(studentNumber) {
     // Calculate attendance status based on grace period using helper function
     console.log('Offline mode - calculating attendance status...');
     const attendanceStatus = calculateAttendanceStatus();
-    console.log('Calculated attendance status for offline mode:', attendanceStatus);
+    console.log('📱 Calculated attendance status for offline mode:', attendanceStatus);
     
     console.log('Offline student validation successful:', offlineStudent);
-    console.log('Calculated attendance status:', attendanceStatus);
+    console.log('📱 About to store offline attendance with status:', attendanceStatus);
     
     playSuccessSound();
     
@@ -696,7 +1019,14 @@ function validateStudentOffline(studentNumber) {
 }
 
 // Store attendance record in offline mode
-function storeOfflineAttendance(studentData, attendanceStatus = 'Present') {
+function storeOfflineAttendance(studentData, attendanceStatus) {
+    console.log('📱 [OFFLINE STORAGE] Starting offline attendance storage');
+    console.log('📱 [OFFLINE STORAGE] Input parameters:', {
+        studentNumber: studentData.student_number,
+        attendanceStatus: attendanceStatus,
+        timestamp: Date.now()
+    });
+    
     // Create offline record
     const offlineRecord = {
         action: 'validate_and_record',
@@ -704,17 +1034,26 @@ function storeOfflineAttendance(studentData, attendanceStatus = 'Present') {
         student_number: studentData.student_number, // Keep both for compatibility
         studentData: studentData,
         attendance_status: attendanceStatus,
+        attendanceStatus: attendanceStatus, // Store both formats
         timestamp: Date.now()
     };
+    
+    console.log('📱 [OFFLINE STORAGE] Created offline record:', {
+        action: offlineRecord.action,
+        student_id: offlineRecord.student_id,
+        attendance_status: offlineRecord.attendance_status,
+        attendanceStatus: offlineRecord.attendanceStatus,
+        timestamp: offlineRecord.timestamp
+    });
     
     // Store the record
     const success = storeOfflineRecord(offlineRecord);
     
     if (success) {
-        console.log('Attendance stored offline successfully');
+        console.log('✅ [OFFLINE STORAGE] Attendance stored offline successfully');
         showToast('Attendance stored offline - Will sync when online', 'info');
     } else {
-        console.error('Failed to store attendance offline');
+        console.error('❌ [OFFLINE STORAGE] Failed to store attendance offline');
         showToast('Failed to store attendance offline', 'error');
     }
 }
@@ -839,8 +1178,8 @@ function recordAttendance(studentId, studentData = null) {
 
 function updateStudentInfo(student) {
     console.log('updateStudentInfo called with:', student);
-    const studentInfoContent = document.getElementById('studentInfoContent');
     const studentStatusBadge = document.getElementById('studentStatusBadge');
+    const studentDetailsView = document.getElementById('studentDetailsView');
     
     // Status badge with late detection
     const status = student.attendance_status || 'Present';
@@ -860,8 +1199,8 @@ function updateStudentInfo(student) {
         <span>${status}</span>
     `;
     
-    // Student info content
-    studentInfoContent.innerHTML = `
+    // Update only the student details view content
+    studentDetailsView.innerHTML = `
         <div class="student-details">
             <div class="student-avatar-section">
                 <div class="student-avatar">
@@ -900,13 +1239,25 @@ function updateStudentInfo(student) {
         </div>
     `;
     
+    // Use appropriate update method based on connectivity and loading state
+    if (isOnline && hasInitialLoad) {
+        fastUpdateAttendanceTable();
+    } else {
+        updateAttendanceTable();
+    }
+    
+    // Only switch to student details view if user is not in attendance list view
+    if (!isInAttendanceListView()) {
+        showStudentDetails();
+    }
+    
     console.log('Student info updated, attendance_status:', student.attendance_status);
 }
 
 
 function resetStudentInfo() {
-    const studentInfoContent = document.getElementById('studentInfoContent');
     const studentStatusBadge = document.getElementById('studentStatusBadge');
+    const studentDetailsView = document.getElementById('studentDetailsView');
     
     // Reset status badge
     studentStatusBadge.className = 'student-status-badge';
@@ -915,14 +1266,19 @@ function resetStudentInfo() {
         <span>Waiting for scan</span>
     `;
     
-    // Reset student info content
-    studentInfoContent.innerHTML = `
+    // Reset student details view content
+    studentDetailsView.innerHTML = `
         <div class="no-student-placeholder">
             <i class="bi bi-qr-code-scan"></i>
             <p>Student information will appear here</p>
             <small>After QR code is scanned</small>
         </div>
     `;
+    
+    // Only switch to student details view if user is not in attendance list view
+    if (!isInAttendanceListView()) {
+        showStudentDetails();
+    }
 }
 
 
@@ -998,19 +1354,105 @@ function showToast(message, type = 'success') {
 
 // Initialize session
 document.addEventListener('DOMContentLoaded', function() {
+    initializeSessionData(); // Initialize session data from data attributes FIRST
+    
+    // Check if session data is properly initialized
+    if (!sessionId) {
+        console.error('Session ID not found in data attributes');
+        return;
+    }
+    
+    // Initialize history API for consistent back navigation
+    initializeHistoryHandling();
+    
+    // Prevent keyboard events on back button
+    const backButton = document.querySelector('.btn-back-inline');
+    if (backButton) {
+        backButton.addEventListener('keydown', function(event) {
+            // Prevent back button from responding to keyboard navigation
+            if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowLeft') {
+                event.preventDefault();
+                event.stopPropagation();
+                console.log('Keyboard navigation on back button prevented');
+                return false;
+            }
+        });
+    }
+    
     loadGracePeriodSettings(); // Load grace period settings first
     initializeNetworkMonitoring(); // Initialize offline storage system
     initializeOfflineRecords(); // Load existing offline records
-    startTimer();
+    startTimer(); // Now startTimer can access sessionId
     initializeAttendanceCounts();
     setupSessionCleanup();
 });
 
+// Initialize history API handling for consistent back navigation
+function initializeHistoryHandling() {
+    // Add a state to history stack to intercept back navigation
+    if (window.history && history.pushState) {
+        // Add initial state if not present
+        if (!history.state || !history.state.attendanceSession) {
+            history.pushState({ attendanceSession: true, sessionId: sessionId }, '', window.location.href);
+            console.log('History state added for attendance session');
+        }
+        
+        // Listen for popstate events (browser back/forward)
+        window.addEventListener('popstate', function(event) {
+            console.log('Popstate event detected:', event.state);
+            
+            // Check if this is our attendance session navigation
+            if (!event.state || !event.state.attendanceSession) {
+                // User is trying to navigate away from attendance session
+                console.log('User attempting to leave attendance session');
+                
+                // Prevent double modal trigger if user is already leaving
+                if (window.isLeavingSession) {
+                    console.log('Already leaving session, allowing navigation');
+                    return;
+                }
+                
+                // Prevent the navigation and show confirmation modal
+                event.preventDefault();
+                
+                // Push the state back to maintain our position
+                history.pushState({ attendanceSession: true, sessionId: sessionId }, '', window.location.href);
+                
+                // Show confirmation modal
+                showBackConfirmationModal();
+                return false;
+            }
+        });
+        
+        // Handle page visibility changes (mobile app switching, tab switching)
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && !isSessionClosed) {
+                console.log('Page became hidden - user may be navigating away');
+                // Don't show modal immediately as this could be tab switching
+                // This is mainly for logging and potential future enhancements
+            }
+        });
+        // Sessions should only be closed when user explicitly ends them
+        console.log('Session cleanup setup complete - sessions will only close when explicitly ended by user');
+    }
+}
+
+// Show back confirmation modal (extracted from goBack for reuse)
+function showBackConfirmationModal() {
+    // Check if offline and show WiFi warning first
+    if (!isOnline) {
+        const wifiModal = new bootstrap.Modal(document.getElementById('wifiWarningModal'));
+        wifiModal.show();
+        return;
+    }
+    
+    // Show confirmation modal
+    const modal = new bootstrap.Modal(document.getElementById('confirmLeaveModal'));
+    modal.show();
+}
+
 // Setup automatic session cleanup
 function setupSessionCleanup() {
-    // Don't close session automatically - only close when user explicitly ends session
-    // This prevents session closure on browser refresh/tab switching
-    
     console.log('Session cleanup setup complete - sessions will only close when explicitly ended by user');
 }
 
@@ -1042,6 +1484,11 @@ function initializeAttendanceCounts() {
     }
     
     updateAttendanceDisplay();
+    
+    // Recalculate from actual records to ensure accuracy
+    setTimeout(() => {
+        recalculateAttendanceCounts();
+    }, 1000);
 }
 
 // Save attendance counts to sessionStorage
@@ -1061,32 +1508,78 @@ function updateAttendanceDisplay() {
     document.getElementById('lateCount').textContent = lateCount;
 }
 
+// Recalculate attendance counts from all records (online + offline)
+async function recalculateAttendanceCounts() {
+    console.log('📊 [STATS] Recalculating attendance counts from all records');
+    
+    try {
+        // Get all attendance records (online + offline)
+        const allRecords = await getAttendanceRecords();
+        
+        // Reset counts
+        presentCount = 0;
+        absentCount = 0;
+        lateCount = 0;
+        
+        // Count by status
+        allRecords.forEach(record => {
+            const status = record.status ? record.status.toLowerCase() : 'present';
+            
+            switch (status) {
+                case 'present':
+                    presentCount++;
+                    break;
+                case 'late':
+                    lateCount++;
+                    break;
+                case 'absent':
+                    absentCount++;
+                    break;
+            }
+        });
+        
+        console.log('📊 [STATS] Recalculated counts:', {
+            present: presentCount,
+            late: lateCount,
+            absent: absentCount,
+            total: allRecords.length
+        });
+        
+        // Update display and save
+        updateAttendanceDisplay();
+        saveAttendanceCounts();
+        
+    } catch (error) {
+        console.error('❌ [STATS] Error recalculating attendance counts:', error);
+    }
+}
+
 // Mark student as present
 function markPresent() {
-    if (lateCount > 0) {
-        lateCount--;
-    } else if (absentCount > 0) {
-        absentCount--;
-    }
+    console.log('📊 [STATS] markPresent called - current counts:', { presentCount, lateCount, absentCount });
+    
     presentCount++;
     updateAttendanceDisplay();
     saveAttendanceCounts();
+    
+    console.log('📊 [STATS] markPresent completed - new counts:', { presentCount, lateCount, absentCount });
 }
 
 // Mark student as late
 function markLate() {
-    if (presentCount > 0) {
-        presentCount--;
-    } else if (absentCount > 0) {
-        absentCount--;
-    }
+    console.log('📊 [STATS] markLate called - current counts:', { presentCount, lateCount, absentCount });
+    
     lateCount++;
     updateAttendanceDisplay();
     saveAttendanceCounts();
+    
+    console.log('📊 [STATS] markLate completed - new counts:', { presentCount, lateCount, absentCount });
 }
 
 // Mark student as absent
 function markAbsent() {
+    console.log('📊 [STATS] markAbsent called - current counts:', { presentCount, lateCount, absentCount });
+    
     if (presentCount > 0) {
         presentCount--;
     } else if (lateCount > 0) {
@@ -1095,6 +1588,8 @@ function markAbsent() {
     absentCount++;
     updateAttendanceDisplay();
     saveAttendanceCounts();
+    
+    console.log('📊 [STATS] markAbsent completed - new counts:', { presentCount, lateCount, absentCount });
 }
 
 // Session management functions
@@ -1175,11 +1670,16 @@ function closeSession() {
     // First, mark absent students before closing the session
     markAbsentStudents();
     
-    // Clear sessionStorage when session ends
+    // Clear both sessionStorage and localStorage when session ends
     sessionStorage.removeItem('sessionStartTime');
     sessionStorage.removeItem('currentSessionId');
     sessionStorage.removeItem('attendanceCounts');
-    console.log('SessionStorage cleared');
+    
+    localStorage.removeItem('sessionStartTime');
+    localStorage.removeItem('currentSessionId');
+    localStorage.removeItem('attendanceCounts');
+    
+    console.log('SessionStorage and localStorage cleared');
     
     // Use fetch for normal requests, sendBeacon for page unload
     const data = JSON.stringify({
@@ -1269,30 +1769,51 @@ function loadGracePeriodSettings() {
 // GRACE PERIOD HELPER FUNCTIONS
 // ==========================================
 
+// Ensure session start time is initialized
+function SessionStartTime() {
+    let sessionStartTime = sessionStorage.getItem('sessionStartTime');
+    
+    if (!sessionStartTime) {
+        console.log('Session start time missing - initializing now');
+        const activationStartTime = Date.now();
+        sessionStorage.setItem('sessionStartTime', activationStartTime.toString());
+        sessionStorage.setItem('currentSessionId', sessionId);
+        sessionStartTime = activationStartTime.toString();
+        console.log('Session start time initialized:', new Date(parseInt(sessionStartTime)).toLocaleTimeString());
+    }
+    
+    return parseInt(sessionStartTime);
+}
+
 // Calculate attendance status based on grace period
 function calculateAttendanceStatus() {
     let attendanceStatus = 'Present';
     
     if (autoLateEnabled) {
-        const sessionStartTime = sessionStorage.getItem('sessionStartTime');
-        if (sessionStartTime) {
+        // Ensure session start time is initialized before calculation
+        const sessionActivationTime = SessionStartTime();
+        
+        if (sessionActivationTime) {
             const currentTime = Date.now();
-            const sessionStart = parseInt(sessionStartTime);
-            const elapsedMinutes = Math.floor((currentTime - sessionStart) / 60000);
+            const elapsedMinutes = Math.floor((currentTime - sessionActivationTime) / 60000);
             
             console.log('Grace period calculation:');
-            console.log('- Session start time:', new Date(sessionStart).toLocaleTimeString());
+            console.log('- Session activation time:', new Date(sessionActivationTime).toLocaleTimeString());
             console.log('- Current time:', new Date(currentTime).toLocaleTimeString());
             console.log('- Elapsed minutes:', elapsedMinutes);
             console.log('- Grace period:', gracePeriod);
             
-            if (elapsedMinutes > gracePeriod) {
+            if (elapsedMinutes >= gracePeriod) {
                 attendanceStatus = 'Late';
                 console.log('Student marked as LATE');
             } else {
                 console.log('Student marked as PRESENT (within grace period)');
             }
+        } else {
+            console.warn('Session activation time still missing after initialization');
         }
+    } else {
+        console.log('Auto late marking is disabled');
     }
     
     return attendanceStatus;
@@ -1303,14 +1824,14 @@ function calculateAttendanceStatus() {
 // ==========================================
 
 // Network connectivity detection
-let isOnline = null; // Start with unknown state, will be determined by actual connectivity check
+// isOnline variable is already declared globally at the top of the file
 let offlineRecords = [];
 let syncInProgress = false;
 let syncRetryCount = 0;
 const MAX_SYNC_RETRIES = 3;
 let networkCheckInterval = null;
 const NETWORK_CHECK_INTERVAL = 10000; // Check every 10 seconds (more frequent)
-let isProcessingQR = false; // Flag to prevent network status changes during QR processing
+let isProcessingQR = false;
 let isInitialized = false; // Flag to track if initialization is complete
 
 // Initialize network monitoring
@@ -1354,8 +1875,6 @@ async function checkActualConnectivity() {
     let actuallyOnline = false;
     
     try {
-        // Test connectivity with multiple external endpoints to ensure real internet access
-        // Use reliable external services that don't require CORS and respond quickly
         const testEndpoints = [
             'https://httpbin.org/status/200',
             'https://jsonplaceholder.typicode.com/posts/1',
@@ -1550,6 +2069,13 @@ function handleConnectionRestored() {
     updateConnectionStatus();
     showToast('Connection restored', 'success');
     
+    // Update attendance list seamlessly when connection is restored
+    if (hasInitialLoad) {
+        fastUpdateAttendanceTable();
+        // Recalculate stats when connection is restored
+        recalculateAttendanceCounts();
+    }
+    
     // Close WiFi warning modal if it's open
     const wifiModal = document.getElementById('wifiWarningModal');
     if (wifiModal) {
@@ -1575,6 +2101,9 @@ function handleConnectionLost() {
     console.log('Browser reports connection lost - entering offline mode');
     isOnline = false;
     updateConnectionStatus();
+    
+    // Recalculate stats when going offline to ensure consistency
+    recalculateAttendanceCounts();
 }
 
 // Update connection status display
@@ -1622,16 +2151,16 @@ function updateConnectionStatus() {
 
 // Sync offline records to server when connection is restored
 function syncOfflineRecords() {
-    console.log('Starting sync of offline records...');
+    console.log('🔄 [SYNC] Starting sync of offline records...');
     
     if (syncInProgress) {
-        console.log('Sync already in progress, skipping');
+        console.log('🔄 [SYNC] Sync already in progress, skipping');
         return;
     }
     
     // Check if current session is active
     if (!sessionId) {
-        console.log('No active session - cannot sync offline records');
+        console.log('🔄 [SYNC] No active session - cannot sync offline records');
         showToast('No active session - offline records cannot be synced', 'warning');
         return;
     }
@@ -1639,12 +2168,25 @@ function syncOfflineRecords() {
     const recordsToSync = getOfflineRecords();
     
     if (recordsToSync.length === 0) {
-        console.log('No offline records to sync');
+        console.log('🔄 [SYNC] No offline records to sync');
         return;
     }
     
-    console.log('Found records to sync:', recordsToSync.length);
-    console.log('Current session ID:', sessionId);
+    console.log('🔄 [SYNC] Found records to sync:', recordsToSync.length);
+    console.log('🔄 [SYNC] Current session ID:', sessionId);
+    
+    // Log all records for debugging
+    recordsToSync.forEach((record, index) => {
+        console.log(`🔄 [SYNC] Record ${index + 1}:`, {
+            id: record.id,
+            action: record.action,
+            student_id: record.student_id,
+            attendance_status: record.attendance_status,
+            attendanceStatus: record.attendanceStatus,
+            sessionId: record.sessionId,
+            timestamp: record.timestamp
+        });
+    });
     
     // Filter records that belong to current session
     const validRecords = recordsToSync.filter(record => 
@@ -1652,12 +2194,12 @@ function syncOfflineRecords() {
     );
     
     if (validRecords.length === 0) {
-        console.log('No records belong to current session');
+        console.log('🔄 [SYNC] No records belong to current session');
         showToast('No offline records for current session', 'info');
         return;
     }
     
-    console.log('Valid records for current session:', validRecords.length);
+    console.log('🔄 [SYNC] Valid records for current session:', validRecords.length);
     syncInProgress = true;
     
     // Process records one by one
@@ -1671,6 +2213,13 @@ function syncNextRecord(records, index) {
         syncInProgress = false;
         syncRetryCount = 0;
         showToast('All offline attendance synced successfully', 'success');
+        
+        // Update attendance table to show synced data
+        fastUpdateAttendanceTable();
+        
+        // Recalculate attendance counts after sync to ensure accuracy
+        recalculateAttendanceCounts();
+        
         return;
     }
     
@@ -1693,9 +2242,16 @@ function syncNextRecord(records, index) {
 
 // Sync record that needs validation and attendance recording
 function syncValidateAndRecord(record, records, index) {
-    console.log('Syncing validate_and_record record:', record);
-    console.log('student_number:', record.student_number);
-    console.log('subjectId:', subjectId);
+    console.log('🔄 [SYNC VALIDATE] Starting sync validation for record:', record.id);
+    console.log('🔄 [SYNC VALIDATE] Record details:', {
+        id: record.id,
+        action: record.action,
+        student_number: record.student_number,
+        studentId: record.studentId,
+        attendance_status: record.attendance_status,
+        attendanceStatus: record.attendanceStatus,
+        subjectId: subjectId
+    });
     
     // Get student number from multiple possible locations
     const studentNumber = record.student_number || 
@@ -1703,17 +2259,10 @@ function syncValidateAndRecord(record, records, index) {
                           record.studentData?.student_number || 
                           record.studentData?.id;
     
-    console.log('Extracted student number:', studentNumber);
-    console.log('Full studentData:', record.studentData);
+    console.log('🔄 [SYNC VALIDATE] Extracted student number:', studentNumber);
     
     if (!studentNumber) {
-        console.error('No student number found in record:', record);
-        console.error('Available fields:', {
-            student_number: record.student_number,
-            studentId: record.studentId,
-            studentData_student_number: record.studentData?.student_number,
-            studentData_id: record.studentData?.id
-        });
+        console.error('❌ [SYNC VALIDATE] No student number found in record:', record);
         // Skip this record and move to next
         syncNextRecord(records, index + 1);
         return;
@@ -1734,53 +2283,129 @@ function syncValidateAndRecord(record, records, index) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            console.log('✅ [SYNC VALIDATE] Student validated during sync:', data.student);
+            
+            // Update student data cache with server data to replace unknown values
+            if (data.student && data.student.student_number) {
+                studentDataCache[data.student.student_number] = {
+                    name: data.student.name,
+                    course: data.student.course,
+                    year: data.student.year,
+                    email: data.student.email,
+                    profile_picture: data.student.profile_picture
+                };
+                console.log('🔄 [SYNC VALIDATE] Updated student data cache for:', data.student.student_number);
+            }
+            
+            // CRITICAL: Extract attendance status with detailed logging
+            console.log('🔄 [SYNC VALIDATE] Checking attendance status fields:');
+            console.log('  - record.attendance_status:', record.attendance_status);
+            console.log('  - record.attendanceStatus:', record.attendanceStatus);
+            
+            const attendanceStatus = record.attendance_status || record.attendanceStatus || 'Present';
+            console.log('🔄 [SYNC VALIDATE] Final attendance status to sync:', attendanceStatus);
+            
             // Student validated, now record attendance
-            recordAttendanceOnline(data.student.id, record.attendance_status, record, records, index);
+            recordAttendanceOnline(data.student.id, attendanceStatus, record, records, index);
         } else {
-            console.log('Student validation failed during sync:', data.message);
+            console.log('❌ [SYNC VALIDATE] Student validation failed during sync:', data.message);
             // Skip this record and move to next
             syncNextRecord(records, index + 1);
         }
     })
     .catch(error => {
-        console.error('Error during sync validation:', error);
+        console.error('❌ [SYNC VALIDATE] Error during sync validation:', error);
         handleSyncError(record, records, index, error);
     });
 }
 
 // Sync record that only needs attendance recording
 function syncAttendanceOnly(record, records, index) {
-    recordAttendanceOnline(record.student_id, record.attendance_status, record, records, index);
+    console.log('🔄 [SYNC ONLY] Starting sync-only for record:', record.id);
+    console.log('🔄 [SYNC ONLY] Record details:', {
+        id: record.id,
+        student_id: record.student_id,
+        attendance_status: record.attendance_status,
+        attendanceStatus: record.attendanceStatus
+    });
+    
+    const attendanceStatus = record.attendance_status || record.attendanceStatus || 'Present';
+    console.log('🔄 [SYNC ONLY] Final attendance status to sync:', attendanceStatus);
+    
+    recordAttendanceOnline(record.student_id, attendanceStatus, record, records, index);
 }
 
 // Record attendance online during sync
 function recordAttendanceOnline(studentId, attendanceStatus, record, records, index) {
+    console.log('🔄 [SYNC ONLINE] Starting online attendance recording');
+    console.log('🔄 [SYNC ONLINE] Input parameters:', {
+        studentId: studentId,
+        attendanceStatus: attendanceStatus,
+        recordId: record.id,
+        sessionId: record.sessionId,
+        originalTimestamp: record.timestamp,
+        formattedTime: new Date(record.timestamp).toLocaleString()
+    });
+    
+    const requestBody = {
+        action: 'record_attendance',
+        session_id: record.sessionId,
+        student_id: studentId,
+        attendance_status: attendanceStatus,
+        scan_timestamp: record.timestamp // Send original scan timestamp to preserve status
+    };
+    
+    console.log('🔄 [SYNC ONLINE] Request body to server:', requestBody);
+    
     fetch('../api/attendance_session_api.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-            action: 'record_attendance',
-            session_id: record.sessionId,
-            student_id: studentId,
-            attendance_status: attendanceStatus
-        })
+        body: JSON.stringify(requestBody)
     })
     .then(response => response.json())
     .then(data => {
+        console.log('🔄 [SYNC ONLINE] Server response received:', data);
+        
         if (data.success) {
-            console.log('Record synced successfully:', record.id);
+            console.log('✅ [SYNC ONLINE] Record synced successfully:', {
+                recordId: record.id,
+                serverRecordId: data.record_id,
+                preservedStatus: attendanceStatus,
+                message: data.message
+            });
+            
+            // Update student data cache with server data to replace unknown values
+            if (record.studentData && record.studentData.student_number) {
+                studentDataCache[record.studentData.student_number] = {
+                    name: record.studentData.name,
+                    course: record.studentData.course,
+                    year: record.studentData.year,
+                    email: record.studentData.email,
+                    profile_picture: record.studentData.profile_picture
+                };
+                console.log('🔄 [SYNC ONLINE] Updated student data cache for:', record.studentData.student_number);
+            }
+            
             // Remove the synced record
             removeOfflineRecord(record.id);
+            // Update table to show the synced record
+            fastUpdateAttendanceTable();
             // Move to next record
             syncNextRecord(records, index + 1);
         } else {
-            console.log('Failed to sync record:', data.message);
+            console.log('❌ [SYNC ONLINE] Failed to sync record:', {
+                recordId: record.id,
+                attemptedStatus: attendanceStatus,
+                errorMessage: data.message
+            });
             // Check if it's a duplicate (already recorded)
             if (data.message.includes('already recorded')) {
-                console.log('Record already exists on server, removing offline copy');
+                console.log('🔄 [SYNC ONLINE] Record already exists on server, removing offline copy');
                 removeOfflineRecord(record.id);
+                // Update table to reflect the removal
+                fastUpdateAttendanceTable();
                 syncNextRecord(records, index + 1);
             } else {
                 handleSyncError(record, records, index, data.message);
@@ -1788,7 +2413,7 @@ function recordAttendanceOnline(studentId, attendanceStatus, record, records, in
         }
     })
     .catch(error => {
-        console.error('Error during sync recording:', error);
+        console.error('❌ [SYNC ONLINE] Error during sync recording:', error);
         handleSyncError(record, records, index, error);
     });
 }
@@ -1823,24 +2448,44 @@ const OFFLINE_STORAGE_KEY = 'attendance_offline_records';
 
 // Store attendance record locally when offline
 function storeOfflineRecord(recordData) {
-    console.log('Storing offline record:', recordData);
+    console.log('📱 [STORAGE] Starting offline record storage');
+    console.log('📱 [STORAGE] Input recordData:', recordData);
+    console.log('📱 [STORAGE] Attendance status analysis:', {
+        'recordData.attendance_status': recordData.attendance_status,
+        'recordData.attendanceStatus': recordData.attendanceStatus,
+        'finalStatus': recordData.attendance_status || recordData.attendanceStatus || 'Present'
+    });
     
     try {
         // Get existing offline records
         const existingRecords = getOfflineRecords();
+        console.log('📱 [STORAGE] Existing records count:', existingRecords.length);
         
         // Create new offline record with metadata
+        const attendanceStatus = recordData.attendance_status || recordData.attendanceStatus || 'Present';
+        console.log('📱 [STORAGE] Extracted attendanceStatus:', attendanceStatus);
+        
         const offlineRecord = {
             id: generateOfflineRecordId(),
             timestamp: Date.now(),
             sessionId: recordData.session_id || sessionId,
             studentId: recordData.student_id,
             studentData: recordData.studentData || null,
-            attendanceStatus: recordData.attendance_status || 'Present',
+            attendanceStatus: attendanceStatus,
+            attendance_status: attendanceStatus, 
             action: recordData.action || 'record_attendance',
             retryCount: 0,
             synced: false
         };
+        
+        console.log('📱 [STORAGE] Final offline record created:', {
+            id: offlineRecord.id,
+            attendanceStatus: offlineRecord.attendanceStatus,
+            attendance_status: offlineRecord.attendance_status,
+            sessionId: offlineRecord.sessionId,
+            studentId: offlineRecord.studentId,
+            timestamp: offlineRecord.timestamp
+        });
         
         // Add to existing records
         existingRecords.push(offlineRecord);
@@ -1864,10 +2509,24 @@ function getOfflineRecords() {
     try {
         const stored = localStorage.getItem(OFFLINE_STORAGE_KEY);
         const records = stored ? JSON.parse(stored) : [];
-        console.log('Retrieved offline records:', records.length);
+        console.log('📱 [RETRIEVE] Retrieved offline records:', records.length);
+        
+        // Log each record for debugging
+        records.forEach((record, index) => {
+            console.log(`📱 [RETRIEVE] Record ${index + 1}:`, {
+                id: record.id,
+                action: record.action,
+                student_id: record.student_id,
+                attendance_status: record.attendance_status,
+                attendanceStatus: record.attendanceStatus,
+                sessionId: record.sessionId,
+                timestamp: record.timestamp
+            });
+        });
+        
         return records;
     } catch (error) {
-        console.error('Error retrieving offline records:', error);
+        console.error('❌ [RETRIEVE] Error retrieving offline records:', error);
         return [];
     }
 }
@@ -1993,6 +2652,64 @@ function testOfflineStorage() {
     console.log('Final records:', getOfflineRecords());
     
     console.log('=== OFFLINE STORAGE TEST COMPLETE ===');
+}
+
+// Test attendance status calculation for debugging
+function testAttendanceStatusCalculation() {
+    console.log('=== TESTING ATTENDANCE STATUS CALCULATION ===');
+    
+    // Save current settings
+    const originalGracePeriod = gracePeriod;
+    const originalAutoLateEnabled = autoLateEnabled;
+    const originalSessionStartTime = sessionStorage.getItem('sessionStartTime');
+    
+    try {
+        // Test 1: Session start time missing (should initialize and mark as Present)
+        console.log('Test 1: Session start time missing');
+        sessionStorage.removeItem('sessionStartTime');
+        gracePeriod = 15;
+        autoLateEnabled = true;
+        
+        const status1 = calculateAttendanceStatus();
+        console.log('Result when session start time missing:', status1);
+        console.log('Session start time after calculation:', sessionStorage.getItem('sessionStartTime'));
+        
+        // Test 2: Within grace period (should mark as Present)
+        console.log('\nTest 2: Within grace period');
+        const now = Date.now();
+        const fiveMinutesAgo = now - (5 * 60 * 1000);
+        sessionStorage.setItem('sessionStartTime', fiveMinutesAgo.toString());
+        
+        const status2 = calculateAttendanceStatus();
+        console.log('Result within grace period:', status2);
+        
+        // Test 3: Beyond grace period (should mark as Late)
+        console.log('\nTest 3: Beyond grace period');
+        const twentyMinutesAgo = now - (20 * 60 * 1000);
+        sessionStorage.setItem('sessionStartTime', twentyMinutesAgo.toString());
+        
+        const status3 = calculateAttendanceStatus();
+        console.log('Result beyond grace period:', status3);
+        
+        // Test 4: Auto late disabled (should always mark as Present)
+        console.log('\nTest 4: Auto late disabled');
+        autoLateEnabled = false;
+        
+        const status4 = calculateAttendanceStatus();
+        console.log('Result with auto late disabled:', status4);
+        
+        console.log('\n=== ATTENDANCE STATUS TEST COMPLETE ===');
+        
+    } finally {
+        // Restore original settings
+        gracePeriod = originalGracePeriod;
+        autoLateEnabled = originalAutoLateEnabled;
+        if (originalSessionStartTime) {
+            sessionStorage.setItem('sessionStartTime', originalSessionStartTime);
+        } else {
+            sessionStorage.removeItem('sessionStartTime');
+        }
+    }
 }
 
 // Test connectivity function for debugging

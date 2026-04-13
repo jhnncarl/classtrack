@@ -178,11 +178,11 @@ body {
 
 /* Left Column Styles */
 .left-column {
-    flex: 2; /* Takes 2/3 of the space */
+    flex: 1; 
     display: flex;
     flex-direction: column;
     gap: 24px;
-    min-height: 100%; /* Fill the layout height */
+    min-height: 100%; 
 }
 
 .session-status {
@@ -256,7 +256,7 @@ body {
 
 /* Right Column Styles */
 .right-column {
-    flex: 1; /* Takes 1/3 of the space */
+    flex: 2; /* Takes 2/3 of the space */
     display: flex;
     flex-direction: column;
     gap: 24px;
@@ -289,6 +289,198 @@ body {
     font-weight: 600;
     color: #060606;
     margin: 0;
+}
+
+/* Header Icons Group */
+.header-icons-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-icon-btn {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    color: #6c757d;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.header-icon-btn:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+    color: #060606;
+    transform: translateY(-1px);
+}
+
+.header-icon-btn:active {
+    transform: translateY(0);
+}
+
+.header-icon-btn i {
+    font-size: 18px;
+}
+
+/* Attendance List View Styles */
+.attendance-list-view {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+.attendance-list-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    width: 100%;
+}
+
+/* Students Table Styles */
+.students-table-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+}
+
+.students-table-wrapper {
+    flex: 1;
+    overflow: auto;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.students-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.students-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #f8f9fa;
+}
+
+.students-table th {
+    background: #f8f9fa;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #060606;
+    border-bottom: 2px solid #e9ecef;
+    white-space: nowrap;
+}
+
+.students-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+.students-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.students-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Empty state message styling */
+.students-table tbody tr.empty-message td {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+    font-style: italic;
+    vertical-align: middle;
+}
+
+.students-table tbody tr.empty-message td i {
+    font-size: 24px;
+    display: block;
+    margin-bottom: 8px;
+    color: #adb5bd;
+}
+
+/* Remove hover effect from empty state */
+.students-table tbody tr.empty-message:hover {
+    background: transparent !important;
+}
+
+.students-table tbody tr.empty-message:hover td {
+    background: transparent !important;
+}
+
+/* Loading message styling */
+.students-table tbody tr.loading-message td {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+    font-style: italic;
+    vertical-align: middle;
+}
+
+.students-table tbody tr.loading-message td i {
+    font-size: 24px;
+    display: block;
+    margin-bottom: 8px;
+    color: #007bff;
+    animation: spin 1s linear infinite;
+}
+
+/* Remove hover effect from loading state */
+.students-table tbody tr.loading-message:hover {
+    background: transparent !important;
+}
+
+.students-table tbody tr.loading-message:hover td {
+    background: transparent !important;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Status Badge Styles */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.present {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.late {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.absent {
+    background: #f8d7da;
+    color: #721c24;
 }
 
 .student-status-badge {
@@ -326,8 +518,15 @@ body {
     border-radius: 12px;
     padding: 20px;
     flex: 1; 
-    overflow-y: auto; 
-    min-height: 300px; 
+    display: flex;
+    flex-direction: column;
+    min-height: 400px; 
+    overflow: hidden;
+}
+
+/* Ensure attendance list view fills the container */
+.student-info-content:has(#attendanceListView:not(.hidden)) {
+    overflow: hidden;
 }
 
 /* Center content only when no student data */
@@ -339,7 +538,8 @@ body {
 
 /* Normal display when student data is present */
 .student-info-content:not(:has(.no-student-placeholder)) {
-    display: block;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Custom scrollbar styling */
@@ -402,8 +602,9 @@ body {
 
 .control-buttons {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 12px;
+    width: 100%;
 }
 
 .btn-control {
@@ -418,6 +619,8 @@ body {
     justify-content: center;
     gap: 8px;
     transition: all 0.3s ease;
+    flex: 1;
+    min-width: 0;
 }
 
 .btn-control.pause {
@@ -995,8 +1198,36 @@ body {
     
     .session-layout {
         flex-direction: column;
-        gap: 20px;
-        align-items: stretch; /* Maintain equal height in mobile */
+        gap: 16px; 
+        align-items: stretch; 
+    }
+    
+    .left-column {
+        flex: 1.2;
+    }
+    
+    .right-column {
+        flex: 1;
+    }
+    
+    .student-info-content {
+        min-height: 350px;
+        padding: 16px; /* Consistent with container padding */
+    }
+    
+    .students-table th,
+    .students-table td {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+    
+    .students-table tbody tr.empty-message td {
+        padding: 35px 18px;
+        font-size: 13px;
+    }
+    
+    .students-table tbody tr.empty-message td i {
+        font-size: 22px;
     }
     
     .header-content {
@@ -1086,8 +1317,8 @@ body {
     }
     
     .student-info-section {
-        flex: 1; /* Take remaining space on mobile */
-        min-height: 300px; /* Maintain consistent height on mobile */
+        flex: 1; 
+        min-height: 300px;
     }
     
     .session-header {
@@ -1099,6 +1330,133 @@ body {
         width: 56px;
         height: 56px;
         font-size: 28px;
+    }
+    
+    /* Stack control buttons vertically on mobile */
+    .control-buttons {
+        flex-direction: column;
+    }
+    
+    /* Adjust header icons for mobile */
+    .header-icons-group {
+        gap: 8px;
+    }
+    
+    .header-icon-btn {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .header-icon-btn i {
+        font-size: 16px;
+    }
+    
+    /* Mobile table styles */
+    .students-table th,
+    .students-table td {
+        padding: 8px 12px;
+        font-size: 12px;
+        white-space: nowrap; /* Ensure one-line text display */
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+    
+    .students-table tbody tr.empty-message td {
+        padding: 30px 15px;
+        font-size: 12px;
+    }
+    
+    .students-table tbody tr.empty-message td i {
+        font-size: 20px;
+    }
+    
+    .students-table tbody tr.loading-message td {
+        padding: 30px 15px;
+        font-size: 12px;
+    }
+    
+    .students-table tbody tr.loading-message td i {
+        font-size: 20px;
+    }
+    
+    .status-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+    
+    /* Enhanced mobile table styling with scrollbar */
+    .students-table-wrapper {
+        max-height: 300px;
+        overflow-x: auto;
+        overflow-y: auto;
+        margin: 0;
+        padding: 0;
+        position: relative;
+    }
+    
+    .students-table {
+        min-width: 600px;
+        font-size: 12px;
+    }
+    
+    .students-table th {
+        padding: 10px 8px;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+    
+    .students-table td {
+        padding: 10px 6px;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+    
+    .status-badge {
+        padding: 2px 6px;
+        font-size: 10px;
+    }
+    
+    /* Mobile scrollbar for horizontal and vertical scrolling */
+    .students-table-wrapper::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+    }
+    
+    .students-table-wrapper::-webkit-scrollbar-track {
+        background: #f1f3f4;
+        border-radius: 2px;
+    }
+    
+    .students-table-wrapper::-webkit-scrollbar-thumb {
+        background: #c5c7ca;
+        border-radius: 2px;
+    }
+    
+    .students-table-wrapper::-webkit-scrollbar-thumb:hover {
+        background: #9aa0a6;
+    }
+    
+    /* Fade effect for mobile table */
+    .students-table-wrapper::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 4px;
+        height: 15px;
+        background: linear-gradient(to top, white 0%, rgba(255, 255, 255, 0.7) 70%, transparent 100%);
+        pointer-events: none;
+        z-index: 1;
+    }
+    
+    /* Ensure table container fills space on mobile */
+    .attendance-list-content {
+        min-height: 300px;
+    }
+    
+    .students-table-container {
+        min-height: 250px;
     }
 }
 

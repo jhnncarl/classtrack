@@ -44,22 +44,31 @@ if ($teacher_id && $classCode) {
             $stmt->execute([$subject_data['SubjectID']]);
             $student_count = $stmt->fetch()['student_count'];
             
-            // Check if there's an active session for today, if not create one
-            $stmt = $db->prepare("SELECT SessionID FROM attendancesessions WHERE SubjectID = ? AND SessionDate = CURDATE() AND Status = 'Active'");
+            // Check if there's any session for today (active or closed), reuse if exists
+            $stmt = $db->prepare("SELECT SessionID, Status, EndTime FROM attendancesessions WHERE SubjectID = ? AND SessionDate = CURDATE() ORDER BY SessionID DESC LIMIT 1");
             $stmt->execute([$subject_data['SubjectID']]);
             $existing_session = $stmt->fetch();
             
-            error_log("Session Check - SubjectID: " . $subject_data['SubjectID'] . ", Existing session: " . ($existing_session ? $existing_session['SessionID'] : 'None'));
-            
             if (!$existing_session) {
-                // Create new attendance session
+                // Create new attendance session only if absolutely none exists for today
                 $stmt = $db->prepare("INSERT INTO attendancesessions (SubjectID, SessionDate, StartTime, Status) VALUES (?, CURDATE(), CURTIME(), 'Active')");
                 $stmt->execute([$subject_data['SubjectID']]);
                 $session_id = $db->lastInsertId();
-                error_log("New session created with ID: " . $session_id);
+            } else if ($existing_session['EndTime'] && $existing_session['EndTime'] !== '0000-00-00 00:00:00') {
+                // Previous session was properly closed with a valid EndTime, create new session
+                $stmt = $db->prepare("INSERT INTO attendancesessions (SubjectID, SessionDate, StartTime, Status) VALUES (?, CURDATE(), CURTIME(), 'Active')");
+                $stmt->execute([$subject_data['SubjectID']]);
+                $session_id = $db->lastInsertId();
             } else {
+                // Reuse existing session - this handles browser refresh and reopened sessions
                 $session_id = $existing_session['SessionID'];
-                error_log("Using existing session with ID: " . $session_id);
+                
+                // If session was closed but has no EndTime, reopen it by updating status only (preserve original StartTime)
+                if ($existing_session['Status'] === 'Closed') {
+                    // Only update Status to 'Active', preserve original StartTime for timer continuity
+                    $stmt = $db->prepare("UPDATE attendancesessions SET Status = 'Active' WHERE SessionID = ?");
+                    $stmt->execute([$session_id]);
+                }
             }
             
             // Convert to expected format
@@ -96,10 +105,10 @@ if (!$currentClass) {
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="../assets/css/attendance_session.css">
+    <link rel="stylesheet" href="../assets/css/attendance_session.css?">
     <link rel="stylesheet" href="../assets/css/toast.css">
 </head>
-<body>
+<body data-session-id="<?php echo htmlspecialchars($session_id); ?>" data-subject-id="<?php echo htmlspecialchars($subject_data['SubjectID'] ?? ''); ?>" data-class-code="<?php echo htmlspecialchars($classCode); ?>">
     <!-- Session Container -->
     <div class="session-container">
         <!-- Header -->
@@ -107,7 +116,7 @@ if (!$currentClass) {
             <div class="header-content">
                 <div class="class-info">
                     <h1 class="session-title">
-                        <button class="btn-back-inline" onclick="goBack()">
+                        <button class="btn-back-inline" onclick="goBack(event)">
                             <i class="bi bi-arrow-left"></i>
                         </button>
                         <?php echo htmlspecialchars($currentClass['title']); ?>
@@ -190,16 +199,50 @@ if (!$currentClass) {
                         <div class="student-info-card">
                             <div class="student-info-header">
                                 <h3>Student Information</h3>
-                                <div class="student-status-badge" id="studentStatusBadge">
-                                    <i class="bi bi-person"></i>
-                                    <span>Waiting for scan</span>
+                                <div class="header-icons-group">
+                                    <div class="student-status-badge" id="studentStatusBadge">
+                                        <i class="bi bi-person"></i>
+                                        <span>Waiting for scan</span>
+                                    </div>
+                                    <button class="header-icon-btn" title="Student Profile" onclick="showStudentDetails()">
+                                        <i class="bi bi-person-circle"></i>
+                                    </button>
+                                    <button class="header-icon-btn" title="Attendance List" onclick="toggleAttendanceList()">
+                                        <i class="bi bi-list-ul"></i>
+                                    </button>
                                 </div>
                             </div>
                             <div class="student-info-content" id="studentInfoContent">
-                                <div class="no-student-placeholder">
-                                    <i class="bi bi-qr-code-scan"></i>
-                                    <p>Student information will appear here</p>
-                                    <small>After QR code is scanned</small>
+                                <!-- Student Details View -->
+                                <div id="studentDetailsView">
+                                    <div class="no-student-placeholder">
+                                        <i class="bi bi-qr-code-scan"></i>
+                                        <p>Student information will appear here</p>
+                                        <small>After QR code is scanned</small>
+                                    </div>
+                                </div>
+                                
+                                <!-- Attendance List View -->
+                                <div id="attendanceListView" class="attendance-list-view hidden">
+                                    <div class="attendance-list-content">
+                                        <div class="students-table-container">
+                                            <div class="students-table-wrapper">
+                                                <table class="students-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Student Number</th>
+                                                            <th>Name</th>
+                                                            <th>Course</th>
+                                                            <th>Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="attendanceTableBody">
+                                                        <!-- Attendance records will be populated here -->
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -375,7 +418,7 @@ if (!$currentClass) {
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="saveGracePeriodSettings()" style="background: #060606; border-color: #060606;">
-                        <i class="bi bi-check-lg"></i> Save Settings
+                        Save Settings
                     </button>
                 </div>
             </div>
@@ -387,12 +430,6 @@ if (!$currentClass) {
     <!-- QR Code Scanner Library -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <!-- Custom JavaScript -->
-    <script>
-        // Pass session data to JavaScript
-        const sessionId = <?php echo json_encode($session_id); ?>;
-        const subjectId = <?php echo json_encode($subject_data['SubjectID'] ?? null); ?>;
-        const classCode = <?php echo json_encode($classCode); ?>;
-    </script>
-    <script src="../assets/js/attendance_session.js"></script>
+    <script src="../assets/js/attendance_session.js?"></script>
 </body>
 </html>
