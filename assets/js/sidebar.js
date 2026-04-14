@@ -24,23 +24,44 @@
     }
 })();
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize sidebar directly (no dynamic loading needed)
-    initializeSidebar();
-});
+// Check if DOM is already loaded
+if (document.readyState === 'loading') {
+    // DOM is still loading, wait for DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Sidebar.js: DOMContentLoaded fired (waiting)');
+        // Add a small delay to ensure other scripts have loaded
+        setTimeout(() => {
+            console.log('Sidebar.js: Starting initialization after delay');
+            initializeSidebar();
+        }, 100);
+    });
+} else {
+    // DOM is already loaded, initialize immediately
+    console.log('Sidebar.js: DOM already loaded, initializing immediately');
+    setTimeout(() => {
+        console.log('Sidebar.js: Starting initialization after delay');
+        initializeSidebar();
+    }, 100);
+}
 
 // Initialize sidebar directly (no dynamic loading needed)
 // Sidebar is now included directly in the page
 
 function initializeSidebar() {
+    console.log('=== initializeSidebar called ==='); // Debug log
     const menuToggle = document.getElementById('menuToggle');
     const sidebar = document.getElementById('sidebar');
     
     if (!menuToggle || !sidebar) {
+        console.log('Sidebar elements not found, retrying...'); // Debug log
+        console.log('menuToggle:', menuToggle);
+        console.log('sidebar:', sidebar);
         // If elements don't exist yet, try again
         setTimeout(initializeSidebar, 100);
         return;
     }
+    
+    console.log('Sidebar elements found, continuing initialization'); // Debug log
     
     // Restore sidebar state from localStorage
     restoreSidebarState();
@@ -61,7 +82,9 @@ function initializeSidebar() {
     setupSignOutModal();
     
     // Set active menu item based on current page
+    console.log('About to call setActiveMenuBasedOnCurrentPage');
     setActiveMenuBasedOnCurrentPage();
+    console.log('Finished setActiveMenuBasedOnCurrentPage');
 }
 
 // Restore sidebar state from localStorage
@@ -110,10 +133,17 @@ function restoreSidebarState() {
 
 // Set active menu item based on current page URL
 function setActiveMenuBasedOnCurrentPage() {
+    console.log('=== setActiveMenuBasedOnCurrentPage called ==='); // Debug log
     const currentPath = window.location.pathname;
+    const currentHref = window.location.href;
+    console.log('Current path:', currentPath); // Debug log
+    console.log('Current href:', currentHref); // Debug log
     let activePage = 'dashboard'; // default
     
-    if (currentPath.includes('attendance_history.php')) {
+    // Check multiple ways to detect the page
+    if (currentPath.includes('reports.php') || currentHref.includes('reports.php')) {
+        activePage = 'reports';
+    } else if (currentPath.includes('attendance_history.php') || currentHref.includes('attendance_history.php')) {
         activePage = 'attendance-history';
     } else if (currentPath.includes('subjects.php') || currentPath.includes('attendance.php')) {
         activePage = 'subjects';
@@ -123,6 +153,7 @@ function setActiveMenuBasedOnCurrentPage() {
         activePage = 'dashboard';
     }
     
+    console.log('Active page determined:', activePage); // Debug log
     setActiveMenuItem(activePage);
 }
 
@@ -250,13 +281,35 @@ window.addEventListener('resize', function() {
 
 // Set Active Menu Item in Sidebar
 function setActiveMenuItem(pageName) {
+    console.log('Setting active menu item for:', pageName); // Debug log
     const sidebarLinks = document.querySelectorAll('.sidebar-link');
-    sidebarLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('data-page') === pageName) {
-            link.classList.add('active');
+    console.log('Found sidebar links:', sidebarLinks.length); // Debug log
+    
+    // First, check if PHP already set the active class
+    let phpActiveFound = false;
+    sidebarLinks.forEach((link, index) => {
+        if (link.classList.contains('active')) {
+            phpActiveFound = true;
+            console.log('PHP already set active class on link with data-page:', link.getAttribute('data-page')); // Debug log
         }
     });
+    
+    // If PHP didn't set active class, use JavaScript logic
+    if (!phpActiveFound) {
+        console.log('No PHP active class found, using JavaScript logic'); // Debug log
+        sidebarLinks.forEach((link, index) => {
+            const dataPage = link.getAttribute('data-page');
+            console.log(`Link ${index}: data-page="${dataPage}"`); // Debug log
+            
+            link.classList.remove('active');
+            if (dataPage === pageName) {
+                link.classList.add('active');
+                console.log('Added active class to link with data-page:', dataPage); // Debug log
+            }
+        });
+    } else {
+        console.log('PHP active class preserved, JavaScript logic skipped'); // Debug log
+    }
 }
 
 // Setup Navigation Menu Items

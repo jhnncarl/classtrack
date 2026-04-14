@@ -420,7 +420,7 @@ body.sidebar-collapsed {
 
 /* Focus states for accessibility */
 .sidebar-link:focus {
-    outline: none; /* Remove blue focus outline */
+    outline: none; 
 }
 
 /* Log Out item special styling */
@@ -428,6 +428,22 @@ body.sidebar-collapsed {
     border-top: 1px solid #e9ecef;
     margin-top: 1rem;
     padding-top: 1.25rem;
+}
+
+/* Sign Out Modal Button Fix */
+#confirmSignOutBtn {
+    white-space: nowrap !important;
+    min-width: 120px !important;
+    text-align: center !important;
+}
+
+/* Responsive adjustments for sign-out modal */
+@media (max-width: 576px) {
+    #confirmSignOutBtn {
+        min-width: 100px !important;
+        padding: 8px 16px !important;
+        font-size: 13px !important;
+    }
 }
 
 /* Icon animations - DISABLED to prevent movement during expand/collapse */

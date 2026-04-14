@@ -49,7 +49,7 @@
                 ?>
                     <!-- My Class -->
                     <li class="sidebar-item">
-                        <a href="../teacher/dashboard.php" class="sidebar-link active" data-page="dashboard">
+                        <a href="../teacher/dashboard.php" class="sidebar-link <?php echo (basename($_SERVER['PHP_SELF']) === 'dashboard.php') ? 'active' : ''; ?>" data-page="dashboard">
                             <i class="bi bi-people sidebar-icon"></i>
                             <span class="sidebar-text">My Class</span>
                         </a>
@@ -57,7 +57,7 @@
                     
                     <!-- Attendance Session History -->
                     <li class="sidebar-item">
-                        <a href="../teacher/attendance_history.php" class="sidebar-link" data-page="attendance-history">
+                        <a href="../teacher/attendance_session_history.php" class="sidebar-link <?php echo (basename($_SERVER['PHP_SELF']) === 'attendance_session_history.php' || (isset($_GET['page']) && $_GET['page'] === 'attendance-sessions')) ? 'active' : ''; ?>" data-page="attendance-sessions">
                             <i class="bi bi-clock-history sidebar-icon"></i>
                             <span class="sidebar-text">Attendance Sessions</span>
                         </a>
@@ -67,7 +67,7 @@
                     <li class="sidebar-item">
                         <a href="../teacher/reports.php" class="sidebar-link" data-page="reports">
                             <i class="bi bi-file-text sidebar-icon"></i>
-                            <span class="sidebar-text">Generated Reports</span>
+                            <span class="sidebar-text">Generate Reports</span>
                         </a>
                     </li>
                     
@@ -141,15 +141,18 @@
                 <!-- Footer Actions -->
                 <div class="modal-footer-actions" style="padding: 16px 32px 32px 32px !important; display: flex !important; justify-content: flex-end !important; gap: 12px !important;">
                     <button type="button" class="btn-cancel" data-bs-dismiss="modal" style="background: transparent !important; border: none !important; color: #5f6368 !important; font-size: 14px !important; font-weight: 500 !important; padding: 8px 24px !important; cursor: pointer !important; border-radius: 6px !important; transition: background-color 0.2s ease !important; font-family: 'Montserrat', sans-serif !important;">Cancel</button>
-                    <button type="button" class="btn-join" id="confirmSignOutBtn" style="background: #060606 !important; border: none !important; color: #ffffff !important; font-size: 14px !important; font-weight: 500 !important; padding: 8px 24px !important; cursor: pointer !important; border-radius: 6px !important; transition: all 0.2s ease !important; font-family: 'Montserrat', sans-serif !important;">Sign Out</button>
+                    <button type="button" class="btn-join" id="confirmSignOutBtn" style="background: #060606 !important; border: none !important; color: #ffffff !important; font-size: 14px !important; font-weight: 500 !important; padding: 8px 24px !important; cursor: pointer !important; border-radius: 6px !important; transition: all 0.2s ease !important; font-family: 'Montserrat', sans-serif !important; white-space: nowrap !important; min-width: 120px !important; text-align: center !important;">Sign Out</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Link Sidebar CSS -->
+<link rel="stylesheet" href="../assets/css/sidebar.css">
+
 <!-- Link Toast CSS -->
 <link rel="stylesheet" href="../assets/css/toast.css">
 
 <!-- Include Sidebar JavaScript -->
-<script src="../assets/js/sidebar.js"></script>
+<script src="../assets/js/sidebar.js?v=2"></script>
