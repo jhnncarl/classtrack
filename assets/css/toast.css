@@ -3,7 +3,7 @@
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 10002; scan the navbar.js to see how the toast notification function is implemented there
+    z-index: 10002; 
     pointer-events: none;
 }
 
