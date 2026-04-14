@@ -151,8 +151,9 @@ try {
             $session_id = $input['session_id'] ?? null;
             $student_id = $input['student_id'] ?? null;
             $attendance_status = $input['attendance_status'] ?? 'Present';
+            $scan_timestamp = $input['scan_timestamp'] ?? null;
             
-            error_log("Record Attendance Request - Session ID: " . $session_id . ", Student ID: " . $student_id . ", Status: " . $attendance_status);
+            error_log("Record Attendance Request - Session ID: " . $session_id . ", Student ID: " . $student_id . ", Status: " . $attendance_status . ", Scan Timestamp: " . $scan_timestamp);
             
             if (!$session_id || !$student_id) {
                 $response['message'] = 'Missing session ID or student ID';
@@ -188,12 +189,15 @@ try {
                 $response['message'] = 'Attendance already recorded for this student';
                 error_log("Record Attendance Error - Duplicate record for Student ID: " . $student_id);
             } else {
-                // Create new attendance record
+                // Use original scan timestamp if provided, otherwise use current time
+                $scan_time = $scan_timestamp ? date('Y-m-d H:i:s', $scan_timestamp / 1000) : date('Y-m-d H:i:s');
+                
+                // Create new attendance record with original scan time
                 $stmt = $db->prepare("
                     INSERT INTO attendancerecords (SessionID, StudentID, ScanTime, AttendanceStatus) 
-                    VALUES (?, ?, NOW(), ?)
+                    VALUES (?, ?, ?, ?)
                 ");
-                $stmt->execute([$session_id, $student_id, $attendance_status]);
+                $stmt->execute([$session_id, $student_id, $scan_time, $attendance_status]);
                 
                 if ($stmt->rowCount() > 0) {
                     $response['success'] = true;
@@ -296,6 +300,79 @@ try {
             $response['marked_absent'] = $marked_count;
             $response['total_enrolled'] = count($enrolled_students);
             $response['already_recorded'] = count($recorded_students);
+            break;
+            
+        case 'get_attendance_list':
+            $session_id = $input['session_id'] ?? null;
+            
+            error_log("Get Attendance List Request - Session ID: " . $session_id);
+            
+            if (!$session_id) {
+                $response['message'] = 'Missing session ID';
+                break;
+            }
+            
+            // Verify session exists and get subject info
+            $stmt = $db->prepare("
+                SELECT asess.SessionID, asess.SubjectID, sub.SubjectName 
+                FROM attendancesessions asess
+                JOIN subjects sub ON asess.SubjectID = sub.SubjectID
+                WHERE asess.SessionID = ?
+            ");
+            $stmt->execute([$session_id]);
+            $session_info = $stmt->fetch();
+            
+            if (!$session_info) {
+                $response['success'] = false;
+                $response['message'] = 'Session not found';
+                break;
+            }
+            
+            // Get attendance records with student information
+            $stmt = $db->prepare("
+                SELECT 
+                    ar.RecordID,
+                    ar.AttendanceStatus,
+                    ar.ScanTime,
+                    s.StudentID,
+                    s.StudentNumber,
+                    CONCAT(u.first_name, ' ', u.last_name) as StudentName,
+                    st.Course,
+                    st.YearLevel
+                FROM attendancerecords ar
+                JOIN students s ON ar.StudentID = s.StudentID
+                JOIN users u ON s.UserID = u.UserID
+                JOIN students st ON s.StudentID = st.StudentID
+                WHERE ar.SessionID = ?
+                ORDER BY ar.ScanTime ASC
+            ");
+            $stmt->execute([$session_id]);
+            $attendance_records = $stmt->fetchAll();
+            
+            // Format records for frontend
+            $formatted_records = [];
+            foreach ($attendance_records as $record) {
+                $formatted_records[] = [
+                    'record_id' => $record['RecordID'],
+                    'studentNumber' => $record['StudentNumber'],
+                    'name' => $record['StudentName'],
+                    'course' => $record['Course'],
+                    'status' => $record['AttendanceStatus'],
+                    'scan_time' => $record['ScanTime']
+                ];
+            }
+            
+            $response['success'] = true;
+            $response['message'] = 'Attendance list retrieved successfully';
+            $response['attendance_records'] = $formatted_records;
+            $response['session_info'] = [
+                'session_id' => $session_info['SessionID'],
+                'subject_id' => $session_info['SubjectID'],
+                'subject_name' => $session_info['SubjectName']
+            ];
+            $response['total_records'] = count($formatted_records);
+            
+            error_log("Get Attendance List Success - Found " . count($formatted_records) . " records for session " . $session_id);
             break;
             
         case 'ping':
