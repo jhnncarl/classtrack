@@ -48,6 +48,7 @@ if ($auth->isLoggedIn()) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClassTrack - Login</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><style>@media (prefers-color-scheme: dark) { path { fill: %23FFFFFF; } } @media (prefers-color-scheme: light) { path { fill: %23000000; } }</style><path d='M3 3h6v6H3V3zm2 2v2h2V5H5zM3 15h6v6H3v-6zm2 2v2h2v-2H5zM15 3h6v6h-6V3zm2 2v2h2V5h-2zM9 5h2v2H9V5zm4 0h2v2h-2V5zm-2 4h2v2h-2V9zm2 2h2v2h-2v-2zm2 2h2v2h-2v-2zm-4 0h2v2H9v-2zm-2 2h2v2H7v-2zm8 0h2v2h-2v-2zm2-2h2v2h-2v-2zm0-4h2v2h-2V9zm-4 4h2v2h-2v-2z'/></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../assets/css/login.css?v=3">
