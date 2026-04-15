@@ -104,7 +104,6 @@ $user_initials = strtoupper(substr($user_name, 0, 2));
     <link rel="stylesheet" href="../assets/css/sidebar.css">
     <link rel="stylesheet" href="../assets/css/attendance.css">
     <link rel="stylesheet" href="../assets/css/toast.css">
-    <link rel="stylesheet" href="../assets/css/join_button_fix.css">
     
     <!-- Inline script to prevent sidebar flicker -->
     <script>
