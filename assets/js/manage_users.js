@@ -14,6 +14,7 @@ function initializeManageUsers() {
     initializeResponsive();
     initializeTooltips();
     initializeConfirmationModal();
+    initializeRegistrationModal();
     
     // Load real data from server
     loadAllUsers();
@@ -731,9 +732,10 @@ function getSelectedPendingUsers() {
 }
 
 function showAddUserModal() {
-    // For now, show a placeholder message
-    // In a full implementation, this would open a modal with user creation form
-    showToast('Add user functionality will be implemented in the next phase', 'info');
+    const modal = document.getElementById('registrationModal');
+    if (modal) {
+        modal.classList.add('active');
+    }
 }
 
 // RBAC/Permissions
@@ -1022,7 +1024,7 @@ function populateAllUsersTable(users) {
     if (users.length === 0) {
         tbody.innerHTML = `
             <tr class="empty-state">
-                <td colspan="6">
+                <td colspan="5">
                     <div class="empty-state-content">
                         <i class="bi bi-people"></i>
                         <h4>No users found</h4>
@@ -1041,7 +1043,6 @@ function populateAllUsersTable(users) {
         
         return `
         <tr data-user-id="${user.UserID}">
-            <td><input type="checkbox" class="form-check-input user-checkbox" value="${user.UserID}"></td>
             <td>
                 <div class="user-info">
                     <div class="user-avatar">
@@ -1089,7 +1090,7 @@ function populateTeachersTable(teachers) {
     if (teachers.length === 0) {
         tbody.innerHTML = `
             <tr class="empty-state">
-                <td colspan="6">
+                <td colspan="5">
                     <div class="empty-state-content">
                         <i class="bi bi-mortarboard"></i>
                         <h4>No teachers found</h4>
@@ -1108,7 +1109,6 @@ function populateTeachersTable(teachers) {
         
         return `
         <tr data-user-id="${teacher.UserID}">
-            <td><input type="checkbox" class="form-check-input user-checkbox" value="${teacher.UserID}"></td>
             <td>
                 <div class="user-info">
                     <div class="user-avatar">
@@ -1149,7 +1149,7 @@ function populateStudentsTable(students) {
     if (students.length === 0) {
         tbody.innerHTML = `
             <tr class="empty-state">
-                <td colspan="6">
+                <td colspan="5">
                     <div class="empty-state-content">
                         <i class="bi bi-book"></i>
                         <h4>No students found</h4>
@@ -1168,7 +1168,6 @@ function populateStudentsTable(students) {
         
         return `
         <tr data-user-id="${student.UserID}">
-            <td><input type="checkbox" class="form-check-input user-checkbox" value="${student.UserID}"></td>
             <td>
                 <div class="user-info">
                     <div class="user-avatar">
@@ -1319,6 +1318,387 @@ function initializeConfirmationModal() {
             currentConfirmationCallback = null;
         });
     }
+}
+
+// Registration Modal Management
+function initializeRegistrationModal() {
+    const modal = document.getElementById('registrationModal');
+    const closeBtn = document.getElementById('closeModal');
+    const modalOverlay = document.getElementById('modalOverlay');
+    
+    // Close modal when clicking close button
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            hideRegistrationModal();
+        });
+    }
+    
+    // Close modal when clicking overlay
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', function() {
+            hideRegistrationModal();
+        });
+    }
+    
+    // Role selection handlers
+    const studentBtn = document.getElementById('studentBtn');
+    const teacherBtn = document.getElementById('teacherBtn');
+    const administratorBtn = document.getElementById('administratorBtn');
+    
+    if (studentBtn) {
+        studentBtn.addEventListener('click', function() {
+            handleRoleSelection('Student');
+        });
+    }
+    
+    if (teacherBtn) {
+        teacherBtn.addEventListener('click', function() {
+            handleRoleSelection('Teacher');
+        });
+    }
+    
+    if (administratorBtn) {
+        administratorBtn.addEventListener('click', function() {
+            handleRoleSelection('Administrator');
+        });
+    }
+    
+    // Form button handlers
+    const backToRolesBtn = document.getElementById('backToRolesBtn');
+    const createAccountBtn = document.getElementById('createAccountBtn');
+    
+    if (backToRolesBtn) {
+        backToRolesBtn.addEventListener('click', function() {
+            showRoleSelection();
+        });
+    }
+    
+    if (createAccountBtn) {
+        createAccountBtn.addEventListener('click', function() {
+            handleCreateAccount();
+        });
+    }
+    
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal && modal.classList.contains('active')) {
+            hideRegistrationModal();
+        }
+    });
+}
+
+function hideRegistrationModal() {
+    const modal = document.getElementById('registrationModal');
+    if (modal) {
+        modal.classList.remove('active');
+        // Reset modal when hidden
+        setTimeout(() => {
+            resetModal();
+        }, 300);
+    }
+}
+
+function handleRoleSelection(role) {
+    // Hide role selection and show form section
+    const roleSelection = document.querySelector('.role-selection');
+    const formSection = document.getElementById('formSection');
+    const welcomeSection = document.querySelector('.welcome-section');
+    const studentTeacherFields = document.getElementById('studentTeacherFields');
+    const adminFields = document.getElementById('adminFields');
+    const formTitle = document.querySelector('.form-title');
+    const formDescription = document.querySelector('.form-description');
+    
+    // Hide role selection and welcome section
+    if (roleSelection) roleSelection.style.display = 'none';
+    if (welcomeSection) welcomeSection.style.display = 'none';
+    
+    // Show form section
+    if (formSection) {
+        formSection.style.display = 'block';
+        formSection.style.animation = 'slideUp 0.4s ease-out';
+    }
+    
+    // Clear all form fields first
+    if (studentTeacherFields) studentTeacherFields.style.display = 'none';
+    if (adminFields) adminFields.style.display = 'none';
+    
+    // Show appropriate form fields based on role
+    if (role === 'Student' || role === 'Teacher') {
+        if (studentTeacherFields) {
+            studentTeacherFields.style.display = 'flex';
+            studentTeacherFields.style.animation = 'slideUp 0.3s ease-out';
+        }
+        formTitle.textContent = `Create New ${role} Account`;
+        formDescription.textContent = 'Please fill in the required information below';
+    } else if (role === 'Administrator') {
+        if (adminFields) {
+            adminFields.style.display = 'flex';
+            adminFields.style.animation = 'slideUp 0.3s ease-out';
+        }
+        formTitle.textContent = 'Create New Administrator Account';
+        formDescription.textContent = 'Please provide a username for the administrator account';
+    }
+    
+    // Store selected role for later use
+    window.selectedRole = role;
+}
+
+function showRoleSelection() {
+    // Show role selection and welcome section
+    const roleSelection = document.querySelector('.role-selection');
+    const formSection = document.getElementById('formSection');
+    const welcomeSection = document.querySelector('.welcome-section');
+    
+    // Hide form section
+    if (formSection) formSection.style.display = 'none';
+    
+    // Show role selection and welcome section
+    if (roleSelection) {
+        roleSelection.style.display = 'grid';
+        roleSelection.style.animation = 'slideUp 0.3s ease-out';
+    }
+    if (welcomeSection) {
+        welcomeSection.style.display = 'block';
+        welcomeSection.style.animation = 'slideUp 0.3s ease-out';
+    }
+    
+    // Clear form fields
+    clearFormFields();
+    
+    // Clear selected role
+    window.selectedRole = null;
+}
+
+function clearFormFields() {
+    // Clear Student/Teacher fields
+    const firstNameInput = document.getElementById('firstName');
+    const lastNameInput = document.getElementById('lastName');
+    const emailInput = document.getElementById('email');
+    
+    if (firstNameInput) firstNameInput.value = '';
+    if (lastNameInput) lastNameInput.value = '';
+    if (emailInput) emailInput.value = '';
+    
+    // Clear Admin fields
+    const usernameInput = document.getElementById('username');
+    if (usernameInput) usernameInput.value = '';
+}
+
+function handleCreateAccount() {
+    const role = window.selectedRole;
+    
+    if (!role) {
+        showToast('Please select an account type first', 'error');
+        return;
+    }
+    
+    let formData = {};
+    let isValid = true;
+    
+    if (role === 'Student' || role === 'Teacher') {
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        
+        // Validation
+        if (!firstName) {
+            showToast('First name is required', 'error');
+            document.getElementById('firstName').focus();
+            isValid = false;
+        } else if (!lastName) {
+            showToast('Last name is required', 'error');
+            document.getElementById('lastName').focus();
+            isValid = false;
+        } else if (!email) {
+            showToast('Email address is required', 'error');
+            document.getElementById('email').focus();
+            isValid = false;
+        } else if (!validateEmail(email)) {
+            showToast('Please enter a valid email address', 'error');
+            document.getElementById('email').focus();
+            isValid = false;
+        } else {
+            formData = { firstName, lastName, email };
+        }
+    } else if (role === 'Administrator') {
+        const username = document.getElementById('username').value.trim();
+        
+        if (!username) {
+            showToast('Username is required', 'error');
+            document.getElementById('username').focus();
+            isValid = false;
+        } else if (username.length < 3) {
+            showToast('Username must be at least 3 characters long', 'error');
+            document.getElementById('username').focus();
+            isValid = false;
+        } else {
+            formData = { username };
+        }
+    }
+    
+    if (isValid) {
+        // Show loading state
+        const createBtn = document.getElementById('createAccountBtn');
+        const originalText = createBtn.innerHTML;
+        createBtn.innerHTML = '<i class="bi bi-spinner me-2"></i>Creating...';
+        createBtn.disabled = true;
+        
+        // Prepare data for backend
+        const requestData = {
+            accountType: role,
+            ...formData
+        };
+        
+        // Send AJAX request to backend
+        fetch('../api/register_user.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                
+                // Show credentials modal only for admin accounts
+                if (role === 'Administrator' && data.data && data.data.tempPassword) {
+                    setTimeout(() => {
+                        showCredentialsModal(data.data, role);
+                    }, 1000);
+                } else {
+                    // For Student/Teacher accounts, just close modal and reset
+                    setTimeout(() => {
+                        hideRegistrationModal();
+                        resetModal();
+                    }, 1500);
+                }
+                
+                // Refresh user lists if they exist
+                if (typeof loadAllUsers === 'function') {
+                    setTimeout(() => {
+                        loadAllUsers();
+                    }, 2000);
+                }
+            } else {
+                showToast(data.message || 'Failed to create account', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Registration error:', error);
+            showToast('An error occurred while creating the account', 'error');
+        })
+        .finally(() => {
+            // Restore button state
+            createBtn.innerHTML = originalText;
+            createBtn.disabled = false;
+        });
+    }
+}
+
+function validateEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+function showCredentialsModal(data, accountType) {
+    // Create credentials modal HTML
+    const modalHTML = `
+        <div class="modal fade" id="credentialsModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-shield-check me-2"></i>
+                            Account Created Successfully
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle me-2"></i>
+                            ${accountType} account has been created successfully!
+                        </div>
+                        
+                        <div class="credentials-info">
+                            <h6><i class="bi bi-key me-2"></i>Login Credentials:</h6>
+                            <div class="credential-item">
+                                <strong>${accountType === 'Administrator' ? 'Username:' : 'Email:'}</strong>
+                                <span class="credential-value">${data.username || data.email}</span>
+                            </div>
+                            <div class="credential-item">
+                                <strong>Temporary Password:</strong>
+                                <span class="credential-value password">${data.tempPassword}</span>
+                                <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyPassword('${data.tempPassword}')">
+                                    <i class="bi bi-clipboard"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning mt-3">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Important:</strong> This is a temporary password. The user must change it upon first login.
+                        </div>
+                        
+                        ${accountType === 'Administrator' ? `
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Note:</strong> For security reasons, admin credentials are not sent via email. Please save these credentials securely.
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                            <i class="bi bi-check me-2"></i>Got it
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing credentials modal if any
+    const existingModal = document.getElementById('credentialsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('credentialsModal'));
+    modal.show();
+    
+    // Remove modal from DOM when hidden
+    document.getElementById('credentialsModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+        hideRegistrationModal();
+        resetModal();
+    });
+}
+
+function copyPassword(password) {
+    navigator.clipboard.writeText(password).then(function() {
+        showToast('Password copied to clipboard', 'success');
+    }).catch(function() {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = password;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showToast('Password copied to clipboard', 'success');
+    });
+}
+
+function resetModal() {
+    // Reset to initial state
+    showRoleSelection();
+    clearFormFields();
+    window.selectedRole = null;
 }
 
 // Toast Notification Helper

@@ -226,7 +226,7 @@ function createUser($db, $userData) {
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/navbar.css">
     <link rel="stylesheet" href="../assets/css/sidebar.css">
-    <link rel="stylesheet" href="../assets/css/manage_users.css?v=8">
+    <link rel="stylesheet" href="../assets/css/manage_users.css?v=26">
     <link rel="stylesheet" href="../assets/css/toast.css">
     
     <!-- Inline script to prevent sidebar flicker -->
@@ -345,9 +345,6 @@ function createUser($db, $userData) {
                                     <table class="table users-table" id="allUsersTable">
                                     <thead>
                                         <tr>
-                                            <th>
-                                                <input type="checkbox" class="form-check-input" id="selectAllAll">
-                                            </th>
                                             <th>User</th>
                                             <th>Role</th>
                                             <th>Status</th>
@@ -358,7 +355,7 @@ function createUser($db, $userData) {
                                     <tbody id="allUsersTableBody">
                                         <!-- Empty State -->
                                         <tr class="empty-state">
-                                            <td colspan="6">
+                                            <td colspan="5">
                                                 <div class="empty-state-content">
                                                     <i class="bi bi-people"></i>
                                                     <h4>No users found</h4>
@@ -396,9 +393,6 @@ function createUser($db, $userData) {
                                     <table class="table users-table" id="teachersTable">
                                     <thead>
                                         <tr>
-                                            <th>
-                                                <input type="checkbox" class="form-check-input" id="selectAllTeachers">
-                                            </th>
                                             <th>Teacher</th>
                                             <th>Department</th>
                                             <th>Status</th>
@@ -409,7 +403,7 @@ function createUser($db, $userData) {
                                     <tbody id="teachersTableBody">
                                         <!-- Empty State -->
                                         <tr class="empty-state">
-                                            <td colspan="6">
+                                            <td colspan="5">
                                                 <div class="empty-state-content">
                                                     <i class="bi bi-mortarboard"></i>
                                                     <h4>No teachers found</h4>
@@ -447,9 +441,6 @@ function createUser($db, $userData) {
                                     <table class="table users-table" id="studentsTable">
                                     <thead>
                                         <tr>
-                                            <th>
-                                                <input type="checkbox" class="form-check-input" id="selectAllStudents">
-                                            </th>
                                             <th>Student</th>
                                             <th>ID Number</th>
                                             <th>Section</th>
@@ -460,7 +451,7 @@ function createUser($db, $userData) {
                                     <tbody id="studentsTableBody">
                                         <!-- Empty State -->
                                         <tr class="empty-state">
-                                            <td colspan="6">
+                                            <td colspan="5">
                                                 <div class="empty-state-content">
                                                     <i class="bi bi-book"></i>
                                                     <h4>No students found</h4>
@@ -825,6 +816,125 @@ function createUser($db, $userData) {
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Registration Modal -->
+    <div class="registration-modal" id="registrationModal">
+        <div class="modal-overlay" id="modalOverlay"></div>
+        <div class="registration-card">
+            <!-- Modal Header -->
+            <div class="registration-header">
+                <div class="logo-section">
+                    <div class="admin-logo">🛡️</div>
+                    <div class="header-text">
+                        <h2 class="admin-title">Create New Account</h2>
+                        <p class="admin-subtitle">Choose the type of account to create</p>
+                    </div>
+                </div>
+                <button class="close-btn" id="closeModal" aria-label="Close modal">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="registration-body">
+                <div class="welcome-section">
+                    <div class="welcome-text">Select Account Type</div>
+                    <p class="form-subtitle">Choose the role that best describes the user you want to create</p>
+                </div>
+                
+                <div class="role-selection">
+                    <button class="role-btn student-btn" id="studentBtn" aria-label="Select Student account type">
+                        <div class="role-icon-wrapper">
+                            <svg class="role-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 14l9-5-9-5-9 5 9 5z"></path>
+                                <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
+                                <path d="M12 14v7"></path>
+                            </svg>
+                        </div>
+                        <div class="role-content">
+                            <span class="role-title">Student</span>
+                            <span class="role-description">For enrolled students</span>
+                        </div>
+                    </button>
+                    
+                    <button class="role-btn teacher-btn" id="teacherBtn" aria-label="Select Teacher account type">
+                        <div class="role-icon-wrapper">
+                            <svg class="role-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="8.5" cy="7" r="4"></circle>
+                                <path d="M20 8v6M23 11h-6"></path>
+                            </svg>
+                        </div>
+                        <div class="role-content">
+                            <span class="role-title">Teacher</span>
+                            <span class="role-description">For faculty members</span>
+                        </div>
+                    </button>
+                    
+                    <button class="role-btn admin-btn" id="administratorBtn" aria-label="Select Administrator account type">
+                        <div class="role-icon-wrapper">
+                            <svg class="role-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                <path d="M9 12l2 2 4-4"></path>
+                            </svg>
+                        </div>
+                        <div class="role-content">
+                            <span class="role-title">Administrator</span>
+                            <span class="role-description">For system admins</span>
+                        </div>
+                    </button>
+                </div>
+                
+                <!-- Dynamic Form Section -->
+                <div class="form-section" id="formSection" style="display: none;">
+                    <div class="form-header">
+                        <h3 class="form-title">Account Information</h3>
+                        <p class="form-description">Please fill in the required information</p>
+                    </div>
+                    
+                    <!-- Student/Teacher Form Fields -->
+                    <div class="form-fields" id="studentTeacherFields">
+                        <div class="form-group">
+                            <label for="firstName" class="form-label">First Name</label>
+                            <input type="text" class="form-input" id="firstName" name="firstName" placeholder="Enter first name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="lastName" class="form-label">Last Name</label>
+                            <input type="text" class="form-input" id="lastName" name="lastName" placeholder="Enter last name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-input" id="email" name="email" placeholder="Enter email address" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Admin Form Fields -->
+                    <div class="form-fields" id="adminFields" style="display: none;">
+                        <div class="form-group">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-input" id="username" name="username" placeholder="Enter username" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="backToRolesBtn">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Roles
+                        </button>
+                        <button type="button" class="btn btn-primary" id="createAccountBtn">
+                            <i class="bi bi-person-plus me-2"></i>Create Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        
     <!-- Edit User Modal -->
     <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -968,6 +1078,6 @@ function createUser($db, $userData) {
     </div>
 
     <!-- Custom JavaScript -->
-    <script src="../assets/js/manage_users.js?v=8"></script>
+    <script src="../assets/js/manage_users.js?v=15"></script>
 </body>
 </html>
