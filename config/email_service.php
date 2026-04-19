@@ -47,6 +47,50 @@ class EmailService {
     }
     
     /**
+     * Send account creation email
+     * @param string $toEmail
+     * @param string $firstName
+     * @param string $subject
+     * @param string $emailBody
+     * @return array
+     */
+    public function sendAccountCreationEmail($toEmail, $firstName, $subject, $emailBody) {
+        try {
+            if (!$this->config->isConfigured()) {
+                return ['success' => false, 'message' => 'Email service not configured'];
+            }
+            
+            $this->mailer->clearAddresses();
+            $this->mailer->clearAttachments();
+            
+            // Recipients
+            $smtpConfig = $this->config->getSmtpConfig();
+            $this->mailer->setFrom($smtpConfig['from_email'], $smtpConfig['from_name']);
+            $this->mailer->addAddress($toEmail, $firstName);
+            
+            // Set reply-to to a different address (optional)
+            $this->mailer->addReplyTo('admin@classtrack.system', 'ClassTrack Support');
+            
+            // Content
+            $this->mailer->isHTML(true);
+            $this->mailer->Subject = $subject;
+            $this->mailer->Body = $emailBody;
+            
+            // Create plain text version
+            $plainTextBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $emailBody));
+            $this->mailer->AltBody = $plainTextBody;
+            
+            $this->mailer->send();
+            
+            return ['success' => true, 'message' => 'Account creation email sent successfully'];
+            
+        } catch (Exception $e) {
+            error_log("Email Send Error: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Failed to send account creation email: ' . $e->getMessage()];
+        }
+    }
+    
+    /**
      * Send OTP email
      * @param string $toEmail
      * @param string $otp
