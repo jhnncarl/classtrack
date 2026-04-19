@@ -63,12 +63,12 @@ function updateUserProfile() {
     // Debug: Log function start
     error_log("=== UPDATE USER PROFILE FUNCTION STARTED ===");
     
+    // Regular user session handling
     if (!isset($_SESSION['user_id']) || !is_numeric($_SESSION['user_id'])) {
         error_log("ERROR: User not logged in or invalid user_id");
         echo json_encode(['success' => false, 'message' => 'User not logged in']);
         exit;
     }
-    
     $user_id = $_SESSION['user_id'];
     error_log("User ID: " . $user_id);
     
@@ -360,14 +360,11 @@ function updateUserProfile() {
     exit;
 }
 
-// Get user information from session or use default values for demo
-$user_role = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : 'student'; // Default to student for demo
-$user_name = isset($_SESSION['user_first_name']) && isset($_SESSION['user_last_name']) ? 
-    $_SESSION['user_first_name'] . ' ' . $_SESSION['user_last_name'] : 
-    (isset($_SESSION['user_first_name']) ? $_SESSION['user_first_name'] : 'Demo Student');
-$user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : ($user_role === 'student' ? 'STU001234' : 'TCH001234');
 
-// Fetch actual user data from database
+// Get user information from session
+$user_role = '';
+$user_name = '';
+$user_id = '';
 $user_email = '';
 $user_fullname = '';
 $department = '';
@@ -375,6 +372,14 @@ $course = '';
 $year_level_num = '';
 $profile_picture = '';
 
+// Regular user session handling
+$user_role = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : 'student';
+$user_name = isset($_SESSION['user_first_name']) && isset($_SESSION['user_last_name']) ? 
+    $_SESSION['user_first_name'] . ' ' . $_SESSION['user_last_name'] : 
+    (isset($_SESSION['user_first_name']) ? $_SESSION['user_first_name'] : 'Demo Student');
+$user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : ($user_role === 'student' ? 'STU001234' : 'TCH001234');
+
+// Fetch actual user data from database
 if (isset($_SESSION['user_id']) && is_numeric($_SESSION['user_id'])) {
     try {
         $stmt = $db->prepare("SELECT u.first_name, u.last_name, u.Email, u.Role, u.ProfilePicture,
@@ -507,16 +512,6 @@ if (!empty($year_level_num)) {
     <!-- Main Content Area -->
     <main class="main-content">
         <div class="container-fluid">
-            <!-- Settings Header -->
-            <div class="settings-header">
-                <div class="d-flex align-items-center mb-4">
-                    <div>
-                        <h1 class="page-title">Settings</h1>
-                        <p class="page-subtitle">Manage your profile and preferences</p>
-                    </div>
-                </div>
-            </div>
-
             <!-- Settings Navigation -->
             <div class="settings-nav">
                 <div class="nav-tabs-custom">
@@ -560,21 +555,29 @@ if (!empty($year_level_num)) {
                     <div class="profile-info-section">
                         <h4 class="section-title">Personal Information</h4>
                         
-                        <?php if (strtolower($user_role) === 'student'): ?>
-                        <!-- Student Fields -->
+                        <!-- Student/Teacher Fields -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">First Name</label>
-                                <input type="text" class="form-control" id="firstName" value="<?php echo htmlspecialchars($first_name); ?>" placeholder="Enter first name">
+                                <input type="text" class="form-control" id="firstName" value="<?php echo htmlspecialchars($first_name ?? ''); ?>" placeholder="Enter first name">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Last Name</label>
-                                <input type="text" class="form-control" id="lastName" value="<?php echo htmlspecialchars($last_name); ?>" placeholder="Enter last name">
+                                <input type="text" class="form-control" id="lastName" value="<?php echo htmlspecialchars($last_name ?? ''); ?>" placeholder="Enter last name">
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Email</label>
+                                <label class="form-label">Email Address</label>
                                 <input type="email" class="form-control" id="email" value="<?php echo htmlspecialchars($user_email); ?>" placeholder="Enter email address">
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Role</label>
+                                <input type="text" class="form-control" value="<?php echo htmlspecialchars(ucfirst($user_role)); ?>" readonly>
+                            </div>
+                        </div>
+                        
+                        <?php if (strtolower($user_role) === 'student'): ?>
+                        <!-- Student Specific Fields -->
+                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Course</label>
                                 <input type="text" class="form-control" id="course" value="<?php echo htmlspecialchars($course); ?>" placeholder="Enter course">
@@ -582,29 +585,17 @@ if (!empty($year_level_num)) {
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Year Level</label>
                                 <select class="form-control" id="yearLevel">
-                                    <option value="1st Year" <?php echo $year_level_text === '1st Year' ? 'selected' : ''; ?>>1st Year</option>
-                                    <option value="2nd Year" <?php echo $year_level_text === '2nd Year' ? 'selected' : ''; ?>>2nd Year</option>
-                                    <option value="3rd Year" <?php echo $year_level_text === '3rd Year' ? 'selected' : ''; ?>>3rd Year</option>
-                                    <option value="4th Year" <?php echo $year_level_text === '4th Year' ? 'selected' : ''; ?>>4th Year</option>
-                                    <option value="5th Year" <?php echo $year_level_text === '5th Year' ? 'selected' : ''; ?>>5th Year</option>
+                                    <option value="1st Year" <?php echo ($year_level_text === '1st Year') ? 'selected' : ''; ?>>1st Year</option>
+                                    <option value="2nd Year" <?php echo ($year_level_text === '2nd Year') ? 'selected' : ''; ?>>2nd Year</option>
+                                    <option value="3rd Year" <?php echo ($year_level_text === '3rd Year') ? 'selected' : ''; ?>>3rd Year</option>
+                                    <option value="4th Year" <?php echo ($year_level_text === '4th Year') ? 'selected' : ''; ?>>4th Year</option>
+                                    <option value="5th Year" <?php echo ($year_level_text === '5th Year') ? 'selected' : ''; ?>>5th Year</option>
                                 </select>
                             </div>
                         </div>
-                        <?php else: ?>
-                        <!-- Teacher Fields -->
+                        <?php elseif (strtolower($user_role) === 'teacher'): ?>
+                        <!-- Teacher Specific Fields -->
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">First Name</label>
-                                <input type="text" class="form-control" id="firstName" value="<?php echo htmlspecialchars($first_name); ?>" placeholder="Enter first name">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Last Name</label>
-                                <input type="text" class="form-control" id="lastName" value="<?php echo htmlspecialchars($last_name); ?>" placeholder="Enter last name">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" value="<?php echo htmlspecialchars($user_email); ?>" placeholder="Enter email address">
-                            </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Department</label>
                                 <input type="text" class="form-control" id="department" value="<?php echo htmlspecialchars($department); ?>" placeholder="Enter department">

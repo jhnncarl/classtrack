@@ -35,9 +35,9 @@ function storeOriginalFormValues() {
     const formInputs = document.querySelectorAll('.form-control');
     
     originalFormValues = {
-        firstName: document.getElementById('firstName').value,
-        lastName: document.getElementById('lastName').value,
-        email: document.getElementById('email').value,
+        firstName: document.getElementById('firstName')?.value || '',
+        lastName: document.getElementById('lastName')?.value || '',
+        email: document.getElementById('email')?.value || '',
         course: document.getElementById('course')?.value || '',
         yearLevel: document.getElementById('yearLevel')?.value || '3rd Year',
         department: document.getElementById('department')?.value || '',
@@ -415,9 +415,9 @@ function saveInfo() {
     // Collect form data
     const formData = {
         action: 'update_profile',
-        firstName: document.getElementById('firstName').value,
-        lastName: document.getElementById('lastName').value,
-        email: document.getElementById('email').value,
+        firstName: document.getElementById('firstName')?.value || '',
+        lastName: document.getElementById('lastName')?.value || '',
+        email: document.getElementById('email')?.value || '',
         course: document.getElementById('course')?.value || '',
         yearLevel: document.getElementById('yearLevel')?.value || '',
         department: document.getElementById('department')?.value || '',
