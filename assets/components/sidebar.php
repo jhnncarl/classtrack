@@ -1,3 +1,29 @@
+<?php
+// Handle logout request
+if (isset($_GET['action']) && $_GET['action'] === 'logout') {
+    // Start session if not already started
+    if (session_status() == PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    // Check if this was an admin session using multiple indicators
+    $isAdminSession = (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) ||
+                      (isset($_SESSION['admin_id']) && !empty($_SESSION['admin_id'])) ||
+                      (isset($_SESSION['admin_username']) && !empty($_SESSION['admin_username']));
+    
+    // Destroy session for both admin and regular users
+    session_destroy();
+    
+    // Redirect to appropriate login page based on session type
+    if ($isAdminSession) {
+        header('Location: ../../auth/admin/admin_login.php');
+    } else {
+        header('Location: ../../auth/login.php');
+    }
+    exit;
+}
+?>
+
 <!-- Sidebar Navigation -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-container">
@@ -5,7 +31,11 @@
         <nav class="sidebar-nav">
             <ul class="sidebar-menu">
                 <?php
-                // Get current user role from session
+                // Check for admin session first
+                $isAdminLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true;
+                $isAdmin = $isAdminLoggedIn && isset($_SESSION['admin_role']);
+                
+                // Get current user role from session (for regular users)
                 $userRole = $_SESSION['user_role'] ?? null;
                 
                 // Student Menu
@@ -13,7 +43,7 @@
                 ?>
                     <!-- Dashboard -->
                     <li class="sidebar-item">
-                        <a href="../student/dashboard.php" class="sidebar-link active" data-page="dashboard">
+                        <a href="../student/dashboard.php" class="sidebar-link <?php echo (basename($_SERVER['PHP_SELF']) === 'dashboard.php') ? 'active' : ''; ?>" data-page="dashboard">
                             <i class="bi bi-house-door sidebar-icon"></i>
                             <span class="sidebar-text">Dashboard</span>
                         </a>
@@ -21,7 +51,7 @@
                     
                     <!-- Subjects Enrolled -->
                     <li class="sidebar-item">
-                        <a href="../student/subjects.php" class="sidebar-link" data-page="subjects">
+                        <a href="../student/subjects.php" class="sidebar-link <?php echo (basename($_SERVER['PHP_SELF']) === 'subjects.php') ? 'active' : ''; ?>" data-page="subjects">
                             <i class="bi bi-book sidebar-icon"></i>
                             <span class="sidebar-text">Subjects Enrolled</span>
                         </a>
@@ -29,7 +59,7 @@
                     
                     <!-- Attendance History -->
                     <li class="sidebar-item">
-                        <a href="../student/attendance_history.php" class="sidebar-link" data-page="attendance-history">
+                        <a href="../student/attendance_history.php" class="sidebar-link <?php echo (basename($_SERVER['PHP_SELF']) === 'attendance_history.php') ? 'active' : ''; ?>" data-page="attendance-history">
                             <i class="bi bi-graph-up sidebar-icon"></i>
                             <span class="sidebar-text">Attendance History</span>
                         </a>
@@ -37,7 +67,7 @@
                     
                     <!-- Settings -->
                     <li class="sidebar-item">
-                        <a href="../settings_page/settings.php" class="sidebar-link" data-page="settings">
+                        <a href="../settings_page/settings.php" class="sidebar-link <?php echo (basename($_SERVER['PHP_SELF']) === 'settings.php') ? 'active' : ''; ?>" data-page="settings">
                             <i class="bi bi-gear sidebar-icon"></i>
                             <span class="sidebar-text">Settings</span>
                         </a>
@@ -81,11 +111,11 @@
                 
                 <?php
                 // Administrator Menu
-                elseif ($userRole === 'Administrator'):
+                elseif ($isAdmin):
                 ?>
                     <!-- Dashboard -->
                     <li class="sidebar-item">
-                        <a href="../admin/dashboard.php" class="sidebar-link active" data-page="dashboard">
+                        <a href="../admin/dashboard.php" class="sidebar-link <?php echo (basename($_SERVER['PHP_SELF']) === 'dashboard.php') ? 'active' : ''; ?>" data-page="dashboard">
                             <i class="bi bi-speedometer2 sidebar-icon"></i>
                             <span class="sidebar-text">Dashboard</span>
                         </a>
@@ -93,15 +123,15 @@
                     
                     <!-- Manage Users / Roles -->
                     <li class="sidebar-item">
-                        <a href="../admin/users.php" class="sidebar-link" data-page="users">
+                        <a href="../admin/manage_users.php" class="sidebar-link <?php echo (basename($_SERVER['PHP_SELF']) === 'manage_users.php') ? 'active' : ''; ?>" data-page="users">
                             <i class="bi bi-person-gear sidebar-icon"></i>
-                            <span class="sidebar-text">Manage Users / Roles</span>
+                            <span class="sidebar-text">Manage Users</span>
                         </a>
                     </li>
                     
                     <!-- Settings -->
                     <li class="sidebar-item">
-                        <a href="../settings_page/settings.php" class="sidebar-link" data-page="settings">
+                        <a href="../admin/settings.php" class="sidebar-link <?php echo (basename($_SERVER['PHP_SELF']) === 'settings.php') ? 'active' : ''; ?>" data-page="settings">
                             <i class="bi bi-gear sidebar-icon"></i>
                             <span class="sidebar-text">Settings</span>
                         </a>
@@ -111,7 +141,7 @@
                 
                 <!-- Log Out (Common for all roles) -->
                 <li class="sidebar-item">
-                    <a href="#" class="sidebar-link" data-page="logout">
+                    <a href="?action=logout" class="sidebar-link" data-page="logout">
                         <i class="bi bi-box-arrow-right sidebar-icon"></i>
                         <span class="sidebar-text">Sign Out</span>
                     </a>
@@ -155,4 +185,4 @@
 <link rel="stylesheet" href="../assets/css/toast.css">
 
 <!-- Include Sidebar JavaScript -->
-<script src="../assets/js/sidebar.js?v=2"></script>
+<script src="../assets/js/sidebar.js?v=3"></script>

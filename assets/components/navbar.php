@@ -11,25 +11,56 @@ if (file_exists($configPath)) {
     }
 }
 
-// Get current user role
-$userRole = $auth->getUserRole();
-$isLoggedIn = $auth->isLoggedIn();
+// Check for admin session first
+$isAdminLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true;
+$isAdmin = $isAdminLoggedIn && isset($_SESSION['admin_role']);
 
-// Ensure profile path is available in session - fetch from database if needed
-if ($isLoggedIn && (!isset($_SESSION['user_profile_path']) || empty($_SESSION['user_profile_path']))) {
-    try {
-        require_once __DIR__ . '/../../config/database.php';
-        $db = (new Database())->getConnection();
-        
-        $stmt = $db->prepare("SELECT ProfilePicture FROM users WHERE UserID = ?");
-        $stmt->execute([$_SESSION['user_id']]);
-        $user = $stmt->fetch();
-        
-        if ($user && !empty($user['ProfilePicture'])) {
-            $_SESSION['user_profile_path'] = $user['ProfilePicture'];
+// Get current user role (for regular users)
+$userRole = null;
+$isLoggedIn = false;
+
+if (!$isAdminLoggedIn) {
+    // Only load auth for non-admin sessions
+    if (file_exists($configPath)) {
+        require_once $configPath;
+        $userRole = $auth->getUserRole();
+        $isLoggedIn = $auth->isLoggedIn();
+    }
+    
+    // Ensure profile path is available in session - fetch from database if needed
+    if ($isLoggedIn && (!isset($_SESSION['user_profile_path']) || empty($_SESSION['user_profile_path']))) {
+        try {
+            require_once __DIR__ . '/../../config/database.php';
+            $db = (new Database())->getConnection();
+            
+            $stmt = $db->prepare("SELECT ProfilePicture FROM users WHERE UserID = ?");
+            $stmt->execute([$_SESSION['user_id']]);
+            $user = $stmt->fetch();
+            
+            if ($user && !empty($user['ProfilePicture'])) {
+                $_SESSION['user_profile_path'] = $user['ProfilePicture'];
+            }
+        } catch (Exception $e) {
+            error_log("Error fetching profile path: " . $e->getMessage());
         }
-    } catch (Exception $e) {
-        error_log("Error fetching profile path: " . $e->getMessage());
+    }
+} else {
+    // For admin sessions, fetch admin profile picture if not already in session
+    if (!isset($_SESSION['admin_profile_path']) || empty($_SESSION['admin_profile_path'])) {
+        try {
+            require_once __DIR__ . '/../../config/database.php';
+            $db = (new Database())->getConnection();
+            
+            $stmt = $db->prepare("SELECT profile_pic FROM admins WHERE admin_id = ?");
+            $stmt->execute([$_SESSION['admin_id']]);
+            $admin = $stmt->fetch();
+            
+            if ($admin && !empty($admin['profile_pic'])) {
+                $_SESSION['admin_profile_path'] = $admin['profile_pic'];
+            }
+        } catch (Exception $e) {
+            error_log("Error fetching admin profile path: " . $e->getMessage());
+        }
     }
 }
 ?>
@@ -87,18 +118,35 @@ if ($isLoggedIn && (!isset($_SESSION['user_profile_path']) || empty($_SESSION['u
                 <?php if ($isLoggedIn && $userRole === 'Administrator'): ?>
                 <!-- Administrator role - No plus icon, only profile -->
                 <?php endif; ?>
+                
+                <?php if ($isAdmin): ?>
+                <!-- Admin role - Show admin-specific options if needed -->
+                <?php endif; ?>
 
                 <!-- Profile Picture -->
                 <div class="position-relative">
                     <button class="btn-icon btn-icon-large" id="navbarProfileBtn">
                         <?php 
-                        $profilePath = $_SESSION['user_profile_path'] ?? null;
-                        if ($profilePath && !empty($profilePath)) {
-                            // Ensure proper path resolution from web root with classtrack prefix
-                            $fullPath = '/classtrack/' . ltrim($profilePath, '/');
-                            echo '<img src="' . htmlspecialchars($fullPath) . '" alt="Profile" class="rounded-circle">';
+                        if ($isAdmin) {
+                            // Admin users get profile picture or default admin icon
+                            $adminProfilePath = $_SESSION['admin_profile_path'] ?? null;
+                            if ($adminProfilePath && !empty($adminProfilePath)) {
+                                // Ensure proper path resolution from web root with classtrack prefix
+                                $fullPath = '/classtrack/' . ltrim($adminProfilePath, '/');
+                                echo '<img src="' . htmlspecialchars($fullPath) . '" alt="Admin Profile" class="rounded-circle">';
+                            } else {
+                                echo '<i class="bi bi-shield-fill" style="font-size: 40px; color: #6c757d;"></i>';
+                            }
                         } else {
-                            echo '<i class="bi bi-person-circle" style="font-size: 40px; color: #9b9b9b;"></i>';
+                            // Regular users get profile picture or default icon
+                            $profilePath = $_SESSION['user_profile_path'] ?? null;
+                            if ($profilePath && !empty($profilePath)) {
+                                // Ensure proper path resolution from web root with classtrack prefix
+                                $fullPath = '/classtrack/' . ltrim($profilePath, '/');
+                                echo '<img src="' . htmlspecialchars($fullPath) . '" alt="Profile" class="rounded-circle">';
+                            } else {
+                                echo '<i class="bi bi-person-circle" style="font-size: 40px; color: #9b9b9b;"></i>';
+                            }
                         }
                         ?>
                     </button>
@@ -316,8 +364,14 @@ if ($isLoggedIn && (!isset($_SESSION['user_profile_path']) || empty($_SESSION['u
 
     <script>
         // Pass user role to JavaScript
+        <?php if ($isAdmin): ?>
+        window.currentUserRole = 'Administrator';
+        window.isAdmin = true;
+        <?php else: ?>
         window.currentUserRole = <?php echo json_encode($isLoggedIn ? $userRole : null); ?>;
+        window.isAdmin = false;
+        <?php endif; ?>
     </script>
     <link rel="stylesheet" href="/classtrack/assets/css/toast.css?v=4">
-    <link rel="stylesheet" href="/classtrack/assets/css/navbar.css?v=20">
+    <link rel="stylesheet" href="/classtrack/assets/css/navbar.css?v=23">
     <script src="/classtrack/assets/js/navbar.js"></script>
