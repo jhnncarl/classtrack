@@ -54,6 +54,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             echo json_encode(createUser($db, $userData));
             exit;
             
+        case 'updateUser':
+            $userId = $_POST['userId'] ?? 0;
+            $userData = json_decode($_POST['userData'] ?? '{}', true);
+            echo json_encode(updateUser($db, $userId, $userData));
+            exit;
+            
             }
 }
 
@@ -82,7 +88,7 @@ function getTeachers($db) {
     $sql = "SELECT u.UserID, u.first_name, u.last_name, u.Email, u.AccountStatus, u.CreatedAt, u.ProfilePicture,
             t.Department, COUNT(sub.SubjectID) as ClassCount
             FROM users u
-            INNER JOIN teachers t ON u.UserID = t.UserID
+            LEFT JOIN teachers t ON u.UserID = t.UserID
             LEFT JOIN subjects sub ON t.TeacherID = sub.TeacherID
             WHERE u.Role = 'Teacher'
             GROUP BY u.UserID, t.Department
@@ -96,7 +102,7 @@ function getStudents($db) {
     $sql = "SELECT DISTINCT u.UserID, u.first_name, u.last_name, u.Email, u.AccountStatus, u.CreatedAt, u.ProfilePicture,
             s.StudentNumber, s.Course, s.YearLevel, sub.SectionName
             FROM users u
-            INNER JOIN students s ON u.UserID = s.UserID
+            LEFT JOIN students s ON u.UserID = s.UserID
             LEFT JOIN enrollments e ON s.StudentID = e.StudentID
             LEFT JOIN subjects sub ON e.SubjectID = sub.SubjectID
             WHERE u.Role = 'Student'
@@ -201,6 +207,46 @@ function createUser($db, $userData) {
     }
 }
 
+function updateUser($db, $userId, $userData) {
+    try {
+        // Update AccountStatus if provided
+        if (isset($userData['account_status'])) {
+            $stmt = $db->prepare("UPDATE users SET AccountStatus = ? WHERE UserID = ?");
+            $stmt->execute([$userData['account_status'], $userId]);
+        }
+        
+        // Update other fields as needed
+        if (isset($userData['firstName'])) {
+            $stmt = $db->prepare("UPDATE users SET first_name = ? WHERE UserID = ?");
+            $stmt->execute([$userData['firstName'], $userId]);
+        }
+        
+        if (isset($userData['lastName'])) {
+            $stmt = $db->prepare("UPDATE users SET last_name = ? WHERE UserID = ?");
+            $stmt->execute([$userData['lastName'], $userId]);
+        }
+        
+        if (isset($userData['email'])) {
+            $stmt = $db->prepare("UPDATE users SET Email = ? WHERE UserID = ?");
+            $stmt->execute([$userData['email'], $userId]);
+        }
+        
+        if (isset($userData['role'])) {
+            $stmt = $db->prepare("UPDATE users SET Role = ? WHERE UserID = ?");
+            $stmt->execute([$userData['role'], $userId]);
+        }
+        
+        if (isset($userData['status'])) {
+            $stmt = $db->prepare("UPDATE users SET AccountStatus = ? WHERE UserID = ?");
+            $stmt->execute([$userData['status'], $userId]);
+        }
+        
+        return ['success' => true, 'message' => 'User updated successfully'];
+    } catch(PDOException $e) {
+        return ['success' => false, 'message' => 'Error updating user: ' . $e->getMessage()];
+    }
+}
+
 
 ?>
 
@@ -226,7 +272,7 @@ function createUser($db, $userData) {
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/navbar.css">
     <link rel="stylesheet" href="../assets/css/sidebar.css">
-    <link rel="stylesheet" href="../assets/css/manage_users.css?v=26">
+    <link rel="stylesheet" href="../assets/css/manage_users.css?v=30">
     <link rel="stylesheet" href="../assets/css/toast.css">
     
     <!-- Inline script to prevent sidebar flicker -->
@@ -380,7 +426,6 @@ function createUser($db, $userData) {
                                 <div class="table-actions">
                                     <div class="search-box">
                                         <input type="text" class="form-control" placeholder="Search teachers..." id="searchTeachers">
-                                        <i class="bi bi-search"></i>
                                     </div>
                                     <button class="btn btn-search btn-sm" id="searchTeachersBtn">
                                         <i class="bi bi-search me-1"></i>Search
@@ -428,7 +473,6 @@ function createUser($db, $userData) {
                                 <div class="table-actions">
                                     <div class="search-box">
                                         <input type="text" class="form-control" placeholder="Search students..." id="searchStudents">
-                                        <i class="bi bi-search"></i>
                                     </div>
                                     <button class="btn btn-search btn-sm" id="searchStudentsBtn">
                                         <i class="bi bi-search me-1"></i>Search
@@ -443,7 +487,7 @@ function createUser($db, $userData) {
                                         <tr>
                                             <th>Student</th>
                                             <th>ID Number</th>
-                                            <th>Section</th>
+                                            <th>Course</th>
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
@@ -896,6 +940,11 @@ function createUser($db, $userData) {
                     
                     <!-- Student/Teacher Form Fields -->
                     <div class="form-fields" id="studentTeacherFields">
+                        <div class="form-group" id="studentNumberGroup" style="display: none;">
+                            <label for="studentNumber" class="form-label">Student Number</label>
+                            <input type="text" class="form-input" id="studentNumber" name="studentNumber" placeholder="Enter student number" required style="padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: 'Montserrat', sans-serif; transition: all 0.2s ease; background: #ffffff; width: 100%; box-sizing: border-box;">
+                        </div>
+                        
                         <div class="form-group">
                             <label for="firstName" class="form-label">First Name</label>
                             <input type="text" class="form-input" id="firstName" name="firstName" placeholder="Enter first name" required>
@@ -1077,7 +1126,57 @@ function createUser($db, $userData) {
         </div>
     </div>
 
+    <!-- QR Code Success Modal -->
+    <div class="qr-success-modal" id="studentQRModal" style="display: none;">
+        <div class="modal-overlay" id="modalOverlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Student Account Created Successfully!</h3>
+                <button class="close-btn" id="closeModal">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="success-content">
+                    <div class="qr-section">
+                        <div class="qr-container" id="qrContainer">
+                            <img id="qrCodeImage" src="" alt="Student QR Code" class="qr-code-image-large">
+                        </div>
+                        <p class="qr-description">This is your unique QR code for attendance scanning</p>
+                    </div>
+                    
+                    <div class="student-info-section">
+                        <h4>Student Information</h4>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label>Student Number:</label>
+                                <span id="modalStudentNumber"></span>
+                            </div>
+                            <div class="info-item">
+                                <label>Email:</label>
+                                <span id="modalStudentEmail"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Important:</strong> The student can use this QR code for attendance scanning. The QR code will also be available on their student dashboard.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="gotItBtn">
+                    <i class="bi bi-check"></i> Got it
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom JavaScript -->
-    <script src="../assets/js/manage_users.js?v=15"></script>
+    <script src="../assets/js/manage_users.js?v=20"></script>
 </body>
 </html>

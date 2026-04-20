@@ -2333,3 +2333,609 @@ html {
         text-align: center;
     }
 }
+
+/* QR Code Success Modal Styles */
+.qr-success-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                visibility 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.qr-success-modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.qr-success-modal .modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.qr-success-modal.active .modal-overlay {
+    opacity: 1;
+}
+
+.qr-success-modal .modal-content {
+    position: relative;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    transform: scale(0.8) translateY(40px) rotateX(5deg);
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    margin: 20px;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+}
+
+.qr-success-modal.active .modal-content {
+    transform: scale(1) translateY(0) rotateX(0deg);
+    opacity: 1;
+}
+
+/* QR Modal Header */
+.qr-success-modal .modal-header {
+    padding: 32px 32px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    transform: translateY(-20px);
+    opacity: 0;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s;
+}
+
+.qr-success-modal.active .modal-header {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.qr-success-modal .modal-header h3 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+    font-family: 'Montserrat', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+    flex: 1;
+    justify-content: center;
+}
+
+.qr-success-modal .modal-header h3::before {
+    content: '✓';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.qr-success-modal .close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    color: white;
+}
+
+.qr-success-modal .close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+/* QR Modal Body */
+.qr-success-modal .modal-body {
+    padding: 32px;
+    overflow-y: auto;
+    max-height: calc(90vh - 160px);
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s;
+}
+
+.qr-success-modal.active .modal-body {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.success-content {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+/* QR Section */
+.qr-section {
+    text-align: center;
+    padding: 24px;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-radius: 16px;
+    border: 2px solid #bbf7d0;
+}
+
+.qr-container {
+    display: inline-block;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15);
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+.qr-container::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #10b981, #059669, #10b981);
+    border-radius: 12px;
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.3s ease;
+    background-size: 200% 200%;
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+.qr-container:hover::before {
+    opacity: 0.3;
+}
+
+@keyframes shimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.qr-code-image-large {
+    width: 200px;
+    height: 200px;
+    border-radius: 8px;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.qr-container:hover .qr-code-image-large {
+    transform: scale(1.05);
+}
+
+.qr-description {
+    font-size: 14px;
+    color: #059669;
+    margin: 0;
+    font-weight: 500;
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* Student Info Section */
+.student-info-section {
+    background: #f8fafc;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.student-info-section h4 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 16px 0;
+    font-family: 'Montserrat', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.student-info-section h4::before {
+    content: '👤';
+    font-size: 20px;
+}
+
+.info-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.info-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+}
+
+.info-item label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    margin: 0;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.info-item span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* Alert Section */
+.qr-success-modal .alert {
+    margin: 0;
+    padding: 16px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #1e40af;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.qr-success-modal .alert i {
+    color: #2563eb;
+    margin-right: 8px;
+}
+
+.qr-success-modal .alert strong {
+    color: #1e40af;
+}
+
+/* QR Modal Footer */
+.qr-success-modal .modal-footer {
+    padding: 24px 32px 32px;
+    border-top: 1px solid #e5e7eb;
+    background: #f8fafc;
+    display: flex;
+    justify-content: center;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s;
+}
+
+.qr-success-modal.active .modal-footer {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.qr-success-modal .modal-footer .btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    color: white;
+    padding: 12px 32px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 16px;
+    font-family: 'Montserrat', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+}
+
+.qr-success-modal .modal-footer .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.qr-success-modal .modal-footer .btn:active {
+    transform: translateY(0);
+}
+
+/* Responsive Design for QR Success Modal */
+@media (max-width: 768px) {
+    .qr-success-modal .modal-content {
+        width: 95%;
+        margin: 10px;
+        border-radius: 16px;
+    }
+
+    .qr-success-modal .modal-header {
+        padding: 24px 20px 20px;
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+        position: relative;
+    }
+
+    .qr-success-modal .modal-header h3 {
+        font-size: 20px;
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+        padding-right: 40px; 
+    }
+
+    .qr-success-modal .close-btn {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 36px;
+        height: 36px;
+    }
+
+    .qr-success-modal .modal-body {
+        padding: 24px 20px;
+        max-height: calc(95vh - 140px);
+    }
+
+    .success-content {
+        gap: 24px;
+    }
+
+    .qr-section {
+        padding: 20px;
+    }
+
+    .qr-container {
+        padding: 16px;
+        margin-bottom: 12px;
+    }
+
+    .qr-code-image-large {
+        width: 160px;
+        height: 160px;
+    }
+
+    .qr-description {
+        font-size: 13px;
+    }
+
+    .student-info-section {
+        padding: 20px;
+    }
+
+    .student-info-section h4 {
+        font-size: 16px;
+    }
+
+    .info-item {
+        padding: 10px 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .info-item label {
+        font-size: 12px;
+    }
+
+    .info-item span {
+        font-size: 13px;
+        align-self: stretch;
+        text-align: right;
+    }
+
+    .qr-success-modal .alert {
+        padding: 12px;
+        font-size: 13px;
+    }
+
+    .qr-success-modal .modal-footer {
+        padding: 20px;
+    }
+
+    .qr-success-modal .modal-footer .btn {
+        width: 100%;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 14px 24px;
+        font-size: 15px;
+        display: flex;
+    }
+}
+
+@media (max-width: 480px) {
+    .qr-success-modal .modal-content {
+        width: 95%;
+        margin: 4px;
+        border-radius: 12px;
+    }
+
+    .qr-success-modal .modal-header {
+        padding: 20px 16px 16px;
+    }
+
+    .qr-success-modal .modal-header h3 {
+        font-size: 18px;
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+        padding-right: 40px; /* Space for close button */
+    }
+
+    .qr-success-modal .close-btn {
+        width: 32px;
+        height: 32px;
+        top: 12px;
+        right: 12px;
+    }
+
+    .qr-success-modal .modal-body {
+        padding: 20px 16px;
+    }
+
+    .success-content {
+        gap: 20px;
+    }
+
+    .qr-section {
+        padding: 16px;
+    }
+
+    .qr-container {
+        padding: 12px;
+        margin-bottom: 10px;
+    }
+
+    .qr-code-image-large {
+        width: 140px;
+        height: 140px;
+    }
+
+    .qr-description {
+        font-size: 12px;
+    }
+
+    .student-info-section {
+        padding: 16px;
+    }
+
+    .student-info-section h4 {
+        font-size: 15px;
+    }
+
+    .info-item {
+        padding: 8px 10px;
+    }
+
+    .info-item label {
+        font-size: 11px;
+    }
+
+    .info-item span {
+        font-size: 12px;
+    }
+
+    .qr-success-modal .alert {
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    .qr-success-modal .modal-footer {
+        padding: 16px;
+    }
+
+    .qr-success-modal .modal-footer .btn {
+        padding: 12px 20px;
+        font-size: 14px;
+        width: 100%;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        display: flex;
+    }
+}
+
+/* Tablet Responsive Styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .qr-success-modal .modal-content {
+        max-width: 500px;
+    }
+
+    .qr-success-modal .modal-header {
+        padding: 28px 24px 22px;
+    }
+
+    .qr-success-modal .modal-header h3 {
+        font-size: 22px;
+    }
+
+    .qr-success-modal .modal-body {
+        padding: 28px 24px;
+    }
+
+    .qr-code-image-large {
+        width: 180px;
+        height: 180px;
+    }
+}
+
+/* Large Desktop Styles */
+@media (min-width: 1200px) {
+    .qr-success-modal .modal-content {
+        max-width: 650px;
+    }
+
+    .qr-code-image-large {
+        width: 220px;
+        height: 220px;
+    }
+}
+
+/* Accessibility improvements */
+.qr-success-modal .close-btn:focus {
+    outline: 2px solid #10b981;
+    outline-offset: 2px;
+}
+
+.qr-success-modal .modal-footer .btn:focus {
+    outline: 2px solid #10b981;
+    outline-offset: 2px;
+}
+
+/* Print styles for QR code */
+@media print {
+    .qr-success-modal .modal-header,
+    .qr-success-modal .modal-footer,
+    .student-info-section,
+    .qr-success-modal .alert {
+        display: none !important;
+    }
+    
+    .qr-success-modal .modal-content {
+        box-shadow: none;
+        border: 1px solid #000;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+    
+    .qr-section {
+        background: white;
+        border: none;
+        padding: 20px;
+    }
+    
+    .qr-code-image-large {
+        width: 250px;
+        height: 250px;
+    }
+}

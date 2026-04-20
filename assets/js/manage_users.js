@@ -1183,8 +1183,8 @@ function populateStudentsTable(students) {
                     </div>
                 </div>
             </td>
-            <td>${student.StudentNumber}</td>
-            <td>${student.SectionName || `${student.Course} - Year ${student.YearLevel}`}</td>
+            <td>${student.StudentNumber || 'Not assigned'}</td>
+            <td>${student.Course || 'Not assigned'}</td>
             <td><span class="badge status-badge ${getStatusBadgeClass(student.AccountStatus)}">${student.AccountStatus}</span></td>
             <td>
                 <div class="action-buttons">
@@ -1428,6 +1428,17 @@ function handleRoleSelection(role) {
             studentTeacherFields.style.display = 'flex';
             studentTeacherFields.style.animation = 'slideUp 0.3s ease-out';
         }
+        
+        // Show/hide Student Number field based on role
+        const studentNumberGroup = document.getElementById('studentNumberGroup');
+        if (studentNumberGroup) {
+            if (role === 'Student') {
+                studentNumberGroup.style.display = 'block';
+            } else {
+                studentNumberGroup.style.display = 'none';
+            }
+        }
+        
         formTitle.textContent = `Create New ${role} Account`;
         formDescription.textContent = 'Please fill in the required information below';
     } else if (role === 'Administrator') {
@@ -1474,10 +1485,12 @@ function clearFormFields() {
     const firstNameInput = document.getElementById('firstName');
     const lastNameInput = document.getElementById('lastName');
     const emailInput = document.getElementById('email');
+    const studentNumberInput = document.getElementById('studentNumber');
     
     if (firstNameInput) firstNameInput.value = '';
     if (lastNameInput) lastNameInput.value = '';
     if (emailInput) emailInput.value = '';
+    if (studentNumberInput) studentNumberInput.value = '';
     
     // Clear Admin fields
     const usernameInput = document.getElementById('username');
@@ -1500,6 +1513,12 @@ function handleCreateAccount() {
         const lastName = document.getElementById('lastName').value.trim();
         const email = document.getElementById('email').value.trim();
         
+        // Get student number for students
+        let studentNumber = '';
+        if (role === 'Student') {
+            studentNumber = document.getElementById('studentNumber').value.trim();
+        }
+        
         // Validation
         if (!firstName) {
             showToast('First name is required', 'error');
@@ -1517,8 +1536,16 @@ function handleCreateAccount() {
             showToast('Please enter a valid email address', 'error');
             document.getElementById('email').focus();
             isValid = false;
+        } else if (role === 'Student' && !studentNumber) {
+            showToast('Student number is required for students', 'error');
+            document.getElementById('studentNumber').focus();
+            isValid = false;
         } else {
-            formData = { firstName, lastName, email };
+            if (role === 'Student') {
+                formData = { firstName, lastName, email, studentNumber };
+            } else {
+                formData = { firstName, lastName, email };
+            }
         }
     } else if (role === 'Administrator') {
         const username = document.getElementById('username').value.trim();
@@ -1559,26 +1586,45 @@ function handleCreateAccount() {
         })
         .then(response => response.json())
         .then(data => {
+            console.log('Response data:', data);
+            console.log('Role:', role);
+            
             if (data.success) {
                 showToast(data.message, 'success');
                 
-                // Show credentials modal only for admin accounts
+                // Show credentials modal for admin accounts
                 if (role === 'Administrator' && data.data && data.data.tempPassword) {
+                    console.log('Showing admin credentials modal');
                     setTimeout(() => {
                         showCredentialsModal(data.data, role);
                     }, 1000);
-                } else {
-                    // For Student/Teacher accounts, just close modal and reset
+                } 
+                // Show QR code modal for student accounts
+                else if (role === 'Student' && data.data && data.data.qrCodePath) {
+                    console.log('Showing student QR modal');
+                    console.log('QR Code Path:', data.data.qrCodePath);
+                    setTimeout(() => {
+                        showStudentQRModal(data.data);
+                    }, 1000);
+                }
+                // For Teacher accounts, just close modal and reset
+                else {
+                    console.log('Default case - closing modal');
+                    console.log('Role:', role);
+                    console.log('Data:', data.data);
                     setTimeout(() => {
                         hideRegistrationModal();
                         resetModal();
                     }, 1500);
                 }
                 
-                // Refresh user lists if they exist
+                // Refresh all user lists if they exist
                 if (typeof loadAllUsers === 'function') {
                     setTimeout(() => {
                         loadAllUsers();
+                        loadTeachers();
+                        loadStudents();
+                        loadPendingUsers();
                     }, 2000);
                 }
             } else {
@@ -1692,6 +1738,96 @@ function copyPassword(password) {
         document.body.removeChild(textArea);
         showToast('Password copied to clipboard', 'success');
     });
+}
+
+function showStudentQRModal(data) {
+    // Close registration modal first
+    hideRegistrationModal();
+    
+    // Update modal content with student data
+    const qrCodeImage = document.getElementById('qrCodeImage');
+    const modalStudentNumber = document.getElementById('modalStudentNumber');
+    const modalStudentEmail = document.getElementById('modalStudentEmail');
+    
+    if (qrCodeImage) {
+        qrCodeImage.src = '../' + data.qrCodePath;
+    }
+    if (modalStudentNumber) {
+        modalStudentNumber.textContent = data.studentNumber;
+    }
+    if (modalStudentEmail) {
+        modalStudentEmail.textContent = data.email;
+    }
+    
+    // Show modal
+    const modal = document.getElementById('studentQRModal');
+    if (modal) {
+        // Reset modal display state and add active class for CSS animations
+        modal.style.display = '';
+        modal.style.visibility = '';
+        modal.style.opacity = '';
+        modal.classList.remove('show');
+        modal.classList.add('active');
+        
+        // Set up close button
+        const closeBtn = document.getElementById('closeModal');
+        if (closeBtn) {
+            // Remove existing event listeners to prevent duplicates
+            closeBtn.replaceWith(closeBtn.cloneNode(true));
+            const newCloseBtn = document.getElementById('closeModal');
+            newCloseBtn.onclick = function() {
+                hideStudentQRModal();
+            };
+        }
+        
+        // Set up Got it button
+        const gotItBtn = document.getElementById('gotItBtn');
+        if (gotItBtn) {
+            // Remove existing event listeners to prevent duplicates
+            gotItBtn.replaceWith(gotItBtn.cloneNode(true));
+            const newGotItBtn = document.getElementById('gotItBtn');
+            newGotItBtn.onclick = function() {
+                hideStudentQRModal();
+            };
+        }
+        
+        // Close on overlay click
+        const overlay = document.getElementById('modalOverlay');
+        if (overlay) {
+            // Remove existing event listeners to prevent duplicates
+            overlay.replaceWith(overlay.cloneNode(true));
+            const newOverlay = document.getElementById('modalOverlay');
+            newOverlay.onclick = function() {
+                hideStudentQRModal();
+            };
+        }
+        
+        console.log('QR Modal displayed with active class');
+    }
+}
+
+function hideStudentQRModal() {
+    const modal = document.getElementById('studentQRModal');
+    if (modal) {
+        modal.classList.remove('active');
+        // Reset inline styles
+        modal.style.display = '';
+        modal.style.visibility = '';
+        modal.style.opacity = '';
+    }
+    resetModal();
+}
+
+function downloadStudentQR(data) {
+    // Create download link for QR code
+    const link = document.createElement('a');
+    link.download = 'Student_' + data.studentNumber + '.png';
+    link.href = '../' + data.qrCodePath;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast('QR Code downloaded successfully!', 'success');
 }
 
 function resetModal() {
