@@ -10,7 +10,250 @@ ob_start();
 try {
     // Include database configuration and email service
     require_once '../config/database.php';
+    require_once '../config/auth.php';
     require_once '../config/email_service.php';
+    require_once '../vendor/autoload.php';
+
+    // QR Code Generation Function (matching auth.php)
+    function generateStudentQRCode($studentNumber, $firstName, $lastName, $email, $course = '', $yearLevel = '') {
+        try {
+            // Create QR code data as JSON (matching auth.php format)
+            $qrData = [
+                'student_number' => $studentNumber,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'full_name' => $firstName . ' ' . $lastName,
+                'email' => $email,
+                'course' => $course,
+                'year' => $yearLevel,
+                'type' => 'student',
+                'timestamp' => time()
+            ];
+            
+            $qrText = json_encode($qrData);
+            error_log("QR Text to encode: " . $qrText);
+            
+            // Generate QR code image using external APIs (matching auth.php)
+            $qrCodeData = null;
+            
+            // Method 1: Try QR Server API with Long QR format (200x300)
+            $qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x300&data=' . urlencode($qrText) . '&ecc=H';
+            error_log("QR Server URL: " . $qrCodeUrl);
+            
+            $imageData = @file_get_contents($qrCodeUrl);
+            
+            if ($imageData !== false) {
+                $qrCodeData = $imageData;
+                error_log("QR Server API succeeded");
+            } else {
+                // Method 2: Try Google Charts API with Long QR format (200x300)
+                $qrCodeUrl = 'https://chart.googleapis.com/chart?chs=200x300&cht=qr&chl=' . urlencode($qrText) . '&choe=UTF-8&chld=H';
+                error_log("Google Charts URL: " . $qrCodeUrl);
+                
+                $imageData = @file_get_contents($qrCodeUrl);
+                
+                if ($imageData !== false) {
+                    $qrCodeData = $imageData;
+                    error_log("Google Charts API succeeded");
+                } else {
+                    error_log("All QR APIs failed, using placeholder");
+                }
+            }
+            
+            if ($qrCodeData === false || $qrCodeData === null) {
+                // Fallback: create a simple text-based QR code placeholder
+                $qrCodeData = createTextQRPlaceholder($studentNumber);
+            }
+            
+            // Create filename matching existing format
+            $filename = 'Student_' . $studentNumber . '.png';
+            $filepath = '../uploads/qrcodes/' . $filename;
+            
+            // Check if uploads directory exists and is writable
+            $uploadsDir = '../uploads/qrcodes/';
+            if (!is_dir($uploadsDir)) {
+                mkdir($uploadsDir, 0755, true);
+                error_log("Created uploads directory: " . $uploadsDir);
+            }
+            
+            if (!is_writable($uploadsDir)) {
+                error_log("Uploads directory is not writable: " . $uploadsDir);
+                return null;
+            }
+            
+            // Save QR code to file
+            $saveResult = file_put_contents($filepath, $qrCodeData);
+            
+            if ($saveResult !== false) {
+                error_log("QR code file saved successfully. File size: " . filesize($filepath) . " bytes");
+                return 'uploads/qrcodes/' . $filename;
+            } else {
+                error_log("Failed to save QR code file to: " . $filepath);
+                return null;
+            }
+            
+        } catch (Exception $e) {
+            error_log("Exception in QR code generation: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    // Create a text-based QR code placeholder (matching auth.php)
+    function createTextQRPlaceholder($studentNumber) {
+        try {
+            // Create a simple image with student number as fallback
+            $image = imagecreate(200, 300);
+            $bgColor = imagecolorallocate($image, 255, 255, 255);
+            $textColor = imagecolorallocate($image, 0, 0, 0);
+            
+            // Add border
+            imagerectangle($image, 0, 0, 199, 299, $textColor);
+            
+            // Add student number text using built-in font
+            $text = "ID: " . $studentNumber;
+            $fontSize = 4; // Built-in font size (1-5)
+            $x = 100;
+            $y = 150;
+            
+            // Center text using built-in font
+            $textWidth = imagefontwidth($fontSize) * strlen($text);
+            $x = (200 - $textWidth) / 2;
+            
+            imagestring($image, $fontSize, $x, $y, $text, $textColor);
+            
+            // Add "ClassTrack" text
+            $systemText = "ClassTrack";
+            $textWidth = imagefontwidth($fontSize) * strlen($systemText);
+            $x = (200 - $textWidth) / 2;
+            $y = 50;
+            imagestring($image, $fontSize, $x, $y, $systemText, $textColor);
+            
+            // Capture image data
+            ob_start();
+            imagepng($image);
+            $imageData = ob_get_contents();
+            ob_end_clean();
+            imagedestroy($image);
+            
+            return $imageData;
+            
+        } catch (Exception $e) {
+            error_log("Exception in text QR placeholder: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    // Placeholder QR Code Function (fallback)
+    function createPlaceholderQRCode($studentNumber) {
+        try {
+            // Create a rectangular QR code image using GD library
+            $width = 300;
+            $height = 300; 
+            $image = imagecreatetruecolor($width, $height);
+            
+            // Colors
+            $white = imagecolorallocate($image, 255, 255, 255);
+            $black = imagecolorallocate($image, 0, 0, 0);
+            $gray = imagecolorallocate($image, 200, 200, 200);
+            
+            // Fill white background
+            imagefill($image, 0, 0, $white);
+            
+            // Add border
+            imagerectangle($image, 0, 0, $width - 1, $height - 1, $black);
+            
+            // Create a simple QR-like pattern
+            $moduleSize = 5;
+            $qrWidth = 180; // QR code area width
+            $qrHeight = 180; // QR code area height
+            $qrX = ($width - $qrWidth) / 2;
+            $qrY = 20;
+            
+            // Add position markers (corners) for QR-like appearance
+            for ($i = 0; $i < 7; $i++) {
+                for ($j = 0; $j < 7; $j++) {
+                    if (($i == 0 || $i == 6 || $j == 0 || $j == 6) || ($i >= 2 && $i <= 4 && $j >= 2 && $j <= 4)) {
+                        imagefilledrectangle($image, $qrX + $i * $moduleSize, $qrY + $j * $moduleSize, 
+                                            $qrX + ($i + 1) * $moduleSize - 1, $qrY + ($j + 1) * $moduleSize - 1, $black);
+                    }
+                }
+            }
+            
+            // Add some random pattern in the middle
+            for ($i = 9; $i < 36; $i++) {
+                for ($j = 9; $j < 36; $j++) {
+                    if (rand(0, 1) == 1) {
+                        imagefilledrectangle($image, $qrX + $i * $moduleSize, $qrY + $j * $moduleSize, 
+                                            $qrX + ($i + 1) * $moduleSize - 1, $qrY + ($j + 1) * $moduleSize - 1, $black);
+                    }
+                }
+            }
+            
+            // Add student information section below QR code
+            $infoY = $qrY + $qrHeight + 20;
+            
+            // Add student number
+            $textColor = imagecolorallocate($image, 0, 0, 0);
+            $fontSize = 3;
+            $studentText = "Student ID: " . $studentNumber;
+            $textWidth = imagefontwidth($fontSize) * strlen($studentText);
+            $x = ($width - $textWidth) / 2;
+            imagestring($image, $fontSize, $x, $infoY, $studentText, $textColor);
+            
+            // Add "ClassTrack" text
+            $infoY += 20;
+            $systemText = "ClassTrack System";
+            $textWidth = imagefontwidth($fontSize) * strlen($systemText);
+            $x = ($width - $textWidth) / 2;
+            imagestring($image, $fontSize, $x, $infoY, $systemText, $gray);
+            
+            // Add date
+            $infoY += 15;
+            $dateText = date("Y-m-d");
+            $textWidth = imagefontwidth($fontSize) * strlen($dateText);
+            $x = ($width - $textWidth) / 2;
+            imagestring($image, $fontSize, $x, $infoY, $dateText, $gray);
+            
+            // Add "Scan for Attendance" text
+            $infoY += 20;
+            $scanText = "Scan for Attendance";
+            $textWidth = imagefontwidth($fontSize) * strlen($scanText);
+            $x = ($width - $textWidth) / 2;
+            imagestring($image, $fontSize, $x, $infoY, $scanText, $black);
+            
+            // Create filename matching existing format
+            $filename = 'Student_' . $studentNumber . '.png';
+            $filepath = '../uploads/qrcodes/' . $filename;
+            
+            // Check if uploads directory exists and is writable
+            $uploadsDir = '../uploads/qrcodes/';
+            if (!is_dir($uploadsDir)) {
+                mkdir($uploadsDir, 0755, true);
+                error_log("Created uploads directory: " . $uploadsDir);
+            }
+            
+            if (!is_writable($uploadsDir)) {
+                error_log("Uploads directory is not writable: " . $uploadsDir);
+                imagedestroy($image);
+                return null;
+            }
+            
+            // Save image
+            $result = imagepng($image, $filepath);
+            imagedestroy($image);
+            
+            if ($result) {
+                error_log("Placeholder QR code saved: " . $filepath);
+                return 'uploads/qrcodes/' . $filename;
+            } else {
+                error_log("Failed to save placeholder QR code");
+                return null;
+            }
+        } catch (Exception $e) {
+            error_log("Exception in placeholder QR code creation: " . $e->getMessage());
+            return null;
+        }
+    }
     
     // Set JSON header
     header('Content-Type: application/json');
@@ -51,9 +294,17 @@ try {
             }
         }
         
+        // Additional validation for students
+        if ($accountType === 'Student') {
+            if (!isset($input['studentNumber']) || empty(trim($input['studentNumber']))) {
+                throw new Exception('Student number is required');
+            }
+        }
+        
         $firstName = trim($input['firstName']);
         $lastName = trim($input['lastName']);
         $email = trim($input['email']);
+        $studentNumber = isset($input['studentNumber']) ? trim($input['studentNumber']) : '';
         
         // Validate email
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -79,6 +330,45 @@ try {
         $insertUser->execute([$firstName, $lastName, $email, $hashedPassword, $accountType]);
         
         $userId = $db->lastInsertId();
+        
+        // Create role-specific record
+        if ($accountType === 'Student') {
+            $insertStudent = $db->prepare("
+                INSERT INTO students (UserID, StudentNumber, Course, YearLevel) 
+                VALUES (?, ?, ?, ?)
+            ");
+            $insertStudent->execute([$userId, $studentNumber, '', 0]);
+            
+            // Generate QR code for student
+            error_log("Generating QR code for student: $studentNumber");
+            $qrCodePath = generateStudentQRCode($studentNumber, $firstName, $lastName, $email);
+            error_log("QR code generated: " . ($qrCodePath ? $qrCodePath : 'FAILED'));
+            
+            if ($qrCodePath) {
+                $updateStudent = $db->prepare("
+                    UPDATE students SET QRCodePath = ? WHERE UserID = ?
+                ");
+                $updateStudent->execute([$qrCodePath, $userId]);
+                error_log("QR code saved to database");
+            } else {
+                error_log("Failed to generate QR code - creating placeholder");
+                // Create a placeholder QR code using base64
+                $qrCodePath = createPlaceholderQRCode($studentNumber);
+                if ($qrCodePath) {
+                    $updateStudent = $db->prepare("
+                        UPDATE students SET QRCodePath = ? WHERE UserID = ?
+                    ");
+                    $updateStudent->execute([$qrCodePath, $userId]);
+                    error_log("Placeholder QR code saved to database");
+                }
+            }
+        } elseif ($accountType === 'Teacher') {
+            $insertTeacher = $db->prepare("
+                INSERT INTO teachers (UserID, Department) 
+                VALUES (?, ?)
+            ");
+            $insertTeacher->execute([$userId, null]);
+        }
         
         // Send email using EmailService
         try {
@@ -137,7 +427,15 @@ try {
         
         $response['success'] = true;
         $response['message'] = ucfirst($accountType) . ' account created successfully';
-        $response['data'] = ['userId' => $userId, 'email' => $email, 'tempPassword' => $tempPassword];
+        $responseData = ['userId' => $userId, 'email' => $email, 'tempPassword' => $tempPassword];
+        
+        // Add QR code information for students
+        if ($accountType === 'Student' && isset($qrCodePath)) {
+            $responseData['qrCodePath'] = $qrCodePath;
+            $responseData['studentNumber'] = $studentNumber;
+        }
+        
+        $response['data'] = $responseData;
         
     } elseif ($accountType === 'Administrator') {
         // Validate admin fields
