@@ -218,6 +218,24 @@ async function handleUserAction(action, button) {
 // User Management Functions
 async function approveUser(userId, userName) {
     try {
+        // Show initial approving toast with callback
+        showToast('Approving user account...', 'info', function() {
+            // This callback runs after the "Approving..." toast is closed
+            // Show sending email toast and immediately start the API call
+            showToast('Sending approval email...', 'info');
+            
+            // Perform the approval action without waiting for toast to close
+            performApproveAction(userId, userName);
+        });
+    } catch (error) {
+        console.error('Error approving user:', error);
+        showToast('Failed to approve user account', 'error');
+    }
+}
+
+// Separate function to handle the actual approval action
+async function performApproveAction(userId, userName) {
+    try {
         const response = await fetch('manage_users.php', {
             method: 'POST',
             headers: {
@@ -228,19 +246,43 @@ async function approveUser(userId, userName) {
         
         const result = await response.json();
         if (result.success) {
+            // Remove the "Sending Email..." toast and show success
+            removeLastToast();
             showToast(`Approved ${userName}`, 'success');
             loadPendingUsers();
             loadAllUsers();
         } else {
+            // Remove the "Sending Email..." toast and show error
+            removeLastToast();
             showToast(result.message, 'error');
         }
     } catch (error) {
         console.error('Error approving user:', error);
-        showToast('Error approving user', 'error');
+        // Remove the "Sending Email..." toast and show error
+        removeLastToast();
+        showToast('Failed to approve user account', 'error');
     }
 }
 
 async function rejectUser(userId, userName) {
+    try {
+        // Show initial rejecting toast with callback
+        showToast('Rejecting user account...', 'info', function() {
+            // This callback runs after the "Rejecting..." toast is closed
+            // Show sending email toast and immediately start the API call
+            showToast('Sending rejection email...', 'info');
+            
+            // Perform the rejection action without waiting for toast to close
+            performRejectAction(userId, userName);
+        });
+    } catch (error) {
+        console.error('Error rejecting user:', error);
+        showToast('Failed to reject user account', 'error');
+    }
+}
+
+// Separate function to handle the actual rejection action
+async function performRejectAction(userId, userName) {
     try {
         const response = await fetch('manage_users.php', {
             method: 'POST',
@@ -252,15 +294,21 @@ async function rejectUser(userId, userName) {
         
         const result = await response.json();
         if (result.success) {
+            // Remove the "Sending Email..." toast and show success
+            removeLastToast();
             showToast(`Rejected ${userName}`, 'success');
             loadPendingUsers();
             loadAllUsers();
         } else {
+            // Remove the "Sending Email..." toast and show error
+            removeLastToast();
             showToast(result.message, 'error');
         }
     } catch (error) {
         console.error('Error rejecting user:', error);
-        showToast('Error rejecting user', 'error');
+        // Remove the "Sending Email..." toast and show error
+        removeLastToast();
+        showToast('Failed to reject user account', 'error');
     }
 }
 
@@ -633,7 +681,7 @@ function validateEditForm() {
 async function bulkApproveUsers() {
     const selectedUsers = getSelectedPendingUsers();
     if (selectedUsers.length === 0) {
-        showToast('Please select users to approve', 'error');
+        showToast('No users selected for approval', 'info');
         return;
     }
     
@@ -641,47 +689,63 @@ async function bulkApproveUsers() {
         'Approve Users',
         `Are you sure you want to approve ${selectedUsers.length} user(s)?`,
         async () => {
-            let successCount = 0;
-            let errorCount = 0;
-            
-            for (const userId of selectedUsers) {
-                try {
-                    const response = await fetch('manage_users.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `action=approveUser&userId=${userId}`
-                    });
-                    
-                    const result = await response.json();
-                    if (result.success) {
-                        successCount++;
-                    } else {
-                        errorCount++;
-                    }
-                } catch (error) {
-                    errorCount++;
-                }
-            }
-            
-            if (successCount > 0) {
-                showToast(`Approved ${successCount} user(s) successfully`, 'success');
-            }
-            if (errorCount > 0) {
-                showToast(`Failed to approve ${errorCount} user(s)`, 'error');
-            }
-            
-            loadPendingUsers();
-            loadAllUsers();
+            // Show initial approving toast with callback
+            showToast(`Approving ${selectedUsers.length} user account(s)...`, 'info', function() {
+                // Show sending email toast and immediately start the bulk approval
+                showToast(`Sending approval emails to ${selectedUsers.length} user(s)...`, 'info');
+                
+                // Perform the bulk approval action without waiting for toast to close
+                performBulkApproval(selectedUsers);
+            });
         }
     );
+}
+
+// Separate function to handle the actual bulk approval action
+async function performBulkApproval(selectedUsers) {
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const userId of selectedUsers) {
+        try {
+            const response = await fetch('manage_users.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=approveUser&userId=${userId}`
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                successCount++;
+            } else {
+                errorCount++;
+            }
+        } catch (error) {
+            errorCount++;
+        }
+    }
+    
+    // Remove the "Sending Email..." toast and show results
+    removeLastToast();
+    
+    if (successCount > 0 && errorCount === 0) {
+        showToast(`Successfully approved ${successCount} user(s)`, 'success');
+    } else if (successCount > 0 && errorCount > 0) {
+        showToast(`Approved ${successCount} user(s), failed to approve ${errorCount} user(s)`, 'error');
+    } else {
+        showToast(`Failed to approve all ${errorCount} user(s)`, 'error');
+    }
+    
+    loadPendingUsers();
+    loadAllUsers();
 }
 
 async function bulkRejectUsers() {
     const selectedUsers = getSelectedPendingUsers();
     if (selectedUsers.length === 0) {
-        showToast('Please select users to reject', 'error');
+        showToast('No users selected for rejection', 'info');
         return;
     }
     
@@ -689,41 +753,57 @@ async function bulkRejectUsers() {
         'Reject Users',
         `Are you sure you want to reject ${selectedUsers.length} user(s)?`,
         async () => {
-            let successCount = 0;
-            let errorCount = 0;
-            
-            for (const userId of selectedUsers) {
-                try {
-                    const response = await fetch('manage_users.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `action=rejectUser&userId=${userId}`
-                    });
-                    
-                    const result = await response.json();
-                    if (result.success) {
-                        successCount++;
-                    } else {
-                        errorCount++;
-                    }
-                } catch (error) {
-                    errorCount++;
-                }
-            }
-            
-            if (successCount > 0) {
-                showToast(`Rejected ${successCount} user(s) successfully`, 'success');
-            }
-            if (errorCount > 0) {
-                showToast(`Failed to reject ${errorCount} user(s)`, 'error');
-            }
-            
-            loadPendingUsers();
-            loadAllUsers();
+            // Show initial rejecting toast with callback
+            showToast(`Rejecting ${selectedUsers.length} user account(s)...`, 'info', function() {
+                // Show sending email toast and immediately start the bulk rejection
+                showToast(`Sending rejection emails to ${selectedUsers.length} user(s)...`, 'info');
+                
+                // Perform the bulk rejection action without waiting for toast to close
+                performBulkRejection(selectedUsers);
+            });
         }
     );
+}
+
+// Separate function to handle the actual bulk rejection action
+async function performBulkRejection(selectedUsers) {
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const userId of selectedUsers) {
+        try {
+            const response = await fetch('manage_users.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=rejectUser&userId=${userId}`
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                successCount++;
+            } else {
+                errorCount++;
+            }
+        } catch (error) {
+            errorCount++;
+        }
+    }
+    
+    // Remove the "Sending Email..." toast and show results
+    removeLastToast();
+    
+    if (successCount > 0 && errorCount === 0) {
+        showToast(`Successfully rejected ${successCount} user(s)`, 'success');
+    } else if (successCount > 0 && errorCount > 0) {
+        showToast(`Rejected ${successCount} user(s), failed to reject ${errorCount} user(s)`, 'error');
+    } else {
+        showToast(`Failed to reject all ${errorCount} user(s)`, 'error');
+    }
+    
+    loadPendingUsers();
+    loadAllUsers();
 }
 
 function getSelectedPendingUsers() {
@@ -783,7 +863,7 @@ function initializePermissions() {
             if (selectedRole) {
                 showToast(`Permissions for ${selectedRole} saved successfully`, 'success');
             } else {
-                showToast('Please select a role first', 'error');
+                showToast('Please select a role before saving', 'error');
             }
         });
     }
@@ -1501,7 +1581,7 @@ function handleCreateAccount() {
     const role = window.selectedRole;
     
     if (!role) {
-        showToast('Please select an account type first', 'error');
+        showToast('Please select an account type to continue', 'error');
         return;
     }
     
@@ -1838,7 +1918,7 @@ function resetModal() {
 }
 
 // Toast Notification Helper
-function showToast(message, type = 'info') {
+function showToast(message, type = 'info', callback = null) {
     const toastContainer = document.getElementById('toast-container');
     
     if (!toastContainer) {
@@ -1873,26 +1953,44 @@ function showToast(message, type = 'info') {
         </button>
     `;
     
+    // Function to handle toast closure and callback
+    const handleToastClose = () => {
+        if (toast.parentNode) {
+            toast.classList.add('hide');
+            setTimeout(() => {
+                toast.remove();
+                // Execute callback if provided
+                if (callback && typeof callback === 'function') {
+                    callback();
+                }
+            }, 300);
+        }
+    };
+    
     // Add to container
     toastContainer.appendChild(toast);
     
     // Add close functionality
     const closeBtn = toast.querySelector('.toast-close');
-    closeBtn.addEventListener('click', function() {
-        toast.classList.add('hide');
-        setTimeout(() => toast.remove(), 300);
-    });
+    closeBtn.addEventListener('click', handleToastClose);
     
     // Show toast with animation
     setTimeout(() => toast.classList.add('show'), 10);
     
     // Auto hide after 4 seconds
     setTimeout(() => {
-        if (toast.parentNode) {
-            toast.classList.add('hide');
-            setTimeout(() => toast.remove(), 300);
-        }
+        handleToastClose();
     }, 4000);
+}
+
+// Function to remove the last toast immediately
+function removeLastToast() {
+    const toastContainer = document.getElementById('toast-container');
+    if (toastContainer && toastContainer.lastChild) {
+        const lastToast = toastContainer.lastChild;
+        lastToast.classList.add('hide');
+        setTimeout(() => lastToast.remove(), 100);
+    }
 }
 
 // Utility Functions

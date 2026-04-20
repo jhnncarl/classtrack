@@ -12,6 +12,8 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 
 // Include database configuration
 require_once '../config/database.php';
+// Include email service
+require_once '../config/email_service.php';
 
 // Handle AJAX requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
@@ -125,20 +127,100 @@ function getPendingUsers($db) {
 // User management functions
 function approveUser($db, $userId) {
     try {
+        $db->beginTransaction();
+        
+        // Get user details before updating
+        $stmt = $db->prepare("SELECT u.first_name, u.last_name, u.Email, u.Role FROM users u WHERE u.UserID = ?");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$user) {
+            $db->rollBack();
+            return ['success' => false, 'message' => 'User not found'];
+        }
+        
+        // Update user status
         $stmt = $db->prepare("UPDATE users SET AccountStatus = 'Active' WHERE UserID = ?");
         $stmt->execute([$userId]);
-        return ['success' => true, 'message' => 'User approved successfully'];
+        
+        // Send approval email if user is a teacher
+        $emailSent = false;
+        if ($user['Role'] === 'Teacher') {
+            $emailService = new EmailService();
+            $emailResult = $emailService->sendTeacherApprovalEmail(
+                $user['Email'], 
+                $user['first_name'], 
+                $user['last_name']
+            );
+            $emailSent = $emailResult['success'];
+            
+            // Log email result (don't fail the approval if email fails)
+            if (!$emailSent) {
+                error_log("Failed to send teacher approval email: " . $emailResult['message']);
+            }
+        }
+        
+        $db->commit();
+        
+        $message = 'User approved successfully';
+        if ($user['Role'] === 'Teacher') {
+            $message .= $emailSent ? '. Approval email sent to teacher.' : '. Email notification failed, but user was approved.';
+        }
+        
+        return ['success' => true, 'message' => $message];
+        
     } catch(PDOException $e) {
+        $db->rollBack();
         return ['success' => false, 'message' => 'Error approving user: ' . $e->getMessage()];
     }
 }
 
 function rejectUser($db, $userId) {
     try {
+        $db->beginTransaction();
+        
+        // Get user details before updating
+        $stmt = $db->prepare("SELECT u.first_name, u.last_name, u.Email, u.Role FROM users u WHERE u.UserID = ?");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$user) {
+            $db->rollBack();
+            return ['success' => false, 'message' => 'User not found'];
+        }
+        
+        // Update user status
         $stmt = $db->prepare("UPDATE users SET AccountStatus = 'Rejected' WHERE UserID = ?");
         $stmt->execute([$userId]);
-        return ['success' => true, 'message' => 'User rejected successfully'];
+        
+        // Send rejection email if user is a teacher
+        $emailSent = false;
+        if ($user['Role'] === 'Teacher') {
+            $emailService = new EmailService();
+            $emailResult = $emailService->sendTeacherRejectionEmail(
+                $user['Email'], 
+                $user['first_name'], 
+                $user['last_name']
+            );
+            $emailSent = $emailResult['success'];
+            
+            // Log email result (don't fail the rejection if email fails)
+            if (!$emailSent) {
+                error_log("Failed to send teacher rejection email: " . $emailResult['message']);
+            }
+        }
+        
+        $db->commit();
+        
+        $message = 'User rejected successfully';
+        if ($user['Role'] === 'Teacher') {
+            $message .= $emailSent ? '. Rejection email sent to teacher.' : '. Email notification failed, but user was rejected.';
+        }
+        
+        return ['success' => true, 'message' => $message];
+        
     } catch(PDOException $e) {
+        $db->rollBack();
         return ['success' => false, 'message' => 'Error rejecting user: ' . $e->getMessage()];
     }
 }
@@ -1177,6 +1259,6 @@ function updateUser($db, $userId, $userData) {
     </div>
 
     <!-- Custom JavaScript -->
-    <script src="../assets/js/manage_users.js?v=20"></script>
+    <script src="../assets/js/manage_users.js?v=24"></script>
 </body>
 </html>
