@@ -12,7 +12,7 @@ class EmailConfig {
     private $password = 'pemc ckxu rmwr lezr'; // Your App Password (not regular password)
     private $encryption = 'tls';
     private $fromEmail = 'classtrack.admin@gmail.com'; // Same as username
-    private $fromName = 'ClassTrack Admin (No-Reply)';
+    private $fromName = 'ClassTrack';
     
     /**
      * Get SMTP configuration
