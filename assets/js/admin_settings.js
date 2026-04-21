@@ -11,23 +11,61 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeAdminSettings() {
-    // Store original form values FIRST before any other initialization
-    storeOriginalFormValues();
-    
-    // Initialize tab navigation
-    initializeTabNavigation();
-    
-    // Initialize form validation
-    initializeFormValidation();
-    
-    // Initialize password visibility toggle
-    initializePasswordToggle();
-    
-    // Initialize save button (now that original values are stored)
-    initializeSaveButton();
-    
-    // Initialize form change detection
-    initializeFormChangeDetection();
+    // Check if user has editProfile permission before initializing form features
+    checkEditProfilePermission().then(hasPermission => {
+        if (!hasPermission) {
+            console.log('Edit Profile permission denied - skipping form initialization');
+            // Disable all form inputs and buttons
+            disableProfileForm();
+            return;
+        }
+        
+        // User has permission, proceed with normal initialization
+        console.log('Edit Profile permission granted - initializing form features');
+        
+        // Store original form values FIRST before any other initialization
+        storeOriginalFormValues();
+        
+        // Initialize tab navigation
+        initializeTabNavigation();
+        
+        // Initialize form validation
+        initializeFormValidation();
+        
+        // Initialize password visibility toggle
+        initializePasswordToggle();
+        
+        // Initialize save button (now that original values is stored)
+        initializeSaveButton();
+        
+        // Initialize form change detection
+        initializeFormChangeDetection();
+    });
+}
+
+// Check editProfile permission from server
+async function checkEditProfilePermission() {
+    try {
+        const response = await fetch('manage_users.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'action=checkEditProfilePermission'
+        });
+        
+        const result = await response.json();
+        return result.success || false;
+    } catch (error) {
+        console.error('Error checking edit profile permission:', error);
+        return false; // Default to denied on error
+    }
+}
+
+// Disable profile form when permission is denied
+function disableProfileForm() {
+    // Let the CSS overlay handle all blocking - no need to disable individual elements
+    console.log('Profile form disabled via CSS overlay - insufficient permissions');
 }
 
 // Store Original Form Values

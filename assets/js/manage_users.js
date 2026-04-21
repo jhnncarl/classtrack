@@ -106,7 +106,7 @@ function initializeActionButtons() {
     const addUserBtn = document.getElementById('addUserBtn');
     if (addUserBtn) {
         addUserBtn.addEventListener('click', function() {
-            showAddUserModal();
+            checkAddUserPermission();
         });
     }
     
@@ -215,16 +215,122 @@ async function handleUserAction(action, button) {
     }
 }
 
+// Permission checking functions
+async function checkApprovalPermission(userId) {
+    try {
+        const response = await fetch('manage_users.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `action=checkApprovalPermission&userId=${userId}`
+        });
+        
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error checking approval permission:', error);
+        return { success: false, message: 'Error checking permission' };
+    }
+}
+
+async function checkRejectionPermission(userId) {
+    try {
+        const response = await fetch('manage_users.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `action=checkRejectionPermission&userId=${userId}`
+        });
+        
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error checking rejection permission:', error);
+        return { success: false, message: 'Error checking permission' };
+    }
+}
+
+async function checkBulkApprovalPermission(userIds) {
+    try {
+        const response = await fetch('manage_users.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'checkBulkApprovalPermission',
+                userIds: userIds
+            })
+        });
+        
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error checking bulk approval permission:', error);
+        return { success: false, message: 'Error checking permission' };
+    }
+}
+
+async function checkBulkRejectionPermission(userIds) {
+    try {
+        const response = await fetch('manage_users.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'checkBulkRejectionPermission',
+                userIds: userIds
+            })
+        });
+        
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error checking bulk rejection permission:', error);
+        return { success: false, message: 'Error checking permission' };
+    }
+}
+
+async function checkAddUserPermission() {
+    try {
+        const response = await fetch('manage_users.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'action=checkCreateAdminUserPermission'
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            showAddUserModal();
+        } else {
+            showToast(result.message, 'info');
+        }
+    } catch (error) {
+        console.error('Error checking add user permission:', error);
+        showToast('Error checking permission', 'error');
+    }
+}
+
 // User Management Functions
 async function approveUser(userId, userName) {
     try {
-        // Show initial approving toast with callback
-        showToast('Approving user account...', 'info', function() {
-            // This callback runs after the "Approving..." toast is closed
-            // Show sending email toast and immediately start the API call
-            showToast('Sending approval email...', 'info');
-            
-            // Perform the approval action without waiting for toast to close
+        // First check permissions before showing any toast notifications
+        const permissionCheck = await checkApprovalPermission(userId);
+        
+        if (!permissionCheck.success) {
+            // Permission denied - show info toast immediately and exit
+            showToast(permissionCheck.message, 'info');
+            return;
+        }
+        
+        // Permission granted - proceed with normal approval flow
+        showToast('Approving user account and sending email...', 'info', function() {
+            // Perform the approval action after info toast
             performApproveAction(userId, userName);
         });
     } catch (error) {
@@ -236,43 +342,51 @@ async function approveUser(userId, userName) {
 // Separate function to handle the actual approval action
 async function performApproveAction(userId, userName) {
     try {
+        // Use optimized bulk endpoint for single user (same speed as bulk)
         const response = await fetch('manage_users.php', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
             },
-            body: `action=approveUser&userId=${userId}`
+            body: JSON.stringify({
+                action: 'bulkApproveUsers',
+                userIds: [userId]
+            })
         });
         
         const result = await response.json();
         if (result.success) {
-            // Remove the "Sending Email..." toast and show success
-            removeLastToast();
             showToast(`Approved ${userName}`, 'success');
             loadPendingUsers();
             loadAllUsers();
         } else {
-            // Remove the "Sending Email..." toast and show error
-            removeLastToast();
-            showToast(result.message, 'error');
+            // Check if this is a permission-related message and show as info toast
+            if (result.message.includes('permission') || result.message.includes('enable')) {
+                showToast(result.message, 'info');
+            } else {
+                showToast(result.message, 'error');
+            }
         }
     } catch (error) {
         console.error('Error approving user:', error);
-        // Remove the "Sending Email..." toast and show error
-        removeLastToast();
         showToast('Failed to approve user account', 'error');
     }
 }
 
 async function rejectUser(userId, userName) {
     try {
-        // Show initial rejecting toast with callback
-        showToast('Rejecting user account...', 'info', function() {
-            // This callback runs after the "Rejecting..." toast is closed
-            // Show sending email toast and immediately start the API call
-            showToast('Sending rejection email...', 'info');
-            
-            // Perform the rejection action without waiting for toast to close
+        // First check permissions before showing any toast notifications
+        const permissionCheck = await checkRejectionPermission(userId);
+        
+        if (!permissionCheck.success) {
+            // Permission denied - show info toast immediately and exit
+            showToast(permissionCheck.message, 'info');
+            return;
+        }
+        
+        // Permission granted - proceed with normal rejection flow
+        showToast('Rejecting user account and sending email...', 'info', function() {
+            // Perform the rejection action after info toast
             performRejectAction(userId, userName);
         });
     } catch (error) {
@@ -284,30 +398,33 @@ async function rejectUser(userId, userName) {
 // Separate function to handle the actual rejection action
 async function performRejectAction(userId, userName) {
     try {
+        // Use optimized bulk endpoint for single user (same speed as bulk)
         const response = await fetch('manage_users.php', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
             },
-            body: `action=rejectUser&userId=${userId}`
+            body: JSON.stringify({
+                action: 'bulkRejectUsers',
+                userIds: [userId]
+            })
         });
         
         const result = await response.json();
         if (result.success) {
-            // Remove the "Sending Email..." toast and show success
-            removeLastToast();
             showToast(`Rejected ${userName}`, 'success');
             loadPendingUsers();
             loadAllUsers();
         } else {
-            // Remove the "Sending Email..." toast and show error
-            removeLastToast();
-            showToast(result.message, 'error');
+            // Check if this is a permission-related message and show as info toast
+            if (result.message.includes('permission') || result.message.includes('enable')) {
+                showToast(result.message, 'info');
+            } else {
+                showToast(result.message, 'error');
+            }
         }
     } catch (error) {
         console.error('Error rejecting user:', error);
-        // Remove the "Sending Email..." toast and show error
-        removeLastToast();
         showToast('Failed to reject user account', 'error');
     }
 }
@@ -685,61 +802,56 @@ async function bulkApproveUsers() {
         return;
     }
     
+    // First check permissions before showing any toast notifications
+    const permissionCheck = await checkBulkApprovalPermission(selectedUsers);
+    
+    if (!permissionCheck.success) {
+        // Permission denied - show info toast immediately and exit
+        showToast(permissionCheck.message, 'info');
+        return;
+    }
+    
     showConfirmationModal(
         'Approve Users',
         `Are you sure you want to approve ${selectedUsers.length} user(s)?`,
         async () => {
-            // Show initial approving toast with callback
-            showToast(`Approving ${selectedUsers.length} user account(s)...`, 'info', function() {
-                // Show sending email toast and immediately start the bulk approval
-                showToast(`Sending approval emails to ${selectedUsers.length} user(s)...`, 'info');
-                
-                // Perform the bulk approval action without waiting for toast to close
-                performBulkApproval(selectedUsers);
-            });
+            // Perform the bulk approval action
+            performBulkApproval(selectedUsers);
         }
     );
 }
 
 // Separate function to handle the actual bulk approval action
 async function performBulkApproval(selectedUsers) {
-    let successCount = 0;
-    let errorCount = 0;
-    
-    for (const userId of selectedUsers) {
-        try {
-            const response = await fetch('manage_users.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `action=approveUser&userId=${userId}`
+    try {
+        // Use new optimized bulk endpoint
+        const response = await fetch('manage_users.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'bulkApproveUsers',
+                userIds: selectedUsers
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('Sending approval email to the selected users...', 'info', function() {
+                showToast(result.message, 'success');
+                loadPendingUsers();
+                loadAllUsers();
             });
-            
-            const result = await response.json();
-            if (result.success) {
-                successCount++;
-            } else {
-                errorCount++;
-            }
-        } catch (error) {
-            errorCount++;
+        } else {
+            showToast(result.message, 'error');
         }
+        
+    } catch (error) {
+        console.error('Error in bulk approval:', error);
+        showToast('Error processing bulk approval', 'error');
     }
-    
-    // Remove the "Sending Email..." toast and show results
-    removeLastToast();
-    
-    if (successCount > 0 && errorCount === 0) {
-        showToast(`Successfully approved ${successCount} user(s)`, 'success');
-    } else if (successCount > 0 && errorCount > 0) {
-        showToast(`Approved ${successCount} user(s), failed to approve ${errorCount} user(s)`, 'error');
-    } else {
-        showToast(`Failed to approve all ${errorCount} user(s)`, 'error');
-    }
-    
-    loadPendingUsers();
-    loadAllUsers();
 }
 
 async function bulkRejectUsers() {
@@ -749,61 +861,56 @@ async function bulkRejectUsers() {
         return;
     }
     
+    // First check permissions before showing any toast notifications
+    const permissionCheck = await checkBulkRejectionPermission(selectedUsers);
+    
+    if (!permissionCheck.success) {
+        // Permission denied - show info toast immediately and exit
+        showToast(permissionCheck.message, 'info');
+        return;
+    }
+    
     showConfirmationModal(
         'Reject Users',
         `Are you sure you want to reject ${selectedUsers.length} user(s)?`,
         async () => {
-            // Show initial rejecting toast with callback
-            showToast(`Rejecting ${selectedUsers.length} user account(s)...`, 'info', function() {
-                // Show sending email toast and immediately start the bulk rejection
-                showToast(`Sending rejection emails to ${selectedUsers.length} user(s)...`, 'info');
-                
-                // Perform the bulk rejection action without waiting for toast to close
-                performBulkRejection(selectedUsers);
-            });
+            // Perform the bulk rejection action
+            performBulkRejection(selectedUsers);
         }
     );
 }
 
 // Separate function to handle the actual bulk rejection action
 async function performBulkRejection(selectedUsers) {
-    let successCount = 0;
-    let errorCount = 0;
-    
-    for (const userId of selectedUsers) {
-        try {
-            const response = await fetch('manage_users.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `action=rejectUser&userId=${userId}`
+    try {
+        // Use new optimized bulk endpoint
+        const response = await fetch('manage_users.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'bulkRejectUsers',
+                userIds: selectedUsers
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('Sending rejection email to the selected users...', 'info', function() {
+                showToast(result.message, 'success');
+                loadPendingUsers();
+                loadAllUsers();
             });
-            
-            const result = await response.json();
-            if (result.success) {
-                successCount++;
-            } else {
-                errorCount++;
-            }
-        } catch (error) {
-            errorCount++;
+        } else {
+            showToast(result.message, 'error');
         }
+        
+    } catch (error) {
+        console.error('Error in bulk rejection:', error);
+        showToast('Error processing bulk rejection', 'error');
     }
-    
-    // Remove the "Sending Email..." toast and show results
-    removeLastToast();
-    
-    if (successCount > 0 && errorCount === 0) {
-        showToast(`Successfully rejected ${successCount} user(s)`, 'success');
-    } else if (successCount > 0 && errorCount > 0) {
-        showToast(`Rejected ${successCount} user(s), failed to reject ${errorCount} user(s)`, 'error');
-    } else {
-        showToast(`Failed to reject all ${errorCount} user(s)`, 'error');
-    }
-    
-    loadPendingUsers();
-    loadAllUsers();
 }
 
 function getSelectedPendingUsers() {
@@ -818,23 +925,21 @@ function showAddUserModal() {
     }
 }
 
-// RBAC/Permissions
+// RBAC/Permissions - Role-Based Management
 function initializePermissions() {
     const roleSelector = document.getElementById('roleSelector');
     const permissionsPanel = document.getElementById('permissionsPanel');
     
-    console.log('Initializing permissions...');
+    console.log('Initializing role-based permissions...');
     console.log('Role selector found:', roleSelector);
     console.log('Permissions panel found:', permissionsPanel);
     
     if (roleSelector && permissionsPanel) {
         roleSelector.addEventListener('change', function() {
             const selectedRole = this.value;
-            console.log('Role changed to:', selectedRole);
-            
             if (selectedRole) {
                 permissionsPanel.style.display = 'block';
-                console.log('Permissions panel shown');
+                console.log('Permissions panel shown for role:', selectedRole);
                 loadRolePermissions(selectedRole);
             } else {
                 permissionsPanel.style.display = 'none';
@@ -845,43 +950,42 @@ function initializePermissions() {
         console.error('Role selector or permissions panel not found!');
     }
     
-    // Permission toggle switches
+    // Add change event listeners to permission switches
     const permissionSwitches = document.querySelectorAll('.permission-item input[type="checkbox"]');
-    permissionSwitches.forEach(switch_ => {
-        switch_.addEventListener('change', function() {
-            const permissionName = this.id;
-            const isEnabled = this.checked;
-            console.log(`Permission ${permissionName} ${isEnabled ? 'enabled' : 'disabled'}`);
+    permissionSwitches.forEach(permissionSwitch => {
+        permissionSwitch.addEventListener('change', function() {
+            console.log('Permission changed:', this.id, this.checked);
         });
     });
     
-    // Save permissions button
+    // Save permissions button - saves for entire role
     const savePermissionsBtn = document.getElementById('savePermissionsBtn');
     if (savePermissionsBtn) {
         savePermissionsBtn.addEventListener('click', function() {
             const selectedRole = roleSelector.value;
             if (selectedRole) {
-                showToast(`Permissions for ${selectedRole} saved successfully`, 'success');
+                saveRolePermissions(selectedRole);
             } else {
-                showToast('Please select a role before saving', 'error');
+                showToast('Please select a role first', 'warning');
             }
         });
     }
     
-    // Reset permissions button
+    // Reset permissions button - resets entire role to defaults
     const resetPermissionsBtn = document.getElementById('resetPermissionsBtn');
     if (resetPermissionsBtn) {
         resetPermissionsBtn.addEventListener('click', function() {
             const selectedRole = roleSelector.value;
             if (selectedRole) {
                 showConfirmationModal(
-                    'Reset Permissions',
-                    `Reset permissions for ${selectedRole} to default?`,
+                    'Reset Role Permissions',
+                    `Reset ALL ${selectedRole} permissions to default values? This will affect all users with the ${selectedRole} role.`,
                     () => {
-                        loadRolePermissions(selectedRole);
-                        showToast(`Permissions for ${selectedRole} reset to default`, 'info');
+                        resetRolePermissions(selectedRole);
                     }
                 );
+            } else {
+                showToast('Please select a role first', 'warning');
             }
         });
     }
@@ -890,7 +994,7 @@ function initializePermissions() {
 // Load Role Permissions
 function loadRolePermissions(role) {
     console.log('Loading permissions for role:', role);
-    
+
     // Hide all permission panels first
     const allPanels = ['teacherPermissions', 'studentPermissions', 'administratorPermissions'];
     allPanels.forEach(panelId => {
@@ -901,59 +1005,131 @@ function loadRolePermissions(role) {
         }
     });
     
-    // Show the selected role's permission panel
+    // Show selected role panel
     const selectedPanelId = role + 'Permissions';
     const selectedPanel = document.getElementById(selectedPanelId);
-    console.log('Selected panel:', selectedPanelId, selectedPanel);
     if (selectedPanel) {
         selectedPanel.style.display = 'block';
-        console.log('Panel displayed successfully');
+        console.log('Showing panel:', selectedPanelId);
     } else {
         console.error('Panel not found:', selectedPanelId);
     }
     
-    // Set default permissions for each role
-    const permissions = {
-        teacher: {
-            createClass: true,
-            joinClass: false,
-            manageClass: true,
-            takeAttendance: true,
-            viewReports: true,
-            exportReports: true,
-            editTeacherInfo: true,
-            manageUsers: false,
-            systemSettings: false
+    // Load permissions from server
+    fetch('../api/rbac_permissions.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
         },
-        student: {
-            student_createClass: false,
-            student_joinClass: true,
-            student_unenrollClass: true,
-            student_viewAttendanceRecord: true,
-            student_viewAttendanceHistory: true,
-            student_editStudentInfo: true
-        },
-        administrator: {
-            approveTeacherAccounts: true,
-            rejectTeacherAccounts: true,
-            createAdminUser: true,
-            editAdminProfile: true
-        }
-    };
-    
-    const rolePermissions = permissions[role] || {};
-    
-    // Apply permissions to checkboxes
-    Object.keys(rolePermissions).forEach(permission => {
-        const checkbox = document.getElementById(permission);
-        if (checkbox) {
-            checkbox.checked = rolePermissions[permission];
-            console.log('Set permission:', permission, rolePermissions[permission]);
+        body: `action=getRolePermissions&role=${role}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const rolePermissions = data.permissions;
+            
+            // Apply permissions to checkboxes
+            Object.keys(rolePermissions).forEach(permission => {
+                // Handle student-specific permissions (don't double-prefix)
+                let checkboxId;
+                if (permission.startsWith('student_')) {
+                    checkboxId = permission; // Already has student_ prefix
+                } else {
+                    checkboxId = role.toLowerCase() + '_' + permission; // Add role prefix
+                }
+                
+                const checkbox = document.getElementById(checkboxId);
+                if (checkbox) {
+                    checkbox.checked = rolePermissions[permission];
+                    console.log('Set permission:', checkboxId, rolePermissions[permission]);
+                } else {
+                    console.log('Checkbox not found:', checkboxId);
+                }
+            });
         } else {
-            console.log('Checkbox not found:', permission);
+            console.error('Failed to load permissions:', data.message);
+            showToast('Failed to load permissions', 'error');
         }
+    })
+    .catch(error => {
+        console.error('Error loading permissions:', error);
+        showToast('Error loading permissions', 'error');
     });
 }
+
+
+
+// Save Role Permissions
+async function saveRolePermissions(role) {
+    try {
+        // Collect all permission checkboxes for the selected role
+        const rolePermissions = {};
+        const checkboxes = document.querySelectorAll(`#${role}Permissions input[type="checkbox"]`);
+        
+        checkboxes.forEach(checkbox => {
+            // Extract permission name from role-specific ID
+            let permissionName;
+            if (checkbox.id.startsWith('student_')) {
+                // For student permissions
+                const corePermission = checkbox.id.replace('student_', '');
+                if (['joinClass', 'editProfile'].includes(corePermission)) {
+                    permissionName = corePermission; // Use core permission name for database
+                } else {
+                    permissionName = checkbox.id; // Keep student_ prefix for student-specific permissions
+                }
+            } else {
+                permissionName = checkbox.id.replace(role.toLowerCase() + '_', ''); // Remove role prefix
+            }
+            rolePermissions[permissionName] = checkbox.checked;
+        });
+        
+        const response = await fetch('../api/rbac_permissions.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `action=updateRolePermissions&role=${role}&permissions=${JSON.stringify(rolePermissions)}`
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            showToast(result.message, 'success');
+            // Reload permissions to reflect the saved changes
+            loadRolePermissions(role);
+        } else {
+            showToast(result.message || 'Failed to save role permissions', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving role permissions:', error);
+        showToast('Error saving role permissions', 'error');
+    }
+}
+
+// Reset Role Permissions
+async function resetRolePermissions(role) {
+    try {
+        const response = await fetch('../api/rbac_permissions.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `action=resetRolePermissions&role=${role}`
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            showToast(result.message, 'success');
+            // Reload permissions to show the reset values
+            loadRolePermissions(role);
+        } else {
+            showToast(result.message || 'Failed to reset role permissions', 'error');
+        }
+    } catch (error) {
+        console.error('Error resetting role permissions:', error);
+        showToast('Error resetting role permissions', 'error');
+    }
+}
+
 
 // Responsive Design
 function initializeResponsive() {
@@ -1675,17 +1851,21 @@ function handleCreateAccount() {
                 // Show credentials modal for admin accounts
                 if (role === 'Administrator' && data.data && data.data.tempPassword) {
                     console.log('Showing admin credentials modal');
+                    // Close registration modal immediately
+                    hideRegistrationModal();
                     setTimeout(() => {
                         showCredentialsModal(data.data, role);
-                    }, 1000);
+                    }, 500);
                 } 
                 // Show QR code modal for student accounts
                 else if (role === 'Student' && data.data && data.data.qrCodePath) {
                     console.log('Showing student QR modal');
                     console.log('QR Code Path:', data.data.qrCodePath);
+                    // Close registration modal immediately
+                    hideRegistrationModal();
                     setTimeout(() => {
                         showStudentQRModal(data.data);
-                    }, 1000);
+                    }, 500);
                 }
                 // For Teacher accounts, just close modal and reset
                 else {
@@ -1734,7 +1914,7 @@ function showCredentialsModal(data, accountType) {
         <div class="modal fade" id="credentialsModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header">
+                    <div class="modal-header" style='background: #2c3e50;'>
                         <h5 class="modal-title">
                             <i class="bi bi-shield-check me-2"></i>
                             Account Created Successfully

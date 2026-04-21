@@ -4,22 +4,30 @@ date_default_timezone_set('Asia/Manila');
 
 // Start session
 session_start();
+require_once '../config/database.php';
+require_once '../config/permissions.php';
 
 if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
     header('Location: ../auth/admin/admin_login.php');
     exit();
 }
 
-// Include database configuration
-require_once '../config/database.php';
-// Include email service
-require_once '../config/email_service.php';
-
 // Handle AJAX requests
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
     
-    switch ($_POST['action']) {
+    // Get action from either form data or JSON input
+    $action = $_POST['action'] ?? null;
+    if (!$action) {
+        // Try to get from JSON input
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+        $action = $data['action'] ?? null;
+    }
+    
+    if ($action) {
+    
+    switch ($action) {
         case 'getAllUsers':
             echo json_encode(getAllUsers($db));
             exit;
@@ -34,6 +42,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             
         case 'getPendingUsers':
             echo json_encode(getPendingUsers($db));
+            exit;
+            
+        case 'checkApprovalPermission':
+            $userId = $_POST['userId'] ?? 0;
+            echo json_encode(checkApprovalPermission($db, $userId));
+            exit;
+            
+        case 'checkRejectionPermission':
+            $userId = $_POST['userId'] ?? 0;
+            echo json_encode(checkRejectionPermission($db, $userId));
+            exit;
+            
+        case 'checkBulkApprovalPermission':
+            try {
+                $json = file_get_contents('php://input');
+                $data = json_decode($json, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    echo json_encode(['success' => false, 'message' => 'Invalid JSON data']);
+                    exit;
+                }
+                $userIds = $data['userIds'] ?? [];
+                echo json_encode(checkBulkApprovalPermission($db, $userIds));
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Error processing request']);
+            }
+            exit;
+            
+        case 'checkBulkRejectionPermission':
+            try {
+                $json = file_get_contents('php://input');
+                $data = json_decode($json, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    echo json_encode(['success' => false, 'message' => 'Invalid JSON data']);
+                    exit;
+                }
+                $userIds = $data['userIds'] ?? [];
+                echo json_encode(checkBulkRejectionPermission($db, $userIds));
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Error processing request']);
+            }
+            exit;
+            
+        case 'checkCreateAdminUserPermission':
+            echo json_encode(checkCreateAdminUserPermission($db));
+            exit;
+            
+        case 'checkEditProfilePermission':
+            echo json_encode(checkEditProfilePermission($db));
             exit;
             
         case 'approveUser':
@@ -62,7 +118,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             echo json_encode(updateUser($db, $userId, $userData));
             exit;
             
+        case 'bulkApproveUsers':
+            try {
+                $json = file_get_contents('php://input');
+                $data = json_decode($json, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    echo json_encode(['success' => false, 'message' => 'Invalid JSON data']);
+                    exit;
+                }
+                $userIds = $data['userIds'] ?? [];
+                echo json_encode(bulkApproveUsers($db, $userIds));
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Error processing bulk approval']);
             }
+            exit;
+            
+        case 'bulkRejectUsers':
+            try {
+                $json = file_get_contents('php://input');
+                $data = json_decode($json, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    echo json_encode(['success' => false, 'message' => 'Invalid JSON data']);
+                    exit;
+                }
+                $userIds = $data['userIds'] ?? [];
+                echo json_encode(bulkRejectUsers($db, $userIds));
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Error processing bulk rejection']);
+            }
+            exit;
+            
+        }
+    }
 }
 
 // Functions to get user data
@@ -124,6 +211,155 @@ function getPendingUsers($db) {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+// Permission checking function
+function checkAdminPermission($db, $permission) {
+    try {
+        // Get permissions directly from database to avoid class method issues
+        $stmt = $db->prepare("SELECT $permission FROM role_permissions WHERE role = 'Administrator'");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result[$permission] ?? false;
+    } catch (Exception $e) {
+        error_log("Error checking admin permission: " . $e->getMessage());
+        return false;
+    }
+}
+
+// Permission checking functions for frontend
+function checkApprovalPermission($db, $userId) {
+    try {
+        // Get user details to check if it's a teacher
+        $stmt = $db->prepare("SELECT Role FROM users WHERE UserID = ?");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$user) {
+            return ['success' => false, 'message' => 'User not found'];
+        }
+        
+        // Only check permissions for teacher accounts
+        if ($user['Role'] === 'Teacher') {
+            if (!checkAdminPermission($db, 'approveTeacherAccounts')) {
+                return ['success' => false, 'message' => 'This feature is currently unavailable. Please enable the approval permission to proceed.'];
+            }
+        }
+        
+        return ['success' => true];
+        
+    } catch (Exception $e) {
+        error_log("Error checking approval permission: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Error checking permission'];
+    }
+}
+
+function checkRejectionPermission($db, $userId) {
+    try {
+        // Get user details to check if it's a teacher
+        $stmt = $db->prepare("SELECT Role FROM users WHERE UserID = ?");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$user) {
+            return ['success' => false, 'message' => 'User not found'];
+        }
+        
+        // Only check permissions for teacher accounts
+        if ($user['Role'] === 'Teacher') {
+            if (!checkAdminPermission($db, 'rejectTeacherAccounts')) {
+                return ['success' => false, 'message' => 'This feature is currently unavailable. Please enable the rejection permission to proceed.'];
+            }
+        }
+        
+        return ['success' => true];
+        
+    } catch (Exception $e) {
+        error_log("Error checking rejection permission: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Error checking permission'];
+    }
+}
+
+function checkBulkApprovalPermission($db, $userIds) {
+    try {
+        // Validate input
+        if (empty($userIds) || !is_array($userIds)) {
+            return ['success' => false, 'message' => 'No users selected'];
+        }
+        
+        // Check if any of the selected users are teachers
+        $placeholders = str_repeat('?,', count($userIds) - 1) . '?';
+        $stmt = $db->prepare("SELECT COUNT(*) as teacherCount FROM users WHERE UserID IN ($placeholders) AND Role = 'Teacher'");
+        $stmt->execute($userIds);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($result['teacherCount'] > 0) {
+            // There are teachers in the selection, check approval permission
+            if (!checkAdminPermission($db, 'approveTeacherAccounts')) {
+                return ['success' => false, 'message' => 'This feature is currently unavailable. Please enable the approval permission to proceed.'];
+            }
+        }
+        
+        return ['success' => true];
+        
+    } catch (Exception $e) {
+        error_log("Error checking bulk approval permission: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Error checking permission'];
+    }
+}
+
+function checkBulkRejectionPermission($db, $userIds) {
+    try {
+        // Validate input
+        if (empty($userIds) || !is_array($userIds)) {
+            return ['success' => false, 'message' => 'No users selected'];
+        }
+        
+        // Check if any of the selected users are teachers
+        $placeholders = str_repeat('?,', count($userIds) - 1) . '?';
+        $stmt = $db->prepare("SELECT COUNT(*) as teacherCount FROM users WHERE UserID IN ($placeholders) AND Role = 'Teacher'");
+        $stmt->execute($userIds);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($result['teacherCount'] > 0) {
+            // There are teachers in the selection, check rejection permission
+            if (!checkAdminPermission($db, 'rejectTeacherAccounts')) {
+                return ['success' => false, 'message' => 'This feature is currently unavailable. Please enable the rejection permission to proceed.'];
+            }
+        }
+        
+        return ['success' => true];
+        
+    } catch (Exception $e) {
+        error_log("Error checking bulk rejection permission: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Error checking permission'];
+    }
+}
+
+function checkCreateAdminUserPermission($db) {
+    try {
+        if (!checkAdminPermission($db, 'createAdminUser')) {
+            return ['success' => false, 'message' => 'This feature is currently unavailable. Please enable the Add New User permission to proceed.'];
+        }
+        return ['success' => true];
+        
+    } catch (Exception $e) {
+        error_log("Error checking create admin user permission: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Error checking permission'];
+    }
+}
+
+function checkEditProfilePermission($db) {
+    try {
+        if (!checkAdminPermission($db, 'editProfile')) {
+            return ['success' => false, 'message' => 'This feature is currently unavailable. Please enable the Edit Profile Information permission to proceed.'];
+        }
+        return ['success' => true];
+        
+    } catch (Exception $e) {
+        error_log("Error checking edit profile permission: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Error checking permission'];
+    }
+}
+
 // User management functions
 function approveUser($db, $userId) {
     try {
@@ -139,6 +375,12 @@ function approveUser($db, $userId) {
             return ['success' => false, 'message' => 'User not found'];
         }
         
+        // Check permission for approving teacher accounts
+        if ($user['Role'] === 'Teacher' && !checkAdminPermission($db, 'approveTeacherAccounts')) {
+            $db->rollBack();
+            return ['success' => false, 'message' => 'This feature is currently unavailable. Please enable the approval permission to proceed.'];
+        }
+        
         // Update user status
         $stmt = $db->prepare("UPDATE users SET AccountStatus = 'Active' WHERE UserID = ?");
         $stmt->execute([$userId]);
@@ -146,6 +388,7 @@ function approveUser($db, $userId) {
         // Send approval email if user is a teacher
         $emailSent = false;
         if ($user['Role'] === 'Teacher') {
+            require_once '../config/email_service.php';
             $emailService = new EmailService();
             $emailResult = $emailService->sendTeacherApprovalEmail(
                 $user['Email'], 
@@ -189,6 +432,12 @@ function rejectUser($db, $userId) {
             return ['success' => false, 'message' => 'User not found'];
         }
         
+        // Check permission for rejecting teacher accounts
+        if ($user['Role'] === 'Teacher' && !checkAdminPermission($db, 'rejectTeacherAccounts')) {
+            $db->rollBack();
+            return ['success' => false, 'message' => 'This feature is currently unavailable. Please enable the rejection permission to proceed.'];
+        }
+        
         // Update user status
         $stmt = $db->prepare("UPDATE users SET AccountStatus = 'Rejected' WHERE UserID = ?");
         $stmt->execute([$userId]);
@@ -196,6 +445,7 @@ function rejectUser($db, $userId) {
         // Send rejection email if user is a teacher
         $emailSent = false;
         if ($user['Role'] === 'Teacher') {
+            require_once '../config/email_service.php';
             $emailService = new EmailService();
             $emailResult = $emailService->sendTeacherRejectionEmail(
                 $user['Email'], 
@@ -250,6 +500,9 @@ function deleteUser($db, $userId) {
 
 function createUser($db, $userData) {
     try {
+        // Pre-hash password outside of transaction to avoid long locks
+        $hashedPassword = password_hash($userData['password'], PASSWORD_DEFAULT);
+        
         $db->beginTransaction();
         
         // Insert into users table
@@ -259,7 +512,7 @@ function createUser($db, $userData) {
             $userData['first_name'],
             $userData['last_name'],
             $userData['email'],
-            password_hash($userData['password'], PASSWORD_DEFAULT),
+            $hashedPassword,
             $userData['role'],
             'Active'
         ]);
@@ -282,9 +535,12 @@ function createUser($db, $userData) {
         }
         
         $db->commit();
+        
         return ['success' => true, 'message' => 'User created successfully'];
     } catch(PDOException $e) {
-        $db->rollBack();
+        if (isset($db) && $db->inTransaction()) {
+            $db->rollBack();
+        }
         return ['success' => false, 'message' => 'Error creating user: ' . $e->getMessage()];
     }
 }
@@ -316,6 +572,7 @@ function updateUser($db, $userId, $userData) {
         if (isset($userData['role'])) {
             $stmt = $db->prepare("UPDATE users SET Role = ? WHERE UserID = ?");
             $stmt->execute([$userData['role'], $userId]);
+            
         }
         
         if (isset($userData['status'])) {
@@ -328,6 +585,164 @@ function updateUser($db, $userId, $userData) {
         return ['success' => false, 'message' => 'Error updating user: ' . $e->getMessage()];
     }
 }
+
+// Optimized bulk approval function - fast approval, async email
+function bulkApproveUsers($db, $userIds) {
+    try {
+        $db->beginTransaction();
+        
+        // Get all user details first
+        $placeholders = str_repeat('?,', count($userIds) - 1) . '?';
+        $stmt = $db->prepare("SELECT UserID, first_name, last_name, Email, Role FROM users WHERE UserID IN ($placeholders)");
+        $stmt->execute($userIds);
+        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        if (empty($users)) {
+            $db->rollBack();
+            return ['success' => false, 'message' => 'No users found'];
+        }
+        
+        // Check permissions for teachers
+        $teacherCount = 0;
+        foreach ($users as $user) {
+            if ($user['Role'] === 'Teacher') {
+                $teacherCount++;
+            }
+        }
+        
+        if ($teacherCount > 0 && !checkAdminPermission($db, 'approveTeacherAccounts')) {
+            $db->rollBack();
+            return ['success' => false, 'message' => 'This feature is currently unavailable. Please enable the approval permission to proceed.'];
+        }
+        
+        // Bulk update all users at once (FAST)
+        $stmt = $db->prepare("UPDATE users SET AccountStatus = 'Active' WHERE UserID IN ($placeholders)");
+        $stmt->execute($userIds);
+        
+        $db->commit();
+        
+        // Queue emails for background processing (don't wait)
+        $teacherUsers = array_filter($users, function($user) {
+            return $user['Role'] === 'Teacher';
+        });
+        
+        // Send emails asynchronously without blocking the response
+        if (!empty($teacherUsers)) {
+            try {
+                // Queue emails for background processing
+                require_once '../background_jobs/async_email_sender.php';
+                queueBulkApprovalEmails($teacherUsers);
+            } catch (Exception $e) {
+                error_log("Failed to queue emails: " . $e->getMessage());
+                // Don't fail the approval if email queuing fails
+            }
+        }
+        
+        return ['success' => true, 'message' => 'Successfully approved ' . count($users) . ' user(s)'];
+        
+    } catch(PDOException $e) {
+        $db->rollBack();
+        return ['success' => false, 'message' => 'Error in bulk approval: ' . $e->getMessage()];
+    }
+}
+
+// Optimized bulk rejection function - fast rejection, async email
+function bulkRejectUsers($db, $userIds) {
+    try {
+        $db->beginTransaction();
+        
+        // Get all user details first
+        $placeholders = str_repeat('?,', count($userIds) - 1) . '?';
+        $stmt = $db->prepare("SELECT UserID, first_name, last_name, Email, Role FROM users WHERE UserID IN ($placeholders)");
+        $stmt->execute($userIds);
+        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        if (empty($users)) {
+            $db->rollBack();
+            return ['success' => false, 'message' => 'No users found'];
+        }
+        
+        // Check permissions for teachers
+        $teacherCount = 0;
+        foreach ($users as $user) {
+            if ($user['Role'] === 'Teacher') {
+                $teacherCount++;
+            }
+        }
+        
+        if ($teacherCount > 0 && !checkAdminPermission($db, 'rejectTeacherAccounts')) {
+            $db->rollBack();
+            return ['success' => false, 'message' => 'This feature is currently unavailable. Please enable the rejection permission to proceed.'];
+        }
+        
+        // Bulk update all users at once (FAST)
+        $stmt = $db->prepare("UPDATE users SET AccountStatus = 'Rejected' WHERE UserID IN ($placeholders)");
+        $stmt->execute($userIds);
+        
+        $db->commit();
+        
+        // Queue emails for background processing (don't wait)
+        $teacherUsers = array_filter($users, function($user) {
+            return $user['Role'] === 'Teacher';
+        });
+        
+        // Send emails asynchronously without blocking the response
+        if (!empty($teacherUsers)) {
+            try {
+                // Queue emails for background processing
+                require_once '../background_jobs/async_email_sender.php';
+                queueBulkRejectionEmails($teacherUsers);
+            } catch (Exception $e) {
+                error_log("Failed to queue emails: " . $e->getMessage());
+                // Don't fail the rejection if email queuing fails
+            }
+        }
+        
+        return ['success' => true, 'message' => 'Successfully rejected ' . count($users) . ' user(s)'];
+        
+    } catch(PDOException $e) {
+        $db->rollBack();
+        return ['success' => false, 'message' => 'Error in bulk rejection: ' . $e->getMessage()];
+    }
+}
+
+// Background email sending functions
+function sendBulkApprovalEmails($teacherUsers) {
+    try {
+        require_once '../config/email_service.php';
+        $emailService = new EmailService();
+        
+        foreach ($teacherUsers as $user) {
+            $emailService->sendTeacherApprovalEmail(
+                $user['Email'], 
+                $user['first_name'], 
+                $user['last_name']
+            );
+        }
+    } catch (Exception $e) {
+        error_log("Background email sending failed: " . $e->getMessage());
+    }
+}
+
+function sendBulkRejectionEmails($teacherUsers) {
+    try {
+        require_once '../config/email_service.php';
+        $emailService = new EmailService();
+        
+        foreach ($teacherUsers as $user) {
+            $emailService->sendTeacherRejectionEmail(
+                $user['Email'], 
+                $user['first_name'], 
+                $user['last_name']
+            );
+        }
+    } catch (Exception $e) {
+        error_log("Background email sending failed: " . $e->getMessage());
+    }
+}
+
+// RBAC Functions moved to api/rbac_permissions.php
+// This file now handles user management only
 
 
 ?>
@@ -672,35 +1087,24 @@ function updateUser($db, $userId, $userData) {
                                 <h4>Class Management</h4>
                                 <div class="permission-item">
                                     <div class="permission-info">
-                                        <label class="form-check-label" for="createClass">
+                                        <label class="form-check-label" for="teacher_createClass">
                                             <i class="bi bi-plus-circle me-2"></i>Create Class
                                         </label>
                                         <span class="permission-description">Allow teachers to create new classes/subjects</span>
                                     </div>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="createClass">
+                                        <input class="form-check-input" type="checkbox" id="teacher_createClass">
                                     </div>
                                 </div>
-                                <div class="permission-item">
+                                                                <div class="permission-item">
                                     <div class="permission-info">
-                                        <label class="form-check-label" for="joinClass">
-                                            <i class="bi bi-door-open me-2"></i>Join Class
-                                        </label>
-                                        <span class="permission-description">Allow teachers to join classes</span>
-                                    </div>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="joinClass">
-                                    </div>
-                                </div>
-                                <div class="permission-item">
-                                    <div class="permission-info">
-                                        <label class="form-check-label" for="manageClass">
+                                        <label class="form-check-label" for="teacher_manageClass">
                                             <i class="bi bi-gear me-2"></i>Manage Class
                                         </label>
                                         <span class="permission-description">Allow teachers to manage class settings and members</span>
                                     </div>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="manageClass">
+                                        <input class="form-check-input" type="checkbox" id="teacher_manageClass">
                                     </div>
                                 </div>
                             </div>
@@ -709,35 +1113,35 @@ function updateUser($db, $userId, $userData) {
                                 <h4>Attendance & Reports</h4>
                                 <div class="permission-item">
                                     <div class="permission-info">
-                                        <label class="form-check-label" for="takeAttendance">
+                                        <label class="form-check-label" for="teacher_takeAttendance">
                                             <i class="bi bi-check2-square me-2"></i>Take Attendance
                                         </label>
                                         <span class="permission-description">Allow teachers to conduct attendance sessions</span>
                                     </div>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="takeAttendance">
+                                        <input class="form-check-input" type="checkbox" id="teacher_takeAttendance">
                                     </div>
                                 </div>
                                 <div class="permission-item">
                                     <div class="permission-info">
-                                        <label class="form-check-label" for="viewReports">
+                                        <label class="form-check-label" for="teacher_viewReports">
                                             <i class="bi bi-graph-up me-2"></i>View Reports
                                         </label>
                                         <span class="permission-description">Allow teachers to view attendance reports</span>
                                     </div>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="viewReports">
+                                        <input class="form-check-input" type="checkbox" id="teacher_viewReports">
                                     </div>
                                 </div>
                                 <div class="permission-item">
                                     <div class="permission-info">
-                                        <label class="form-check-label" for="exportReports">
+                                        <label class="form-check-label" for="teacher_exportReports">
                                             <i class="bi bi-download me-2"></i>Export Reports
                                         </label>
                                         <span class="permission-description">Allow teachers to export attendance data</span>
                                     </div>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="exportReports">
+                                        <input class="form-check-input" type="checkbox" id="teacher_exportReports">
                                     </div>
                                 </div>
                             </div>
@@ -746,13 +1150,13 @@ function updateUser($db, $userId, $userData) {
                                 <h4>Account Settings</h4>
                                 <div class="permission-item">
                                     <div class="permission-info">
-                                        <label class="form-check-label" for="editTeacherInfo">
-                                            <i class="bi bi-person-gear me-2"></i>Edit Teacher Information
+                                        <label class="form-check-label" for="teacher_editProfile">
+                                            <i class="bi bi-person-gear me-2"></i>Edit Profile Information
                                         </label>
-                                        <span class="permission-description">Allow teachers to change their personal information in settings</span>
+                                        <span class="permission-description">Allow users to change their personal information in settings</span>
                                     </div>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="editTeacherInfo">
+                                        <input class="form-check-input" type="checkbox" id="teacher_editProfile">
                                     </div>
                                 </div>
                             </div>
@@ -762,23 +1166,12 @@ function updateUser($db, $userId, $userData) {
                         <div id="studentPermissions" style="display: none;">
                             <div class="permission-category">
                                 <h4>Class Management</h4>
-                                <div class="permission-item">
-                                    <div class="permission-info">
-                                        <label class="form-check-label" for="student_createClass">
-                                            <i class="bi bi-plus-circle me-2"></i>Create Class
-                                        </label>
-                                        <span class="permission-description">Allow students to create new classes/subjects</span>
-                                    </div>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="student_createClass">
-                                    </div>
-                                </div>
-                                <div class="permission-item">
+                                                                <div class="permission-item">
                                     <div class="permission-info">
                                         <label class="form-check-label" for="student_joinClass">
                                             <i class="bi bi-door-open me-2"></i>Join Class
                                         </label>
-                                        <span class="permission-description">Allow students to join existing classes</span>
+                                        <span class="permission-description">Allow users to join existing classes</span>
                                     </div>
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" type="checkbox" id="student_joinClass">
@@ -827,13 +1220,13 @@ function updateUser($db, $userId, $userData) {
                                 <h4>Account Settings</h4>
                                 <div class="permission-item">
                                     <div class="permission-info">
-                                        <label class="form-check-label" for="student_editStudentInfo">
-                                            <i class="bi bi-person-gear me-2"></i>Edit Student Information
+                                        <label class="form-check-label" for="student_editProfile">
+                                            <i class="bi bi-person-gear me-2"></i>Edit Profile Information
                                         </label>
-                                        <span class="permission-description">Allow students to change their personal information in settings</span>
+                                        <span class="permission-description">Allow users to change their personal information in settings</span>
                                     </div>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="student_editStudentInfo">
+                                        <input class="form-check-input" type="checkbox" id="student_editProfile">
                                     </div>
                                 </div>
                             </div>
@@ -846,35 +1239,35 @@ function updateUser($db, $userId, $userData) {
                                 <h4>User Account Management</h4>
                                 <div class="permission-item">
                                     <div class="permission-info">
-                                        <label class="form-check-label" for="approveTeacherAccounts">
+                                        <label class="form-check-label" for="administrator_approveTeacherAccounts">
                                             <i class="bi bi-check-circle me-2"></i>Approve Teacher Accounts
                                         </label>
                                         <span class="permission-description">Allow administrators to approve new teacher account registrations</span>
                                     </div>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="approveTeacherAccounts">
+                                        <input class="form-check-input" type="checkbox" id="administrator_approveTeacherAccounts">
                                     </div>
                                 </div>
                                 <div class="permission-item">
                                     <div class="permission-info">
-                                        <label class="form-check-label" for="rejectTeacherAccounts">
+                                        <label class="form-check-label" for="administrator_rejectTeacherAccounts">
                                             <i class="bi bi-x-circle me-2"></i>Reject Teacher Accounts
                                         </label>
                                         <span class="permission-description">Allow administrators to reject new teacher account registrations</span>
                                     </div>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="rejectTeacherAccounts">
+                                        <input class="form-check-input" type="checkbox" id="administrator_rejectTeacherAccounts">
                                     </div>
                                 </div>
                                 <div class="permission-item">
                                     <div class="permission-info">
-                                        <label class="form-check-label" for="createAdminUser">
-                                            <i class="bi bi-person-plus-fill me-2"></i>Create Admin User
+                                        <label class="form-check-label" for="administrator_createAdminUser">
+                                            <i class="bi bi-person-plus-fill me-2"></i>Add New User
                                         </label>
-                                        <span class="permission-description">Allow administrators to create new administrator accounts</span>
+                                        <span class="permission-description">Allow administrators to add new administrator accounts</span>
                                     </div>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="createAdminUser">
+                                        <input class="form-check-input" type="checkbox" id="administrator_createAdminUser">
                                     </div>
                                 </div>
                             </div>
@@ -883,13 +1276,13 @@ function updateUser($db, $userId, $userData) {
                                 <h4>Account Settings</h4>
                                 <div class="permission-item">
                                     <div class="permission-info">
-                                        <label class="form-check-label" for="editAdminProfile">
-                                            <i class="bi bi-person-gear me-2"></i>Edit Admin Profile
+                                        <label class="form-check-label" for="administrator_editProfile">
+                                            <i class="bi bi-person-gear me-2"></i>Edit Profile Information
                                         </label>
                                         <span class="permission-description">Allow administrators to change their personal information in settings</span>
                                     </div>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="editAdminProfile">
+                                        <input class="form-check-input" type="checkbox" id="administrator_editProfile">
                                     </div>
                                 </div>
                             </div>
@@ -1259,6 +1652,6 @@ function updateUser($db, $userId, $userData) {
     </div>
 
     <!-- Custom JavaScript -->
-    <script src="../assets/js/manage_users.js?v=24"></script>
+    <script src="../assets/js/manage_users.js?v=37"></script>
 </body>
 </html>

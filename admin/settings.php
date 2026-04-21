@@ -11,6 +11,7 @@ error_log("POST data: " . print_r($_POST, true));
 
 // Include database configuration
 require_once '../config/database.php';
+require_once '../config/permissions.php';
 
 // Test database connection
 try {
@@ -321,6 +322,116 @@ if (isset($_SESSION['admin_id']) && is_numeric($_SESSION['admin_id'])) {
 
             <!-- Profile Section -->
             <div id="profile-tab" class="tab-content active">
+                <?php
+                // Check editProfile permission
+                $canEditProfile = false;
+                if (isset($_SESSION['admin_id']) && is_numeric($_SESSION['admin_id'])) {
+                    try {
+                        // Get admin role directly from admins table
+                        $stmt = $db->prepare("SELECT role FROM admins WHERE admin_id = ?");
+                        $stmt->execute([$_SESSION['admin_id']]);
+                        $adminData = $stmt->fetch();
+                        
+                        if ($adminData) {
+                            // Get permission from role_permissions table
+                            $stmt = $db->prepare("SELECT editProfile FROM role_permissions WHERE role = ?");
+                            $stmt->execute([$adminData['role']]);
+                            $permissionData = $stmt->fetch();
+                            
+                            $canEditProfile = $permissionData && $permissionData['editProfile'] == 1;
+                        }
+                    } catch (Exception $e) {
+                        error_log("Error checking admin permission: " . $e->getMessage());
+                        $canEditProfile = false;
+                    }
+                }
+                
+                // Debug: Log permission status
+                error_log("Edit Profile Permission Status: " . ($canEditProfile ? 'GRANTED' : 'DENIED'));
+                error_log("Admin ID: " . ($_SESSION['admin_id'] ?? 'NOT SET'));
+                ?>
+                
+                <!-- Disabled Overlay -->
+                <?php if (!$canEditProfile): ?>
+                <div class="profile-disabled-overlay">
+                    <div class="profile-disabled-content">
+                        <div class="profile-disabled-icon">
+                            <i class="bi bi-lock-fill"></i>
+                        </div>
+                        <div class="profile-disabled-message">
+                            <h4>Access Restricted</h4>
+                            <p>This feature is currently unavailable. Please enable the Edit Profile Information permission to proceed.</p>
+                        </div>
+                    </div>
+                </div>
+                <style>
+                #profile-tab {
+                    position: relative !important;
+                    <?php echo !$canEditProfile ? 'opacity: 0.4 !important; pointer-events: none !important;' : ''; ?>
+                }
+                .profile-disabled-overlay {
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    bottom: 0 !important;
+                    background: rgba(220, 53, 69, 0.15) !important;
+                    backdrop-filter: blur(5px) !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    z-index: 9999 !important;
+                    border-radius: 8px !important;
+                    border: 2px dashed #dc3545 !important;
+                }
+                .profile-disabled-content {
+                    text-align: center !important;
+                    padding: 40px 32px !important;
+                    background: white !important;
+                    border-radius: 12px !important;
+                    box-shadow: 0 8px 32px rgba(220, 53, 69, 0.3) !important;
+                    border: 2px solid #dc3545 !important;
+                    max-width: 450px !important;
+                    margin: 20px !important;
+                    position: relative !important;
+                    z-index: 10000 !important;
+                }
+                .profile-disabled-icon {
+                    font-size: 64px !important;
+                    color: #dc3545 !important;
+                    margin-bottom: 20px !important;
+                }
+                .profile-disabled-message h4 {
+                    margin: 0 0 12px 0 !important;
+                    color: #dc3545 !important;
+                    font-weight: 600 !important;
+                    font-size: 20px !important;
+                }
+                .profile-disabled-message p {
+                    margin: 0 !important;
+                    color: #6c757d !important;
+                    line-height: 1.6 !important;
+                    font-size: 15px !important;
+                }
+                @media (max-width: 576px) {
+                    .profile-disabled-content {
+                        padding: 30px 24px !important;
+                        margin: 15px !important;
+                    }
+                    .profile-disabled-icon {
+                        font-size: 48px !important;
+                        margin-bottom: 16px !important;
+                    }
+                    .profile-disabled-message h4 {
+                        font-size: 18px !important;
+                    }
+                    .profile-disabled-message p {
+                        font-size: 14px !important;
+                    }
+                }
+                </style>
+                <?php endif; ?>
+                
                 <div class="settings-container">
                     <!-- Profile Icon Section -->
                     <div class="profile-icon-section">
@@ -433,7 +544,7 @@ if (isset($_SESSION['admin_id']) && is_numeric($_SESSION['admin_id'])) {
     <!-- Include Toast Component -->
     <?php include '../assets/components/toast.php'; ?>
     <!-- Admin Settings JavaScript -->
-    <script src="../assets/js/admin_settings.js?v=1"></script>
+    <script src="../assets/js/admin_settings.js?v=2"></script>
     
     <!-- Hidden File Input for Profile Photo -->
     <input type="file" id="profilePhotoInput" accept="image/*" style="display: none;" onchange="handleProfilePhotoSelect(this)">
