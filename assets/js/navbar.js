@@ -1,12 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Navbar script loaded');
-    
     const classCodeInput = document.getElementById('classCodeInput');
     const joinClassBtn = document.getElementById('joinClassBtn');
     const cancelBtn = document.querySelector('.btn-cancel');
-    
-    console.log('classCodeInput found:', !!classCodeInput);
-    console.log('joinClassBtn found:', !!joinClassBtn);
     
     // Plus Dropdown Elements
     const plusDropdownToggle = document.getElementById('plusDropdownToggle');
@@ -31,13 +26,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to show toast notification
     function showToast(message, type = 'success') {
-        console.log('showToast called with message:', message, 'type:', type);
-        
         const toastContainer = document.getElementById('toast-container');
-        console.log('Toast container found:', !!toastContainer);
         
         if (!toastContainer) {
-            console.error('Toast container not found!');
             return;
         }
         
@@ -50,7 +41,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Create toast element
         const toast = document.createElement('div');
         toast.className = `toast toast-${toastType}`;
-        console.log('Created toast element with class:', toast.className);
         
         // Create icon based on type
         let iconSvg;
@@ -75,11 +65,8 @@ document.addEventListener('DOMContentLoaded', function() {
             </button>
         `;
         
-        console.log('Toast inner HTML set');
-        
         // Add to container
         toastContainer.appendChild(toast);
-        console.log('Toast added to container');
         
         // Add close functionality
         const closeBtn = toast.querySelector('.toast-close');
@@ -97,7 +84,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show animation
         setTimeout(() => {
             toast.classList.add('show');
-            console.log('Toast show class added');
         }, 100);
     }
     
@@ -181,7 +167,6 @@ document.addEventListener('DOMContentLoaded', function() {
             agreementCheckbox.checked = false;
         }
         updateContinueButton();
-        console.log('Create Subject modal reset to original state');
     }
     
     // Create Class Modal Functions
@@ -224,9 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     schedule: schedule
                 };
                 
-                console.log('Creating class with data:', classData);
-                console.log('Sending request to: /classtrack/api/create_class.php');
-                
                 // Send AJAX request to create class
                 fetch('/classtrack/api/create_class.php', {
                     method: 'POST',
@@ -235,13 +217,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     body: JSON.stringify(classData)
                 })
-                .then(response => {
-                    console.log('Response status:', response.status);
-                    console.log('Response headers:', response.headers);
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
-                    console.log('Response data:', data);
                     
                     // Reset loading state
                     resetCreateClassModal();
@@ -266,9 +243,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 })
                 .catch(error => {
-                    console.error('Error creating class:', error);
-                    console.error('Error details:', error.message);
-                    console.error('Error stack:', error.stack);
                     resetCreateClassModal();
                     showToast('An error occurred. Please try again.', 'error');
                 });
@@ -346,7 +320,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         updateCreateClassButton();
-        console.log('Create Class modal reset to original state');
     }
     
     // Plus Dropdown Functions
@@ -385,11 +358,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Role-based visibility function
     function updateDropdownVisibility() {
         if (currentUserRole === 'Student') {
-            // Show only Join Class
+            // Student Role: Only show Join Class
             if (createSubjectOption) createSubjectOption.classList.add('hidden');
             if (joinClassOption) joinClassOption.classList.remove('hidden');
         } else if (currentUserRole === 'Teacher') {
-            // Show only Create Subject
+            // Teacher Role: Only show Create Class
             if (createSubjectOption) createSubjectOption.classList.remove('hidden');
             if (joinClassOption) joinClassOption.classList.add('hidden');
         } else if (currentUserRole === 'Administrator' || currentUserRole === null) {
@@ -407,42 +380,61 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleDropdown();
         });
         
-        // Create Subject option click handler
-        if (createSubjectOption) {
-            createSubjectOption.addEventListener('click', function() {
-                closeDropdown();
+        // Use event delegation for dynamic dropdown items
+        plusDropdownMenu.addEventListener('click', function(event) {
+            const clickedItem = event.target.closest('.dropdown-item-plus');
+            if (!clickedItem) return;
+            
+            closeDropdown();
+            
+            // Handle Create Subject/Class option
+            if (clickedItem.id === 'createSubjectOption') {
+                // Check createClass permission
+                if (!window.canCreateClass) {
+                    showToast('This feature is currently unavailable. Please contact your administrator to enable access.', 'info');
+                    return;
+                }
+                
                 // Trigger the Create Subject modal
                 const modal = document.getElementById('createSubjectModal');
                 if (modal) {
                     const bootstrapModal = new bootstrap.Modal(modal);
                     bootstrapModal.show();
                 }
-            });
-        }
-        
-        // Join Class option click handler
-        if (joinClassOption) {
-            joinClassOption.addEventListener('click', function() {
-                closeDropdown();
+            }
+            
+            // Handle Join Class option
+            if (clickedItem.id === 'joinClassOption') {
+                // Special handling for Student role - always show toast if permission disabled
+                if (window.currentUserRole === 'Student' && !window.canJoinClass) {
+                    showToast('This feature is currently unavailable. Please contact your administrator to enable access.', 'info');
+                    return;
+                }
+                
+                // For other roles, check permission normally
+                if (window.currentUserRole !== 'Student' && !window.canJoinClass) {
+                    showToast('This feature is currently unavailable. Please contact your administrator to enable access.', 'info');
+                    return;
+                }
+                
                 // Trigger the existing Join Class modal
                 const modal = document.getElementById('joinClassModal');
                 if (modal) {
                     const bootstrapModal = new bootstrap.Modal(modal);
                     bootstrapModal.show();
                 }
-            });
-        }
+            }
+        });
+    }
         
         // Initialize dropdown visibility
         updateDropdownVisibility();
         
         // Initialize Create Subject modal
         initializeCreateSubjectModal();
-    }
     
     // Function to join class via API
     function joinClassViaAPI(classCode) {
-        console.log('Attempting to join class with code:', classCode);
         
         return fetch('/classtrack/api/join_class.php', {
             method: 'POST',
@@ -451,33 +443,25 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({ classCode: classCode })
         })
-        .then(response => {
-            console.log('API Response status:', response.status);
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('API Response data:', data);
             return {
                 success: data.success,
                 message: data.message,
                 classInfo: data.data
             };
         })
-        .catch(error => {
-            console.error('Error joining class:', error);
-            return {
-                success: false,
-                message: 'Network error. Please try again.',
-                classInfo: null
-            };
-        });
+        .catch(() => ({
+            success: false,
+            message: 'Network error. Please try again.',
+            classInfo: null
+        }));
     }
     
     // Function to reset modal to original state
     function resetModal() {
         classCodeInput.value = '';
         validateClassCode();
-        console.log('Modal reset to original state');
     }
     
     // Function to set loading state
@@ -500,64 +484,26 @@ document.addEventListener('DOMContentLoaded', function() {
         const inputValue = classCodeInput.value.trim();
         const isValid = inputValue.length >= 5 && inputValue.length <= 8 && /^[a-zA-Z0-9]+$/.test(inputValue);
         
-        console.log('Input value:', inputValue);
-        console.log('Input length:', inputValue.length);
-        console.log('Regex test result:', /^[a-zA-Z0-9]+$/.test(inputValue));
-        console.log('Is valid:', isValid);
-        console.log('Button element:', joinClassBtn);
-        
         if (isValid) {
             // Enable the Join button
             joinClassBtn.classList.remove('disabled');
             joinClassBtn.classList.add('enabled');
-            console.log('Join button enabled');
-            console.log('Button classes after enable:', joinClassBtn.className);
-            console.log('Button computed style cursor:', getComputedStyle(joinClassBtn).cursor);
-            console.log('Button computed style pointer-events:', getComputedStyle(joinClassBtn).pointerEvents);
         } else {
             // Disable the Join button
             joinClassBtn.classList.remove('enabled');
             joinClassBtn.classList.add('disabled');
-            console.log('Join button disabled');
-            console.log('Button classes after disable:', joinClassBtn.className);
-            console.log('Button computed style cursor:', getComputedStyle(joinClassBtn).cursor);
-            console.log('Button computed style pointer-events:', getComputedStyle(joinClassBtn).pointerEvents);
         }
     }
     
-    // Add event listener for input validation
-    console.log('DEBUG: Checking for Join Class modal elements');
-    console.log('DEBUG: classCodeInput found:', !!classCodeInput);
-    console.log('DEBUG: joinClassBtn found:', !!joinClassBtn);
-    console.log('DEBUG: currentUserRole:', currentUserRole);
-    
     if (classCodeInput && joinClassBtn) {
-        console.log('Elements found, adding event listener');
-        console.log('joinClassBtn element:', joinClassBtn);
-        console.log('joinClassBtn tagName:', joinClassBtn.tagName);
-        console.log('joinClassBtn classes:', joinClassBtn.className);
-        console.log('Initial input value:', classCodeInput.value);
-        
-        // Test validation function manually
-        console.log('DEBUG: Testing validation with "ABC123"');
-        classCodeInput.value = 'ABC123';
-        validateClassCode();
-        console.log('DEBUG: After setting ABC123, button classes:', joinClassBtn.className);
-        console.log('DEBUG: Button color:', joinClassBtn.style.color);
-        console.log('DEBUG: Button cursor:', joinClassBtn.style.cursor);
-        
-        // Clear the test value
-        classCodeInput.value = '';
         
         // Initial validation
         validateClassCode();
         
         classCodeInput.addEventListener('input', function() {
-            console.log('DEBUG: Input event triggered, value:', classCodeInput.value);
             validateClassCode();
         });
         classCodeInput.addEventListener('keyup', function() {
-            console.log('DEBUG: Keyup event triggered, value:', classCodeInput.value);
             validateClassCode();
         });
         
@@ -569,7 +515,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!isValid) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Button is disabled - invalid input');
                 return;
             }
             
@@ -578,8 +523,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 return;
             }
-            
-            console.log('Button is enabled - proceeding with join');
             
             // Set loading state
             setLoadingState(true);
@@ -623,7 +566,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 2000); // 2-second delay
                 
             } catch (error) {
-                console.error('Error joining class:', error);
                 
                 // Add 2-second delay before showing error
                 setTimeout(() => {
@@ -650,8 +592,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Initialize button state
         validateClassCode();
-    } else {
-        console.log('Join Class modal elements not found - likely not a Student user');
     }
     
     // Close dropdown when Escape key is pressed
@@ -711,8 +651,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         })
-        .catch(error => {
-            console.log('Could not refresh profile picture:', error);
+        .catch(() => {
+            // Silently handle profile refresh errors
         });
     };
 });

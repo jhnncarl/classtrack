@@ -11,6 +11,9 @@ if (file_exists($configPath)) {
     }
 }
 
+// Include permissions for checking createClass and joinClass
+require_once __DIR__ . '/../../config/permissions.php';
+
 // Check for admin session first
 $isAdminLoggedIn = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true;
 $isAdmin = $isAdminLoggedIn && isset($_SESSION['admin_role']);
@@ -63,6 +66,47 @@ if (!$isAdminLoggedIn) {
         }
     }
 }
+
+// Check user permissions for createClass and joinClass
+$canCreateClass = false;
+$canJoinClass = false;
+
+if ($isLoggedIn && isset($_SESSION['user_id'])) {
+    try {
+        require_once __DIR__ . '/../../config/database.php';
+        $db = (new Database())->getConnection();
+        
+        // Get user role
+        $stmt = $db->prepare("SELECT Role FROM users WHERE UserID = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $userData = $stmt->fetch();
+        
+        if ($userData) {
+            // Get permissions from role_permissions table
+            $stmt = $db->prepare("SELECT createClass, joinClass FROM role_permissions WHERE role = ?");
+            $stmt->execute([$userData['Role']]);
+            $permissionData = $stmt->fetch();
+            
+            if ($permissionData) {
+                $canCreateClass = $permissionData['createClass'] == 1;
+                $canJoinClass = $permissionData['joinClass'] == 1;
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Error checking navbar permissions: " . $e->getMessage());
+        $canCreateClass = false;
+        $canJoinClass = false;
+    }
+}
+
+// Debug: Log permission status
+error_log("Navbar Permissions - createClass: " . ($canCreateClass ? 'GRANTED' : 'DENIED') . ", joinClass: " . ($canJoinClass ? 'GRANTED' : 'DENIED'));
+error_log("User Role: " . $userRole);
+error_log("Is Logged In: " . ($isLoggedIn ? 'YES' : 'NO'));
+error_log("Session User ID: " . ($_SESSION['user_id'] ?? 'NOT SET'));
+error_log("Dropdown will show: " . (($canCreateClass || $canJoinClass) ? 'YES' : 'NO'));
+error_log("Student Create Class visible: " . ($userRole === 'Student' && $canCreateClass ? 'YES' : 'NO'));
+error_log("Student Join Class visible: YES (always)");
 ?>
 <!-- Top Navigation Bar -->
     <nav class="navbar navbar-light bg-white fixed-top shadow-sm">
@@ -83,34 +127,26 @@ if (!$isAdminLoggedIn) {
 
             <!-- Right Section - Action Items -->
             <div class="d-flex align-items-center">
-                <?php if ($isLoggedIn && $userRole === 'Student'): ?>
-                <!-- Plus Icon with Dropdown for Students -->
+                <?php if ($isLoggedIn && ($userRole === 'Student' || $userRole === 'Teacher' || $canCreateClass || $canJoinClass)): ?>
+                <!-- Plus Icon with Dynamic Dropdown based on Role and Permissions -->
                 <div class="dropdown-plus">
                     <button class="btn-icon btn-icon-large me-3" id="plusDropdownToggle">
                         <i class="bi bi-plus"></i>
                     </button>
                     <div class="dropdown-menu-plus" id="plusDropdownMenu">
-                        <!-- Show only Join Class for Student role -->
-                        <div class="dropdown-item-plus" id="joinClassOption" data-role="student">
-                            <i class="bi bi-door-open me-2"></i>
-                            <span>Join Class</span>
-                        </div>
-                    </div>
-                </div>
-                <?php endif; ?>
-                
-                <?php if ($isLoggedIn && $userRole === 'Teacher'): ?>
-                <!-- Plus Icon with Dropdown for Teachers -->
-                <div class="dropdown-plus">
-                    <button class="btn-icon btn-icon-large me-3" id="plusDropdownToggle">
-                        <i class="bi bi-plus"></i>
-                    </button>
-                    <div class="dropdown-menu-plus" id="plusDropdownMenu">
-                        <!-- Show only Create Subject for Teacher role -->
-                        <div class="dropdown-item-plus" id="createSubjectOption" data-role="teacher">
-                            <i class="bi bi-plus-circle me-2"></i>
-                            <span>Create Subject</span>
-                        </div>
+                        <?php if ($userRole === 'Student'): ?>
+                            <!-- Student Role: Only show Join Class -->
+                            <div class="dropdown-item-plus" id="joinClassOption" data-role="Student">
+                                <i class="bi bi-door-open me-2"></i>
+                                <span>Join Class</span>
+                            </div>
+                        <?php elseif ($userRole === 'Teacher'): ?>
+                            <!-- Teacher Role: Only show Create Class -->
+                            <div class="dropdown-item-plus" id="createSubjectOption" data-role="Teacher">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                <span>Create Class</span>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <?php endif; ?>
@@ -363,15 +399,22 @@ if (!$isAdminLoggedIn) {
     </div>
 
     <script>
-        // Pass user role to JavaScript
+        // Pass user role and permissions to JavaScript
         <?php if ($isAdmin): ?>
         window.currentUserRole = 'Administrator';
         window.isAdmin = true;
+        window.canCreateClass = false;
+        window.canJoinClass = false;   
         <?php else: ?>
         window.currentUserRole = <?php echo json_encode($isLoggedIn ? $userRole : null); ?>;
         window.isAdmin = false;
+        window.canCreateClass = <?php echo json_encode($canCreateClass); ?>;
+        window.canJoinClass = <?php echo json_encode($canJoinClass); ?>;
         <?php endif; ?>
     </script>
     <link rel="stylesheet" href="/classtrack/assets/css/toast.css?v=4">
-    <link rel="stylesheet" href="/classtrack/assets/css/navbar.css?v=23">
-    <script src="/classtrack/assets/js/navbar.js"></script>
+    <link rel="stylesheet" href="/classtrack/assets/css/navbar.css?v=26">
+    <script src="/classtrack/assets/js/navbar.js?v=30"></script>
+    
+    <!-- Toast Notification Container -->
+    <?php include __DIR__ . '/toast.php'; ?>
