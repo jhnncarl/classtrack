@@ -191,6 +191,13 @@ error_log("Student Join Class visible: YES (always)");
         </div>
     </nav>
 
+    <!-- Linear Progress Bar for Loading State -->
+    <div class="navbar-progress-container" id="navbarProgressBar" style="display: none;">
+        <div class="navbar-progress-bar">
+            <div class="navbar-progress-fill"></div>
+        </div>
+    </div>
+
     <!-- Join Class Modal -->
     <div class="modal fade" id="joinClassModal" tabindex="-1" aria-labelledby="joinClassModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-custom" style="max-width: 560px !important;">
@@ -413,8 +420,8 @@ error_log("Student Join Class visible: YES (always)");
         <?php endif; ?>
     </script>
     <link rel="stylesheet" href="/classtrack/assets/css/toast.css?v=4">
-    <link rel="stylesheet" href="/classtrack/assets/css/navbar.css?v=26">
-    <script src="/classtrack/assets/js/navbar.js?v=30"></script>
+    <link rel="stylesheet" href="/classtrack/assets/css/navbar.css?v=30">
+    <script src="/classtrack/assets/js/navbar.js?v=36"></script>
     
     <!-- Toast Notification Container -->
     <?php include __DIR__ . '/toast.php'; ?>

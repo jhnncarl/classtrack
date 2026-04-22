@@ -236,6 +236,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                     bootstrapModal.hide();
                                 }
                             }
+                            
+                            // Auto-reload teacher dashboard if we're on it
+                            reloadTeacherDashboard();
                         }, 1000);
                     } else {
                         // Show error toast
@@ -558,6 +561,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                             }
                             resetModal();
+                            
+                            // Auto-reload subjects page if we're on it
+                            reloadSubjectsPage();
                         }, 1500);
                     } else {
                         // Show error/info toast with server message
@@ -600,6 +606,64 @@ document.addEventListener('DOMContentLoaded', function() {
             closeDropdown();
         }
     });
+    
+    // Function to reload subjects page after joining a class
+    function reloadSubjectsPage() {
+        // Check if we're currently on the subjects page
+        if (window.location.pathname.includes('/student/subjects.php') || 
+            window.location.href.includes('/student/subjects.php')) {
+            
+            // Show progress bar
+            showProgressBar();
+            
+            // Reload the page content via AJAX to show the newly joined class
+            fetch(window.location.href, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                // Update progress to half way
+                updateProgressBar('loading-half');
+                return response.text();
+            })
+            .then(html => {
+                // Update progress to complete
+                updateProgressBar('loading-complete');
+                
+                // Create a temporary DOM element to parse the response
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                
+                // Find the new class grid content
+                const newClassGrid = tempDiv.querySelector('.class-grid');
+                const currentClassGrid = document.querySelector('.class-grid');
+                
+                if (newClassGrid && currentClassGrid) {
+                    // Replace the current class grid with the updated one
+                    currentClassGrid.innerHTML = newClassGrid.innerHTML;
+                    
+                    // Reinitialize subjects page functionality
+                    if (typeof initializeSubjectsPage === 'function') {
+                        initializeSubjectsPage();
+                    }
+                }
+                
+                // Hide progress bar after a short delay
+                setTimeout(() => {
+                    hideProgressBar();
+                }, 500);
+            })
+            .catch(error => {
+                console.error('Error reloading subjects page:', error);
+                // Hide progress bar
+                hideProgressBar();
+                // Fallback: reload the entire page if AJAX fails
+                window.location.reload();
+            });
+        }
+    }
     
     // Function to refresh navbar profile picture dynamically
     window.refreshNavbarProfile = function() {
@@ -656,4 +720,106 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 });
+
+// Progress Bar Functions (Global Access)
+// Function to show progress bar
+function showProgressBar() {
+    const progressBar = document.getElementById('navbarProgressBar');
+    
+    if (progressBar) {
+        progressBar.style.display = 'block';
+        progressBar.className = 'navbar-progress-container loading';
+        
+        // Add body class for smooth padding transition
+        document.body.classList.add('has-progress-bar');
+        
+        // Reset progress fill
+        const progressFill = progressBar.querySelector('.navbar-progress-fill');
+        if (progressFill) {
+            progressFill.style.width = '0%';
+        }
+        
+        // Start animation after a brief delay
+        setTimeout(() => {
+            updateProgressBar('loading');
+        }, 100);
+    }
+}
+
+// Function to update progress bar state
+function updateProgressBar(state) {
+    const progressBar = document.getElementById('navbarProgressBar');
+    if (progressBar) {
+        progressBar.className = 'navbar-progress-container ' + state;
+    }
+}
+
+// Function to hide progress bar
+function hideProgressBar() {
+    const progressBar = document.getElementById('navbarProgressBar');
+    if (progressBar) {
+        progressBar.className = 'navbar-progress-container loading-complete';
+        
+        // Hide after animation completes
+        setTimeout(() => {
+            progressBar.style.display = 'none';
+            progressBar.className = 'navbar-progress-container';
+            // Remove body class for smooth padding transition
+            document.body.classList.remove('has-progress-bar');
+        }, 500);
+    }
+}
+
+// Function to reload teacher dashboard after creating a class
+function reloadTeacherDashboard() {
+    // Check if we're currently on the teacher dashboard
+    if (window.location.pathname.includes('/teacher/dashboard.php') || 
+        window.location.href.includes('/teacher/dashboard.php')) {
+        
+        // Show progress bar
+        showProgressBar();
+        
+        // Trigger immediate dashboard update using the existing dashboard instance
+        if (window.teacherDashboard) {
+            // Update progress to half way
+            updateProgressBar('loading-half');
+            
+            // Trigger the dashboard update
+            window.teacherDashboard.updateDashboard()
+                .then(() => {
+                    // Update progress to complete
+                    updateProgressBar('loading-complete');
+                    
+                    // Hide progress bar after a short delay
+                    setTimeout(() => {
+                        hideProgressBar();
+                    }, 500);
+                })
+                .catch(error => {
+                    console.error('Error reloading teacher dashboard:', error);
+                    // Hide progress bar
+                    hideProgressBar();
+                    // Fallback: reload the entire page if dashboard update fails
+                    window.location.reload();
+                });
+        } else {
+            // Fallback: use global update function if dashboard instance not available
+            if (typeof updateDashboard === 'function') {
+                updateProgressBar('loading-half');
+                updateDashboard();
+                
+                setTimeout(() => {
+                    updateProgressBar('loading-complete');
+                    setTimeout(() => {
+                        hideProgressBar();
+                    }, 500);
+                }, 1000);
+            } else {
+                // Final fallback: reload the entire page
+                hideProgressBar();
+                window.location.reload();
+            }
+        }
+    }
+}
 

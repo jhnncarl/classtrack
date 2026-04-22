@@ -116,16 +116,16 @@ function downloadQRCode() {
         link.click();
         document.body.removeChild(link);
         
-        showNotification('QR Code downloaded successfully!', 'success');
+        showNotification('QR Code downloaded successfully!', 'success', 'Download Complete');
     } else {
-        showNotification('QR Code not found', 'error');
+        showNotification('QR Code not found', 'error', 'Not Found');
     }
 }
 
 // Print Profile
 function printProfile() {
     window.print();
-    showNotification('Print dialog opened', 'info');
+    showNotification('Print dialog opened', 'info', 'Print');
 }
 
 // Export Profile
@@ -156,23 +156,23 @@ function exportProfile() {
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
     
-    showNotification('Profile exported successfully!', 'success');
+    showNotification('Profile exported successfully!', 'success', 'Export Complete');
 }
 
 // View Subjects
 function viewSubjects() {
-    showNotification('Opening subjects page...', 'info');
+    showNotification('Opening subjects page...', 'info', 'Navigation');
     // In a real implementation, this would navigate to the subjects page
 }
 
 // View Attendance
 function viewAttendance() {
-    showNotification('Opening attendance history...', 'info');
+    showNotification('Opening attendance history...', 'info', 'Navigation');
     // In a real implementation, this would navigate to the attendance page
 }
 
 // Show notification (toast)
-function showNotification(message, type = 'info') {
+function showNotification(message, type = 'info', title = null) {
     // Create toast container if it doesn't exist
     let toastContainer = document.getElementById('toastContainer');
     if (!toastContainer) {
@@ -180,6 +180,25 @@ function showNotification(message, type = 'info') {
         toastContainer.id = 'toastContainer';
         toastContainer.className = 'toast-container';
         document.body.appendChild(toastContainer);
+    }
+    
+    // Generate default title based on type if not provided
+    if (!title) {
+        switch(type) {
+            case 'success':
+                title = 'Success';
+                break;
+            case 'warning':
+                title = 'Warning';
+                break;
+            case 'danger':
+                title = 'Error';
+                break;
+            case 'info':
+            default:
+                title = 'Information';
+                break;
+        }
     }
     
     // Create toast element with custom structure
@@ -190,6 +209,7 @@ function showNotification(message, type = 'info') {
                 <i class="bi ${type === 'success' ? 'bi-check-circle-fill' : type === 'warning' ? 'bi-exclamation-triangle-fill' : type === 'danger' ? 'bi-x-circle-fill' : 'bi-info-circle-fill'}"></i>
             </div>
             <div class="toast-content">
+                <div class="toast-title">${title}</div>
                 <div class="toast-message">${message}</div>
             </div>
             <button class="toast-close" onclick="document.getElementById('${toastId}').remove()">

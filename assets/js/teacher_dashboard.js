@@ -2,8 +2,6 @@
 
 class TeacherDashboard {
     constructor() {
-        this.updateInterval = null;
-        this.updateFrequency = 1000; // 1 second - much faster updates
         this.isUpdating = false;
         this.lastUpdate = null;
         this.init();
@@ -12,45 +10,13 @@ class TeacherDashboard {
     init() {
         console.log('🚀 Initializing Teacher Dashboard...');
         console.log('🚀 Current URL:', window.location.href);
-        console.log('🚀 User agent:', navigator.userAgent);
-        console.log('🚀 Update frequency set to:', this.updateFrequency / 1000, 'seconds');
         
-        this.startRealTimeUpdates();
         this.setupEventListeners();
-        this.setupVisibilityChange();
         
         console.log('🚀 Teacher Dashboard initialization completed');
     }
 
-    // Start real-time updates
-    startRealTimeUpdates() {
-        console.log('⏰ Starting real-time updates...');
-        console.log('⏰ Update interval:', this.updateFrequency, 'ms');
-        
-        // Initial update
-        console.log('⏰ Triggering initial update...');
-        this.updateDashboard();
-        
-        // Set up periodic updates
-        this.updateInterval = setInterval(() => {
-            console.log('⏰ Scheduled update triggered at:', new Date().toLocaleTimeString());
-            this.updateDashboard();
-        }, this.updateFrequency);
-
-        console.log('✅ Real-time updates started successfully');
-        console.log('✅ Updates will run every', this.updateFrequency / 1000, 'seconds');
-    }
-
-    // Stop real-time updates
-    stopRealTimeUpdates() {
-        if (this.updateInterval) {
-            clearInterval(this.updateInterval);
-            this.updateInterval = null;
-            console.log('Real-time updates stopped');
-        }
-    }
-
-    // Main update function
+    // Main update function - simplified for navbar auto-reload
     async updateDashboard() {
         if (this.isUpdating) {
             console.log('⏭️ Update already in progress, skipping...');
@@ -61,23 +27,13 @@ class TeacherDashboard {
         console.log('🔄 Starting dashboard update at:', new Date().toLocaleTimeString());
 
         try {
-            // Update subjects/classes
+            // Update subjects/classes only
             console.log('📚 Updating subjects...');
             await this.updateSubjects();
             console.log('✅ Subjects updated successfully');
             
-            // Update notifications if needed
-            console.log('🔔 Updating notifications...');
-            await this.updateNotifications();
-            console.log('✅ Notifications updated successfully');
-            
-            // Update any other dashboard data
-            console.log('📊 Updating dashboard stats...');
-            await this.updateDashboardStats();
-            console.log('✅ Dashboard stats updated successfully');
-            
             this.lastUpdate = new Date();
-            console.log('🎉 Dashboard fully updated successfully at:', this.lastUpdate.toLocaleTimeString());
+            console.log('🎉 Dashboard updated successfully at:', this.lastUpdate.toLocaleTimeString());
             
         } catch (error) {
             console.error('❌ Error updating dashboard:', error);
@@ -200,86 +156,7 @@ class TeacherDashboard {
         console.log('🎨 renderSubjects completed');
     }
 
-    // Update notifications
-    async updateNotifications() {
-        try {
-            console.log('📡 Making API call to ../api/get_notifications.php');
-            const response = await fetch('../api/get_notifications.php', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
-            if (data.success) {
-                this.renderNotifications(data.notifications);
-            }
-        } catch (error) {
-            console.error('Error updating notifications:', error);
-            // Don't throw error for notifications as it's not critical
-        }
-    }
-
-    // Render notifications
-    renderNotifications(notifications) {
-        // Update notification badge if it exists
-        const notificationBadge = document.querySelector('.notification-badge');
-        if (notificationBadge) {
-            const unreadCount = notifications.filter(n => !n.read).length;
-            notificationBadge.textContent = unreadCount > 0 ? unreadCount : '';
-            notificationBadge.style.display = unreadCount > 0 ? 'block' : 'none';
-        }
-    }
-
-    // Update dashboard statistics
-    async updateDashboardStats() {
-        try {
-            console.log('📡 Making API call to ../api/get_dashboard_stats.php');
-            const response = await fetch('../api/get_dashboard_stats.php', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
-            if (data.success) {
-                this.renderStats(data.stats);
-            }
-        } catch (error) {
-            console.error('Error updating dashboard stats:', error);
-            // Don't throw error for stats as it's not critical
-        }
-    }
-
-    // Render statistics
-    renderStats(stats) {
-        // Update any stats elements if they exist
-        const totalClassesElement = document.querySelector('.stat-total-classes');
-        const totalStudentsElement = document.querySelector('.stat-total-students');
-        
-        if (totalClassesElement && stats.totalClasses !== undefined) {
-            totalClassesElement.textContent = stats.totalClasses;
-        }
-        
-        if (totalStudentsElement && stats.totalStudents !== undefined) {
-            totalStudentsElement.textContent = stats.totalStudents;
-        }
-    }
-
+    
     // Animate new cards
     animateNewCards() {
         const cards = document.querySelectorAll('.class-card');
@@ -305,7 +182,7 @@ class TeacherDashboard {
             });
         }
 
-        // Listen for custom update events
+        // Listen for custom update events (for navbar auto-reload)
         document.addEventListener('dashboard:update', () => {
             this.updateDashboard();
         });
@@ -313,19 +190,6 @@ class TeacherDashboard {
         // Listen for subject creation/update
         document.addEventListener('subject:changed', () => {
             this.updateSubjects();
-        });
-    }
-
-    // Handle visibility change (pause updates when tab is not visible)
-    setupVisibilityChange() {
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                this.stopRealTimeUpdates();
-                console.log('Dashboard updates paused (tab not visible)');
-            } else {
-                this.startRealTimeUpdates();
-                console.log('Dashboard updates resumed (tab visible)');
-            }
         });
     }
 
@@ -360,25 +224,12 @@ class TeacherDashboard {
     getUpdateStatus() {
         return {
             isUpdating: this.isUpdating,
-            lastUpdate: this.lastUpdate,
-            updateFrequency: this.updateFrequency,
-            isActive: this.updateInterval !== null
+            lastUpdate: this.lastUpdate
         };
-    }
-
-    // Set update frequency
-    setUpdateFrequency(seconds) {
-        this.updateFrequency = seconds * 1000;
-        if (this.updateInterval) {
-            this.stopRealTimeUpdates();
-            this.startRealTimeUpdates();
-        }
-        console.log(`Update frequency set to ${seconds} seconds`);
     }
 
     // Destroy dashboard instance
     destroy() {
-        this.stopRealTimeUpdates();
         console.log('Teacher Dashboard destroyed');
     }
 }
@@ -390,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Create global dashboard instance
     window.teacherDashboard = new TeacherDashboard();
     
-    // Make it available globally for manual control
+    // Make it available globally for navbar auto-reload
     window.updateDashboard = () => {
         console.log('🔄 Manual update triggered from global function');
         if (window.teacherDashboard) {
@@ -400,18 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // Add manual test function
-    window.testRealTimeUpdate = () => {
-        console.log('🧪 Testing real-time update system...');
-        if (window.teacherDashboard) {
-            window.teacherDashboard.updateDashboard();
-        } else {
-            console.error('❌ Teacher dashboard instance not found!');
-        }
-    };
-    
-    console.log('✅ Dashboard instance created and global functions registered');
-    console.log('💡 You can now manually test updates by calling: testRealTimeUpdate()');
+    console.log('✅ Dashboard instance created and global function registered');
 });
 
 // Clean up on page unload

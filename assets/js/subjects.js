@@ -144,13 +144,21 @@ function setupUnenrollLinks() {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             
+            // Check if user has permission to unenroll
+            if (!window.canUnenroll) {
+                showToast('info', 'This feature is currently unavailable. Please contact your administrator to enable access.');
+                return;
+            }
+            
             const className = this.getAttribute('data-class');
+            const subjectId = this.getAttribute('data-subject-id');
             const classCard = this.closest('.class-card');
             
             document.getElementById('unenrollClassName').textContent = className;
             
             window.currentUnenrollData = {
                 className: className,
+                subjectId: subjectId,
                 classCard: classCard
             };
             
@@ -166,35 +174,54 @@ document.addEventListener('DOMContentLoaded', function() {
     if (confirmBtn) {
         confirmBtn.addEventListener('click', function() {
             if (window.currentUnenrollData) {
-                const { className, classCard } = window.currentUnenrollData;
+                const { className, subjectId, classCard } = window.currentUnenrollData;
                 
                 this.disabled = true;
                 this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Unenrolling...';
                 
-                setTimeout(() => {
-                    classCard.style.transition = 'all 0.3s ease';
-                    classCard.style.opacity = '0';
-                    classCard.style.transform = 'scale(0.9)';
-                    
-                    setTimeout(() => {
-                        classCard.remove();
+                // Make actual API call to unenroll
+                fetch('../api/unenroll_student.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        subject_id: subjectId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        classCard.style.transition = 'all 0.3s ease';
+                        classCard.style.opacity = '0';
+                        classCard.style.transform = 'scale(0.9)';
                         
-                        const remainingCards = document.querySelectorAll('.class-card');
-                        if (remainingCards.length === 0) {
-                            showEmptyState();
-                        }
-                        
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('unenrollModal'));
-                        if (modal) modal.hide();
-                        
-                        showSuccessToast(`Successfully unenrolled from ${className}`);
-                        
-                        this.disabled = false;
-                        this.innerHTML = 'Yes';
-                        
-                        window.currentUnenrollData = null;
-                    }, 300);
-                }, 1000);
+                        setTimeout(() => {
+                            classCard.remove();
+                            
+                            const remainingCards = document.querySelectorAll('.class-card');
+                            if (remainingCards.length === 0) {
+                                showEmptyState();
+                            }
+                            
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('unenrollModal'));
+                            if (modal) modal.hide();
+                            
+                            showToast('success', `Successfully unenrolled from ${className}`);
+                        }, 300);
+                    } else {
+                        showToast('error', data.message || 'Failed to unenroll from class');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('error', 'An error occurred while unenrolling');
+                })
+                .finally(() => {
+                    this.disabled = false;
+                    this.innerHTML = 'Yes';
+                    window.currentUnenrollData = null;
+                });
             }
         });
     }
@@ -218,22 +245,11 @@ function showEmptyState() {
 }
 
 // View Attendance History
-function viewAttendanceHistory(subjectId) {
+function viewAttendanceHistory(subjectId, subjectName) {
     if (!navigator.onLine) {
         showConnectionToast('error', 'No internet connection. Please check your connection and try again.');
         return;
     }
-    
-    const subjectData = {
-        'WEBDEV101': { name: 'Web Development', section: 'CS-301', teacher: 'Prof. Sarah Johnson' },
-        'DATA201': { name: 'Data Structures', section: 'CS-201', teacher: 'Dr. Michael Chen' },
-        'DB302': { name: 'Database Systems', section: 'CS-302', teacher: 'Prof. Emily Davis' },
-        'ML401': { name: 'Machine Learning', section: 'CS-401', teacher: 'Dr. Robert Wilson' },
-        'MOB351': { name: 'Mobile Development', section: 'CS-351', teacher: 'Prof. Lisa Anderson' },
-        'NET251': { name: 'Computer Networks', section: 'CS-251', teacher: 'Dr. James Martinez' }
-    };
-    
-    const subject = subjectData[subjectId] || subjectData['WEBDEV101'];
     
     if (event && event.target) {
         const button = event.target.closest('.action-btn');
@@ -243,16 +259,16 @@ function viewAttendanceHistory(subjectId) {
             button.disabled = true;
             
             setTimeout(() => {
-                window.location.href = `attendance.php?subject_id=${subjectId}&subject_name=${encodeURIComponent(subject.name)}`;
+                window.location.href = `attendance.php?subject_id=${subjectId}&subject_name=${encodeURIComponent(subjectName)}`;
             }, 500);
         } else {
             if (navigator.onLine) {
-                window.location.href = `attendance.php?subject_id=${subjectId}&subject_name=${encodeURIComponent(subject.name)}`;
+                window.location.href = `attendance.php?subject_id=${subjectId}&subject_name=${encodeURIComponent(subjectName)}`;
             }
         }
     } else {
         if (navigator.onLine) {
-            window.location.href = `attendance.php?subject_id=${subjectId}&subject_name=${encodeURIComponent(subject.name)}`;
+            window.location.href = `attendance.php?subject_id=${subjectId}&subject_name=${encodeURIComponent(subjectName)}`;
         }
     }
 }
@@ -270,30 +286,124 @@ function setupToastCloseButton() {
     }
 }
 
-// Show Success Toast
-function showSuccessToast(message) {
+
+// Show Toast (Generic function)
+function showToast(type, message) {
     const toastContainer = document.getElementById('toast-container');
-    const toast = document.getElementById('otp-toast');
     
-    if (!toast || !toastContainer) {
-        console.error('Toast elements not found');
+    if (!toastContainer) {
+        console.error('Toast container not found');
         return;
     }
     
-    const toastTitle = toast.querySelector('.toast-title');
-    const toastMessage = toast.querySelector('.toast-message');
+    // Create toast element dynamically
+    const toast = document.createElement('div');
+    toast.className = 'toast';
     
-    toastTitle.textContent = 'Success';
+    // Create toast icon
+    const toastIcon = document.createElement('div');
+    toastIcon.className = 'toast-icon';
+    const iconSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    iconSvg.setAttribute('width', '24');
+    iconSvg.setAttribute('height', '24');
+    iconSvg.setAttribute('viewBox', '0 0 24 24');
+    iconSvg.setAttribute('fill', 'none');
+    iconSvg.setAttribute('stroke', 'currentColor');
+    iconSvg.setAttribute('stroke-width', '2');
+    iconSvg.setAttribute('stroke-linecap', 'round');
+    iconSvg.setAttribute('stroke-linejoin', 'round');
+    
+    // Create toast content
+    const toastContent = document.createElement('div');
+    toastContent.className = 'toast-content';
+    
+    const toastTitle = document.createElement('div');
+    toastTitle.className = 'toast-title';
+    
+    const toastMessage = document.createElement('div');
+    toastMessage.className = 'toast-message';
+    
+    // Create close button
+    const toastClose = document.createElement('button');
+    toastClose.className = 'toast-close';
+    toastClose.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+    toastClose.setAttribute('aria-label', 'Close');
+    
+    // Add close button functionality
+    toastClose.addEventListener('click', function() {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    });
+    
+    // Set toast based on type
+    switch(type) {
+        case 'success':
+            toastTitle.textContent = 'Success';
+            toast.className = 'toast toast-success';
+            iconSvg.innerHTML = `
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            `;
+            break;
+        case 'error':
+            toastTitle.textContent = 'Error';
+            toast.className = 'toast toast-error';
+            iconSvg.innerHTML = `
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+            `;
+            break;
+        case 'info':
+            toastTitle.textContent = 'Info';
+            toast.className = 'toast toast-info';
+            iconSvg.innerHTML = `
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            `;
+            break;
+        default:
+            toastTitle.textContent = 'Info';
+            toast.className = 'toast toast-info';
+            iconSvg.innerHTML = `
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            `;
+    }
+    
     toastMessage.textContent = message;
-    toast.className = 'toast toast-success';
     
+    // Build the toast structure
+    toastIcon.appendChild(iconSvg);
+    toastContent.appendChild(toastTitle);
+    toastContent.appendChild(toastMessage);
+    toast.appendChild(toastIcon);
+    toast.appendChild(toastContent);
+    toast.appendChild(toastClose);
+    toastContainer.appendChild(toast);
+    
+    // Show toast with animation
     setTimeout(() => {
         toast.classList.add('show');
     }, 100);
     
+    // Remove toast after timeout
+    const timeout = type === 'error' ? 4000 : (type === 'info' ? 5000 : 3000);
     setTimeout(() => {
         toast.classList.remove('show');
-    }, 3000);
+        // Remove element from DOM after animation
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }, timeout);
 }
 
 
@@ -317,3 +427,4 @@ window.initializeInternetMonitoring = initializeInternetMonitoring;
 window.updateConnectionStatus = updateConnectionStatus;
 window.checkInternetConnection = checkInternetConnection;
 window.showConnectionToast = showConnectionToast;
+window.initializeSubjectsPage = initializeSubjectsPage;

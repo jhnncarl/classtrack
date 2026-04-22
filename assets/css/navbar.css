@@ -10,7 +10,12 @@ body {
     font-family: 'Montserrat', sans-serif;
     background-color: #F2F3F4;
     padding-top: 60px; /* Account for fixed navbar */
-    transition: margin-left 0.3s ease;
+    transition: margin-left 0.3s ease, padding-top 0.3s ease;
+}
+
+/* Adjust body padding when progress bar is visible */
+body.has-progress-bar {
+    padding-top: 63px; /* 60px navbar + 3px progress bar */
 }
 
 /* Main Navbar - Minimalist Design */
@@ -623,6 +628,12 @@ body {
     font-family: 'Montserrat', sans-serif !important;
     transition: color 0.2s ease !important;
     cursor: not-allowed !important;
+    text-align: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 40px !important;
+    white-space: nowrap !important;
 }
 
 .modal.fade .modal-dialog.modal-custom .modal-content.create-class-modal .btn-create.enabled {
@@ -1369,6 +1380,12 @@ body.modal-open .main-content {
     padding: 8px 24px !important;
     transition: color 0.2s ease !important;
     font-family: 'Montserrat', sans-serif !important;
+    text-align: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 40px !important;
+    white-space: nowrap !important;
 }
 
 /* Override for enabled state - higher specificity */
@@ -1679,5 +1696,78 @@ body.modal-open .main-content {
     .modal.fade .modal-dialog.modal-custom .modal-content.join-class-modal .btn-switch-account {
         font-size: 11px !important;
         padding: 5px 10px !important;
+    }
+}
+
+/* Linear Progress Bar Styles */
+.navbar-progress-container {
+    position: fixed;
+    top: 60px; /* Position right below navbar */
+    left: 0;
+    right: 0;
+    z-index: 1019; /* Just below navbar */
+    background: #ffffff;
+    border-bottom: 1px solid #e9ecef;
+    height: 3px;
+    overflow: hidden;
+}
+
+.navbar-progress-bar {
+    width: 100%;
+    height: 100%;
+    background: #f8f9fa;
+    position: relative;
+}
+
+.navbar-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #64B5F6 0%, #90CAF9 50%, #64B5F6 100%);
+    background-size: 200% 100%;
+    width: 0%;
+    transition: width 0.3s ease;
+    animation: shimmer 2s linear infinite;
+}
+
+/* Shimmer animation for the progress bar */
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Progress bar animation states */
+.navbar-progress-container.loading .navbar-progress-fill {
+    width: 30% !important;
+    animation: shimmer 1.5s linear infinite, pulse 2s ease-in-out infinite;
+}
+
+.navbar-progress-container.loading-half .navbar-progress-fill {
+    width: 60% !important;
+    animation: shimmer 1.5s linear infinite, pulse 2s ease-in-out infinite;
+}
+
+.navbar-progress-container.loading-complete .navbar-progress-fill {
+    width: 100% !important;
+    animation: none;
+    transition: width 0.5s ease;
+}
+
+/* Pulse animation for loading state */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .navbar-progress-container {
+        top: 60px; /* Consistent with navbar height on mobile */
     }
 }
