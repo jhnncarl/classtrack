@@ -146,6 +146,6 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JavaScript -->
-    <script src="../assets/js/teacher_dashboard.js?v=16"></script>
+    <script src="../assets/js/teacher_dashboard.js?v=17"></script>
 </body>
 </html>

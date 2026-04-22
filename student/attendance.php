@@ -7,6 +7,33 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_role']) || $_SESSION[
     exit();
 }
 
+// Include database configuration for permission checking
+require_once '../config/database.php';
+require_once '../config/permissions.php';
+
+// Check student_viewAttendanceRecord permission
+$canViewAttendanceRecord = false;
+if (isset($_SESSION['user_id']) && is_numeric($_SESSION['user_id'])) {
+    try {
+        // Get user role from users table
+        $stmt = $db->prepare("SELECT Role FROM users WHERE UserID = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $userData = $stmt->fetch();
+        
+        if ($userData) {
+            // Get permission from role_permissions table
+            $stmt = $db->prepare("SELECT student_viewAttendanceRecord FROM role_permissions WHERE role = ?");
+            $stmt->execute([$userData['Role']]);
+            $permissionData = $stmt->fetch();
+            
+            $canViewAttendanceRecord = $permissionData && $permissionData['student_viewAttendanceRecord'] == 1;
+        }
+    } catch (Exception $e) {
+        error_log("Error checking attendance record permission: " . $e->getMessage());
+        $canViewAttendanceRecord = false;
+    }
+}
+
 // Get user information from session
 $user_name = isset($_SESSION['user_first_name']) && isset($_SESSION['user_last_name']) ? 
     $_SESSION['user_first_name'] . ' ' . $_SESSION['user_last_name'] : 
@@ -92,6 +119,9 @@ $user_initials = strtoupper(substr($user_name, 0, 2));
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClassTrack - <?php echo htmlspecialchars($subject_name); ?> - Attendance Records</title>
     
+    <!-- Favicon - QR Code Logo for ClassTrack -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231a73e8' rx='6'/%3E%3Cg fill='white'%3E%3Crect x='6' y='6' width='8' height='8'/%3E%3Crect x='18' y='6' width='8' height='8'/%3E%3Crect x='6' y='18' width='8' height='8'/%3E%3Crect x='18' y='18' width='8' height='8'/%3E%3Crect x='8' y='8' width='4' height='4' fill='%231a73e8'/%3E%3Crect x='20' y='8' width='4' height='4' fill='%231a73e8'/%3E%3Crect x='8' y='20' width='4' height='4' fill='%231a73e8'/%3E%3Crect x='20' y='20' width='4' height='4' fill='%231a73e8'/%3E%3C/g%3E%3C/svg%3E">
+    
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -102,7 +132,7 @@ $user_initials = strtoupper(substr($user_name, 0, 2));
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/navbar.css">
     <link rel="stylesheet" href="../assets/css/sidebar.css">
-    <link rel="stylesheet" href="../assets/css/attendance.css">
+    <link rel="stylesheet" href="../assets/css/attendance.css?v=2">
     <link rel="stylesheet" href="../assets/css/toast.css">
     
     <!-- Inline script to prevent sidebar flicker -->
@@ -142,6 +172,103 @@ $user_initials = strtoupper(substr($user_name, 0, 2));
     
     <!-- Include Sidebar -->
     <?php include '../assets/components/sidebar.php'; ?>
+
+    <!-- Disabled Overlay -->
+    <?php if (!$canViewAttendanceRecord): ?>
+    <div class="attendance-disabled-overlay">
+        <div class="attendance-disabled-content">
+            <div class="attendance-disabled-icon">
+                <i class="bi bi-lock-fill"></i>
+            </div>
+            <div class="attendance-disabled-message">
+                <h4>Access Restricted</h4>
+                <p>This feature is currently unavailable. Please contact the administrator for assistance with accessing this feature.</p>
+            </div>
+        </div>
+    </div>
+    <style>
+    .main-content {
+        position: relative !important;
+        <?php echo !$canViewAttendanceRecord ? 'opacity: 0.4 !important; pointer-events: none !important;' : ''; ?>
+    }
+    .sidebar {
+        z-index: 1020 !important;
+        pointer-events: auto !important;
+    }
+    .navbar {
+        z-index: 1021 !important;
+        pointer-events: auto !important;
+    }
+    .attendance-disabled-overlay {
+        position: fixed !important;
+        top: 40px !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: rgba(252, 229, 161, 0.15) !important;
+        backdrop-filter: blur(5px) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 100 !important;
+        border-radius: 0 !important;
+        border: 2px dashed #fcc626 !important;
+        clip-path: polygon(70px 0, 100% 0, 100% 100%, 70px 100%);
+        transition: clip-path 0.3s ease !important;
+    }
+    @media (max-width: 768px) {
+        .attendance-disabled-overlay {
+            top: 20px !important;
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%) !important;
+        }
+    }
+    .attendance-disabled-content {
+        text-align: center !important;
+        padding: 40px 32px !important;
+        background: white !important;
+        border-radius: 12px !important;
+        box-shadow: 0 8px 32px rgba(255, 193, 7, 0.3) !important;
+        border: 2px solid #ffc107 !important;
+        max-width: 450px !important;
+        margin: 20px !important;
+        position: relative !important;
+        z-index: 10000 !important;
+    }
+    .attendance-disabled-icon {
+        font-size: 64px !important;
+        color: #ffc107 !important;
+        margin-bottom: 20px !important;
+    }
+    .attendance-disabled-message h4 {
+        margin: 0 0 12px 0 !important;
+        color: #ffc107 !important;
+        font-weight: 600 !important;
+        font-size: 20px !important;
+    }
+    .attendance-disabled-message p {
+        margin: 0 !important;
+        color: #6c757d !important;
+        line-height: 1.6 !important;
+        font-size: 15px !important;
+    }
+    @media (max-width: 576px) {
+        .attendance-disabled-content {
+            padding: 30px 24px !important;
+            margin: 15px !important;
+        }
+        .attendance-disabled-icon {
+            font-size: 48px !important;
+            margin-bottom: 16px !important;
+        }
+        .attendance-disabled-message h4 {
+            font-size: 18px !important;
+        }
+        .attendance-disabled-message p {
+            font-size: 14px !important;
+        }
+    }
+    </style>
+    <?php endif; ?>
 
     <!-- Main Content Area -->
     <main class="main-content">
@@ -377,6 +504,53 @@ $user_initials = strtoupper(substr($user_name, 0, 2));
     <!-- Include Toast Component -->
     <?php include '../assets/components/toast.php'; ?>
     <!-- Custom JavaScript -->
+    <script src="../assets/js/sidebar.js"></script>
     <script src="../assets/js/attendance.js"></script>
+    
+    <?php if (!$canViewAttendanceRecord): ?>
+    <script>
+    // Handle sidebar expansion and overlay positioning using clip-path
+    function updateOverlayPosition() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.querySelector('.attendance-disabled-overlay');
+        
+        if (sidebar && overlay) {
+            const isExpanded = sidebar.classList.contains('expanded');
+            const isDesktop = window.innerWidth > 768;
+            
+            if (isDesktop) {
+                if (isExpanded) {
+                    overlay.style.clipPath = 'polygon(250px 0, 100% 0, 100% 100%, 250px 100%)';
+                } else {
+                    overlay.style.clipPath = 'polygon(70px 0, 100% 0, 100% 100%, 70px 100%)';
+                }
+            } else {
+                overlay.style.clipPath = 'polygon(0 0, 100% 0, 100% 100%, 0 100%)';
+            }
+        }
+    }
+    
+    // Monitor sidebar state changes
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                updateOverlayPosition();
+            }
+        });
+    });
+    
+    // Start observing sidebar class changes
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        observer.observe(sidebar, { attributes: true });
+    }
+    
+    // Update on window resize
+    window.addEventListener('resize', updateOverlayPosition);
+    
+    // Initial positioning
+    document.addEventListener('DOMContentLoaded', updateOverlayPosition);
+    </script>
+    <?php endif; ?>
 </body>
 </html>
