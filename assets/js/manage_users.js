@@ -2198,6 +2198,7 @@ function getRoleBadgeClass(role) {
     }
 }
 
+
 // Export functions for global access
 window.manageUsers = {
     showToast,

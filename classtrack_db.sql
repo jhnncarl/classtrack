@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 09, 2026 at 03:13 AM
+-- Generation Time: Apr 21, 2026 at 04:40 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -24,6 +24,29 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `admins`
+--
+
+CREATE TABLE `admins` (
+  `admin_id` int(11) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `role` enum('superadmin','admin') DEFAULT 'admin',
+  `status` enum('active','inactive') DEFAULT 'active',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `profile_pic` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `admins`
+--
+
+INSERT INTO `admins` (`admin_id`, `username`, `password`, `role`, `status`, `created_at`, `profile_pic`) VALUES
+(1, 'AdminCarl', '$2y$10$6aqyu7.rIQ54HXfpdjxjl.dXTqc5eGkogR.GZUKWZbdg4T/rXJw/m', 'admin', 'active', '2026-04-14 11:20:35', 'uploads/profiles/admin_profile_1_1776221958.jpg');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `attendancerecords`
 --
 
@@ -40,9 +63,20 @@ CREATE TABLE `attendancerecords` (
 --
 
 INSERT INTO `attendancerecords` (`RecordID`, `SessionID`, `StudentID`, `ScanTime`, `AttendanceStatus`) VALUES
-(20, 61, 68, '2026-04-07 17:51:28', 'Present'),
-(21, 62, 69, '2026-04-07 19:07:44', 'Present'),
-(22, 62, 68, '2026-04-07 19:07:56', 'Present');
+(139, 127, 69, '2026-04-13 15:07:27', 'Present'),
+(140, 127, 68, '2026-04-13 15:08:01', 'Present'),
+(141, 128, 68, '2026-04-13 15:15:19', 'Present'),
+(142, 128, 69, '2026-04-13 15:18:28', 'Late'),
+(143, 129, 69, '2026-04-13 15:26:14', 'Present'),
+(144, 129, 68, '2026-04-13 15:30:26', 'Late'),
+(145, 130, 68, '2026-04-13 15:41:32', 'Present'),
+(146, 130, 69, '2026-04-13 15:41:48', 'Present'),
+(147, 131, 69, '2026-04-13 15:42:37', 'Present'),
+(148, 131, 68, '2026-04-13 15:47:51', 'Late'),
+(149, 132, 68, '2026-04-13 21:56:27', 'Absent'),
+(150, 132, 69, '2026-04-13 21:56:27', 'Absent'),
+(151, 133, 68, '2026-04-13 16:13:28', 'Late'),
+(152, 133, 69, '2026-04-13 16:13:38', 'Late');
 
 -- --------------------------------------------------------
 
@@ -64,12 +98,13 @@ CREATE TABLE `attendancesessions` (
 --
 
 INSERT INTO `attendancesessions` (`SessionID`, `SubjectID`, `SessionDate`, `StartTime`, `EndTime`, `Status`) VALUES
-(59, 24, '2026-04-06', '19:43:09', '19:43:14', 'Closed'),
-(60, 19, '2026-04-07', '15:12:02', '15:12:06', 'Closed'),
-(61, 24, '2026-04-07', '17:50:52', '17:51:41', 'Closed'),
-(62, 24, '2026-04-07', '19:07:36', '19:08:05', 'Closed'),
-(63, 30, '2026-04-09', '08:28:16', '08:28:20', 'Closed'),
-(64, 19, '2026-04-09', '08:55:08', '08:55:12', 'Closed');
+(127, 24, '2026-04-13', '21:02:20', '21:09:43', 'Closed'),
+(128, 24, '2026-04-13', '21:09:49', '21:22:40', 'Closed'),
+(129, 24, '2026-04-13', '21:22:43', '21:39:37', 'Closed'),
+(130, 24, '2026-04-13', '21:41:19', '21:42:21', 'Closed'),
+(131, 24, '2026-04-13', '21:42:25', '21:48:51', 'Closed'),
+(132, 24, '2026-04-13', '21:49:50', '21:56:27', 'Closed'),
+(133, 24, '2026-04-13', '22:06:31', '22:13:47', 'Closed');
 
 -- --------------------------------------------------------
 
@@ -118,6 +153,40 @@ INSERT INTO `password_resets` (`id`, `email`, `otp`, `expires_at`, `created_at`)
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `role_permissions`
+--
+
+CREATE TABLE `role_permissions` (
+  `role` enum('Student','Teacher','Administrator') NOT NULL,
+  `createClass` tinyint(1) DEFAULT 0,
+  `joinClass` tinyint(1) DEFAULT 0,
+  `manageClass` tinyint(1) DEFAULT 0,
+  `takeAttendance` tinyint(1) DEFAULT 0,
+  `viewReports` tinyint(1) DEFAULT 0,
+  `exportReports` tinyint(1) DEFAULT 0,
+  `editProfile` tinyint(1) DEFAULT 0,
+  `student_unenrollClass` tinyint(1) DEFAULT 0,
+  `student_viewAttendanceRecord` tinyint(1) DEFAULT 0,
+  `student_viewAttendanceHistory` tinyint(1) DEFAULT 0,
+  `approveTeacherAccounts` tinyint(1) DEFAULT 0,
+  `rejectTeacherAccounts` tinyint(1) DEFAULT 0,
+  `createAdminUser` tinyint(1) DEFAULT 0,
+  `editAdminProfile` tinyint(1) DEFAULT 0,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `role_permissions`
+--
+
+INSERT INTO `role_permissions` (`role`, `createClass`, `joinClass`, `manageClass`, `takeAttendance`, `viewReports`, `exportReports`, `editProfile`, `student_unenrollClass`, `student_viewAttendanceRecord`, `student_viewAttendanceHistory`, `approveTeacherAccounts`, `rejectTeacherAccounts`, `createAdminUser`, `editAdminProfile`, `updated_at`) VALUES
+('Student', 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, '2026-04-21 02:39:42'),
+('Teacher', 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, '2026-04-21 02:39:42'),
+('Administrator', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, '2026-04-21 02:38:49');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `students`
 --
 
@@ -136,7 +205,10 @@ CREATE TABLE `students` (
 
 INSERT INTO `students` (`StudentID`, `UserID`, `StudentNumber`, `Course`, `YearLevel`, `QRCodePath`) VALUES
 (68, 73, '2022-31559', 'BSIT', 3, 'uploads/qrcodes/student_2022-31559_1774665399.png'),
-(69, 75, '2022-78960', 'BSIT', 3, 'uploads/qrcodes/Student_2022-78960.png');
+(69, 75, '2022-78960', 'BSIT', 3, 'uploads/qrcodes/Student_2022-78960.png'),
+(85, 107, '2026-12762', 'BEED', 1, 'uploads/qrcodes/Student_2026-12762.png'),
+(95, 133, '2022-35614', '', 0, 'uploads/qrcodes/Student_2022-35614.png'),
+(96, 134, '12345', 'BSCE', 2, 'uploads/qrcodes/Student_12345.png');
 
 -- --------------------------------------------------------
 
@@ -162,7 +234,8 @@ INSERT INTO `subjects` (`SubjectID`, `SubjectCode`, `SubjectName`, `TeacherID`, 
 (19, 'k7ceo3m2', 'Web Development', 6, 'Fri, 9:00AM - 11:00PM', 'IT101', '3B'),
 (24, 'xzxm0fb', 'App Development', 6, 'Monday, 9:00AM - 10:00AM', 'IT103', '3B'),
 (30, 'xq2edl', 'Test Subject for Join', 6, 'MWF 10:00-11:00', 'TEST101', '1A'),
-(31, 'nwn9ndpz', 'Data Mining', 6, 'Thursday, 1:00PM - 2:00PM', 'IT243', '3A');
+(31, 'nwn9ndpz', 'Data Mining', 6, 'Thursday, 1:00PM - 2:00PM', 'IT243', '3A'),
+(32, '83sh5k6j', 'SAMPLE', 6, 'MONDAY, 9:00PM', 'SAMPLE', 'SAMPLE');
 
 -- --------------------------------------------------------
 
@@ -181,7 +254,9 @@ CREATE TABLE `teachers` (
 --
 
 INSERT INTO `teachers` (`TeacherID`, `UserID`, `Department`) VALUES
-(6, 74, 'Computer Studies');
+(6, 74, 'Computer Studies'),
+(14, 132, NULL),
+(15, 135, 'Industrial Tech Department');
 
 -- --------------------------------------------------------
 
@@ -207,12 +282,24 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`UserID`, `first_name`, `last_name`, `Email`, `PasswordHash`, `Role`, `AccountStatus`, `CreatedAt`, `ProfilePicture`) VALUES
 (73, 'Jhon Carlo', 'Nudalo', 'nudalojhoncarloe@gmail.com', '$2y$10$hz4hIzN9TQvVz9FtM1p26eu8/T0B9fz3H5aHFla4soZEsR3ebVFdu', 'Student', 'Active', '2026-03-28 02:36:36', 'uploads/profiles/profile_73_1775094155.jpg'),
-(74, 'Rodmarc', 'Villaflores', 'rodmarcariza@gmail.com', '$2y$10$qZfNgLyadHnWfPdMsj5qdu9s2OerEethR7XdKe7.liRN03xOMpVIG', 'Teacher', 'Active', '2026-03-28 05:56:07', 'uploads/profiles/profile_74_1774677821.jpg'),
-(75, 'Kean Andre', 'Maglasang', 'keanandre@gmail.com', '$2y$10$TPXXPAvk7wYdq1XBK72v9OgoJUkUq14lTV6Kxjps.QnAnxy0r0/cy', 'Student', 'Active', '2026-04-02 10:21:28', NULL);
+(74, 'Rodmarc', 'Villaflores', 'rodmarcariza@gmail.com', '$2y$10$RtDTODndlcoz32fnA155q.zxG/j73nh9GWsj5fdSaTnUL2ilJnIJ6', 'Teacher', 'Active', '2026-03-28 05:56:07', 'uploads/profiles/profile_74_1774677821.jpg'),
+(75, 'Kean Andre', 'Maglasang', 'keanandre@gmail.com', '$2y$10$TPXXPAvk7wYdq1XBK72v9OgoJUkUq14lTV6Kxjps.QnAnxy0r0/cy', 'Student', 'Active', '2026-04-02 10:21:28', NULL),
+(107, 'Kathlene', 'Nudalo', 'kathlenenudalo2008@gmail.com', '$2y$10$ruyefCCSDuio4uTDe01umuZDxjCpmlqTCgzHtKRYyzAdJvbdSHvna', 'Student', 'Active', '2026-04-21 00:48:58', NULL),
+(132, 'Jhon Carlo', 'Nudalo', 'nudalojhoncarlo2003@gmail.com', '$2y$10$dHf1ou8.YE/lNfN18V6mjeeoKvxqmX6YSNoPmcxUY.YgR5d1ODIne', 'Teacher', 'Active', '2026-04-21 01:30:31', NULL),
+(133, 'Jason', 'Dawg', 'dawgjason@gmail.com', '$2y$10$dGDGd3uuAUkGnJRLKCXUD.3bTbSN44Sx9YER1GmKB/S7Iwc4sKNqW', 'Student', 'Active', '2026-04-21 01:31:56', NULL),
+(134, 'Jona', 'Magdalina', 'jonamagdalina@gmail.com', '$2y$10$Z.cdpJGRy6WH2rG1qkfQge4pA6BDM0AcKoc1CoJBZQ4TvHeh.RadC', 'Student', 'Active', '2026-04-21 01:35:56', NULL),
+(135, 'Jonas', 'Castro', 'jonascastro@gmail.com', '$2y$10$VxLuaZBTUtTFJvdzmpG96.Grc52q1CYTCtMsDooqhs1Ri7yo9mPGK', 'Teacher', 'Pending', '2026-04-21 01:37:01', NULL);
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `admins`
+--
+ALTER TABLE `admins`
+  ADD PRIMARY KEY (`admin_id`),
+  ADD UNIQUE KEY `username` (`username`);
 
 --
 -- Indexes for table `attendancerecords`
@@ -245,6 +332,12 @@ ALTER TABLE `password_resets`
   ADD UNIQUE KEY `unique_email` (`email`),
   ADD KEY `idx_email_otp` (`email`,`otp`),
   ADD KEY `idx_expires_at` (`expires_at`);
+
+--
+-- Indexes for table `role_permissions`
+--
+ALTER TABLE `role_permissions`
+  ADD PRIMARY KEY (`role`);
 
 --
 -- Indexes for table `students`
@@ -281,16 +374,22 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `admins`
+--
+ALTER TABLE `admins`
+  MODIFY `admin_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `attendancerecords`
 --
 ALTER TABLE `attendancerecords`
-  MODIFY `RecordID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `RecordID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=153;
 
 --
 -- AUTO_INCREMENT for table `attendancesessions`
 --
 ALTER TABLE `attendancesessions`
-  MODIFY `SessionID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
+  MODIFY `SessionID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=134;
 
 --
 -- AUTO_INCREMENT for table `enrollments`
@@ -302,31 +401,31 @@ ALTER TABLE `enrollments`
 -- AUTO_INCREMENT for table `password_resets`
 --
 ALTER TABLE `password_resets`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `students`
 --
 ALTER TABLE `students`
-  MODIFY `StudentID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
+  MODIFY `StudentID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=97;
 
 --
 -- AUTO_INCREMENT for table `subjects`
 --
 ALTER TABLE `subjects`
-  MODIFY `SubjectID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `SubjectID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `teachers`
 --
 ALTER TABLE `teachers`
-  MODIFY `TeacherID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `TeacherID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `UserID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
+  MODIFY `UserID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=136;
 
 --
 -- Constraints for dumped tables

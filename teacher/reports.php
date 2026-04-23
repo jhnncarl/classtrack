@@ -7,8 +7,35 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_role']) || $_SESSION[
     exit();
 }
 
-// Include database configuration
+// Include database configuration for permission checking
 require_once '../config/database.php';
+require_once '../config/permissions.php';
+
+// Check viewReports permission
+$canViewReports = false;
+$canExportReports = false;
+if (isset($_SESSION['user_id']) && is_numeric($_SESSION['user_id'])) {
+    try {
+        // Get user role from users table
+        $stmt = $db->prepare("SELECT Role FROM users WHERE UserID = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $userData = $stmt->fetch();
+        
+        if ($userData) {
+            // Get permissions from role_permissions table
+            $stmt = $db->prepare("SELECT viewReports, exportReports FROM role_permissions WHERE role = ?");
+            $stmt->execute([$userData['Role']]);
+            $permissionData = $stmt->fetch();
+            
+            $canViewReports = $permissionData && $permissionData['viewReports'] == 1;
+            $canExportReports = $permissionData && $permissionData['exportReports'] == 1;
+        }
+    } catch (Exception $e) {
+        error_log("Error checking reports permissions: " . $e->getMessage());
+        $canViewReports = false;
+        $canExportReports = false;
+    }
+}
 
 // Get user information from session
 $user_name = isset($_SESSION['user_first_name']) && isset($_SESSION['user_last_name']) ? 
@@ -181,6 +208,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 $teacher_name = $user_name;
 $user_initials = strtoupper(substr($teacher_name, 0, 2));
 ?>
+
+<script>
+// Permission variables for JavaScript
+var canExportReports = <?php echo $canExportReports ? 'true' : 'false'; ?>;
+</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -238,6 +270,103 @@ $user_initials = strtoupper(substr($teacher_name, 0, 2));
     
     <!-- Include Sidebar -->
     <?php include '../assets/components/sidebar.php'; ?>
+
+    <!-- Disabled Overlay -->
+            <?php if (!$canViewReports): ?>
+            <div class="attendance-disabled-overlay">
+                <div class="attendance-disabled-content">
+                    <div class="attendance-disabled-icon">
+                        <i class="bi bi-lock-fill"></i>
+                    </div>
+                    <div class="attendance-disabled-message">
+                        <h4>Access Restricted</h4>
+                        <p>This feature is currently unavailable. Please contact the administrator for assistance with accessing this feature.</p>
+                    </div>
+                </div>
+            </div>
+            <style>
+            .main-content {
+                position: relative !important;
+                <?php echo !$canViewReports ? 'opacity: 0.4 !important; pointer-events: none !important;' : ''; ?>
+            }
+            .sidebar {
+                z-index: 1020 !important;
+                pointer-events: auto !important;
+            }
+            .navbar {
+                z-index: 1021 !important;
+                pointer-events: auto !important;
+            }
+            .attendance-disabled-overlay {
+                position: fixed !important;
+                top: 40px !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                background: rgba(252, 229, 161, 0.15) !important;
+                backdrop-filter: blur(5px) !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                z-index: 100 !important;
+                border-radius: 0 !important;
+                border: 2px dashed #fcc626 !important;
+                clip-path: polygon(70px 0, 100% 0, 100% 100%, 70px 100%);
+                transition: clip-path 0.3s ease !important;
+            }
+            @media (max-width: 768px) {
+                .attendance-disabled-overlay {
+                    top: 20px !important;
+                    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%) !important;
+                }
+            }
+            .attendance-disabled-content {
+                text-align: center !important;
+                padding: 40px 32px !important;
+                background: white !important;
+                border-radius: 12px !important;
+                box-shadow: 0 8px 32px rgba(255, 193, 7, 0.3) !important;
+                border: 2px solid #ffc107 !important;
+                max-width: 450px !important;
+                margin: 20px !important;
+                position: relative !important;
+                z-index: 10000 !important;
+            }
+            .attendance-disabled-icon {
+                font-size: 64px !important;
+                color: #ffc107 !important;
+                margin-bottom: 20px !important;
+            }
+            .attendance-disabled-message h4 {
+                margin: 0 0 12px 0 !important;
+                color: #ffc107 !important;
+                font-weight: 600 !important;
+                font-size: 20px !important;
+            }
+            .attendance-disabled-message p {
+                margin: 0 !important;
+                color: #6c757d !important;
+                line-height: 1.6 !important;
+                font-size: 15px !important;
+            }
+            @media (max-width: 576px) {
+                .attendance-disabled-content {
+                    padding: 30px 24px !important;
+                    margin: 15px !important;
+                }
+                .attendance-disabled-icon {
+                    font-size: 48px !important;
+                    margin-bottom: 16px !important;
+                }
+                .attendance-disabled-message h4 {
+                    font-size: 18px !important;
+                }
+                .attendance-disabled-message p {
+                    font-size: 14px !important;
+                }
+            }
+            </style>
+            <?php endif; ?>
 
     <!-- Main Content Area -->
     <main class="main-content">

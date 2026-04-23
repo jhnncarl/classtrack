@@ -479,6 +479,11 @@ function deleteUser($db, $userId) {
     try {
         $db->beginTransaction();
         
+        // Get user details before deleting
+        $stmt = $db->prepare("SELECT first_name, last_name, Email, Role FROM users WHERE UserID = ?");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
         // Delete from related tables first
         $stmt = $db->prepare("DELETE FROM students WHERE UserID = ?");
         $stmt->execute([$userId]);
@@ -491,6 +496,7 @@ function deleteUser($db, $userId) {
         $stmt->execute([$userId]);
         
         $db->commit();
+        
         return ['success' => true, 'message' => 'User deleted successfully'];
     } catch(PDOException $e) {
         $db->rollBack();
@@ -740,6 +746,7 @@ function sendBulkRejectionEmails($teacherUsers) {
         error_log("Background email sending failed: " . $e->getMessage());
     }
 }
+
 
 // RBAC Functions moved to api/rbac_permissions.php
 // This file now handles user management only

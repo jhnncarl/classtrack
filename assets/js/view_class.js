@@ -69,6 +69,12 @@ function goBack() {
 }
 
 function startAttendanceSession(classCode) {
+    // Check takeAttendance permission first
+    if (!canTakeAttendance) {
+        showToast('You do not have permission to take attendance. Please contact the administrator for assistance.', 'info');
+        return;
+    }
+    
     window.location.href = 'attendance_session.php?class=' + classCode;
 }
 
@@ -77,8 +83,15 @@ function showNotAvailableNotification() {
 }
 
 function updateAttendanceIndicators(studentId) {
-    // Fetch real attendance data from API
-    fetch(`../api/get_attendance_stats.php?studentId=${studentId}`)
+    // Check if we have current class data
+    if (!window.currentClassData || !window.currentClassData.subject_id) {
+        console.error('Current class data not available');
+        useDummyAttendanceData();
+        return;
+    }
+    
+    // Fetch real attendance data from API with subject-specific context
+    fetch(`../api/get_attendance_stats.php?studentId=${studentId}&subjectId=${window.currentClassData.subject_id}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Failed to fetch attendance data');

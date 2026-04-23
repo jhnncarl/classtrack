@@ -143,6 +143,12 @@ function displaySubjectReport(data) {
 }
 
 function downloadSubjectPDF(subjectId) {
+    // Check export permission first
+    if (!canExportReports) {
+        showToast('This feature is currently unavailable. Please contact the administrator for assistance with accessing this feature.', 'info');
+        return;
+    }
+    
     window.location.href = `../api/generate_subject_report_pdf.php?subject_id=${subjectId}`;
 }
 
@@ -315,6 +321,12 @@ function clearFilters() {
 }
 
 function generateReport(sessionId) {
+    // Check export permission first
+    if (!canExportReports) {
+        showToast('This feature is currently unavailable. Please contact the administrator for assistance with accessing this feature.', 'info');
+        return;
+    }
+    
     clearAllToasts();
     showToast('Preparing your report...', 'info');
     

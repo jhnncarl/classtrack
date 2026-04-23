@@ -17,12 +17,19 @@ header('Content-Type: application/json');
 // Handle GET request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
-        // Get student ID from query parameter
+        // Get student ID and subject ID from query parameters
         $studentId = isset($_GET['studentId']) ? intval($_GET['studentId']) : 0;
+        $subjectId = isset($_GET['subjectId']) ? intval($_GET['subjectId']) : 0;
         
         if ($studentId <= 0) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Invalid student ID']);
+            exit();
+        }
+        
+        if ($subjectId <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid subject ID']);
             exit();
         }
         
@@ -37,22 +44,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             exit();
         }
         
-        // Verify that the student belongs to a subject taught by this teacher
+        // Verify that the student belongs to the specific subject taught by this teacher
         $verifyStmt = $db->prepare("
             SELECT e.StudentID, e.SubjectID 
             FROM enrollments e 
             JOIN subjects s ON e.SubjectID = s.SubjectID 
-            WHERE e.StudentID = ? AND s.TeacherID = ?
+            WHERE e.StudentID = ? AND e.SubjectID = ? AND s.TeacherID = ?
         ");
-        $verifyStmt->execute([$studentId, $teacher['TeacherID']]);
+        $verifyStmt->execute([$studentId, $subjectId, $teacher['TeacherID']]);
         
         if (!$verifyStmt->fetch()) {
             http_response_code(403);
-            echo json_encode(['success' => false, 'message' => 'Student not found or access denied']);
+            echo json_encode(['success' => false, 'message' => 'Student not found in this subject or access denied']);
             exit();
         }
         
-        // Get attendance statistics for the student
+        // Get attendance statistics for the student in the specific subject
         $statsStmt = $db->prepare("
             SELECT 
                 COUNT(CASE WHEN ar.AttendanceStatus = 'Present' THEN 1 END) as present_count,
@@ -61,11 +68,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 COUNT(*) as total_sessions
             FROM attendancerecords ar
             JOIN attendancesessions asess ON ar.SessionID = asess.SessionID
-            JOIN subjects s ON asess.SubjectID = s.SubjectID
-            WHERE ar.StudentID = ? AND s.TeacherID = ?
+            WHERE ar.StudentID = ? AND asess.SubjectID = ?
         ");
         
-        $statsStmt->execute([$studentId, $teacher['TeacherID']]);
+        $statsStmt->execute([$studentId, $subjectId]);
         $stats = $statsStmt->fetch(PDO::FETCH_ASSOC);
         
         if ($stats && $stats['total_sessions'] > 0) {

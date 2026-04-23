@@ -7,8 +7,9 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_role']) || $_SESSION[
     exit();
 }
 
-// Include database configuration
+// Include database configuration for permission checking
 require_once '../config/database.php';
+require_once '../config/permissions.php';
 
 // Get subject code from URL parameter
 $subjectCode = $_GET['class'] ?? '';
@@ -27,6 +28,29 @@ try {
     $teacher_id = $teacher_data ? $teacher_data['TeacherID'] : null;
 } catch(PDOException $e) {
     error_log("Error getting teacher ID: " . $e->getMessage());
+}
+
+// Check takeAttendance permission
+$canTakeAttendance = false;
+if (isset($_SESSION['user_id']) && is_numeric($_SESSION['user_id'])) {
+    try {
+        // Get user role from users table
+        $stmt = $db->prepare("SELECT Role FROM users WHERE UserID = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $userData = $stmt->fetch();
+        
+        if ($userData) {
+            // Get permission from role_permissions table
+            $stmt = $db->prepare("SELECT takeAttendance FROM role_permissions WHERE role = ?");
+            $stmt->execute([$userData['Role']]);
+            $permissionData = $stmt->fetch();
+            
+            $canTakeAttendance = $permissionData && $permissionData['takeAttendance'] == 1;
+        }
+    } catch (Exception $e) {
+        error_log("Error checking take attendance permission: " . $e->getMessage());
+        $canTakeAttendance = false;
+    }
 }
 
 // Get subject data from database
@@ -88,6 +112,11 @@ if (!$currentClass) {
     exit();
 }
 ?>
+
+<script>
+// Permission variables for JavaScript
+var canTakeAttendance = <?php echo $canTakeAttendance ? 'true' : 'false'; ?>;
+</script>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -599,7 +628,7 @@ if (!$currentClass) {
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JavaScript -->
-    <script src="../assets/js/view_class.js?v=14"></script>
+    <script src="../assets/js/view_class.js?v=16"></script>
     
     <!-- Data for JavaScript -->
     <script>
