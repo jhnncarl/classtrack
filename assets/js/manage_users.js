@@ -88,9 +88,9 @@ function initializeTabs() {
 // Search Functionality
 function initializeSearch() {
     const searchInputs = [
-        { id: 'searchAllUsers', tableId: 'allUsersTable' },
-        { id: 'searchTeachers', tableId: 'teachersTable' },
-        { id: 'searchStudents', tableId: 'studentsTable' }
+        { id: 'searchAllUsers', tableId: 'allUsersTable', emptyMessage: 'No users found matching your search.' },
+        { id: 'searchTeachers', tableId: 'teachersTable', emptyMessage: 'No teachers found matching your search.' },
+        { id: 'searchStudents', tableId: 'studentsTable', emptyMessage: 'No students found matching your search.' }
     ];
     
     searchInputs.forEach(search => {
@@ -100,15 +100,73 @@ function initializeSearch() {
         if (input && table) {
             input.addEventListener('input', function() {
                 const searchTerm = this.value.toLowerCase();
-                const rows = table.querySelectorAll('tbody tr:not(.empty-state)');
+                const tbody = table.querySelector('tbody');
+                const rows = tbody.querySelectorAll('tr:not(.empty-state)');
+                let visibleCount = 0;
                 
+                // Reset all rows to visible first, then apply search filter
                 rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                    // Reset display state
+                    row.style.display = '';
+                    
+                    // Apply search filter if there's a search term
+                    if (searchTerm.trim() !== '') {
+                        // Only search specific user data elements
+                        const userName = row.querySelector('.user-name');
+                        const userEmail = row.querySelector('td:nth-child(3)'); // Email column
+                        const userRole = row.querySelector('.badge');
+                        const userStatus = row.querySelector('.status-badge');
+                        
+                        let searchableText = '';
+                        if (userName) searchableText += userName.innerText + ' ';
+                        if (userEmail) searchableText += userEmail.innerText + ' ';
+                        if (userRole) searchableText += userRole.innerText + ' ';
+                        if (userStatus) searchableText += userStatus.innerText + ' ';
+                        
+                        searchableText = searchableText.toLowerCase().trim();
+                        
+                        const shouldShow = searchableText.includes(searchTerm);
+                        row.style.display = shouldShow ? '' : 'none';
+                        if (shouldShow) visibleCount++;
+                    } else {
+                        // If no search term, count all rows as visible
+                        visibleCount++;
+                    }
                 });
+                
+                // Handle empty state for search
+                handleSearchEmptyState(tbody, visibleCount, searchTerm, search.emptyMessage, table);
             });
         }
     });
+}
+
+// Handle search empty state display
+function handleSearchEmptyState(tbody, visibleCount, searchTerm, emptyMessage, table) {
+    // Remove existing search empty state
+    const existingSearchEmpty = tbody.querySelector('.search-empty-state');
+    if (existingSearchEmpty) {
+        existingSearchEmpty.remove();
+    }
+    
+    // If no visible rows and there's a search term, show search empty state
+    if (visibleCount === 0 && searchTerm.trim() !== '') {
+        const colspan = table.querySelectorAll('thead th').length;
+        const searchEmptyRow = document.createElement('tr');
+        searchEmptyRow.className = 'search-empty-state';
+        searchEmptyRow.innerHTML = `
+            <td colspan="${colspan}">
+                <div class="empty-state-content search-empty">
+                    <i class="bi bi-search"></i>
+                    <h4>No results found</h4>
+                    <p>${emptyMessage}</p>
+                    <small>Try adjusting your search terms</small>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(searchEmptyRow);
+    }
+    // If search is cleared, ensure all rows are visible (this is handled in the main search function)
 }
 
 // Search Functionality
@@ -1313,6 +1371,12 @@ function populateAllUsersTable(users) {
     const tbody = document.getElementById('allUsersTableBody');
     if (!tbody) return;
     
+    // Remove any search empty states before repopulating
+    const searchEmptyState = tbody.querySelector('.search-empty-state');
+    if (searchEmptyState) {
+        searchEmptyState.remove();
+    }
+    
     if (users.length === 0) {
         tbody.innerHTML = `
             <tr class="empty-state">
@@ -1379,6 +1443,12 @@ function populateTeachersTable(teachers) {
     const tbody = document.getElementById('teachersTableBody');
     if (!tbody) return;
     
+    // Remove any search empty states before repopulating
+    const searchEmptyState = tbody.querySelector('.search-empty-state');
+    if (searchEmptyState) {
+        searchEmptyState.remove();
+    }
+    
     if (teachers.length === 0) {
         tbody.innerHTML = `
             <tr class="empty-state">
@@ -1439,6 +1509,12 @@ function populateStudentsTable(students) {
     const tbody = document.getElementById('studentsTableBody');
     if (!tbody) return;
     
+    // Remove any search empty states before repopulating
+    const searchEmptyState = tbody.querySelector('.search-empty-state');
+    if (searchEmptyState) {
+        searchEmptyState.remove();
+    }
+    
     if (students.length === 0) {
         tbody.innerHTML = `
             <tr class="empty-state">
@@ -1498,6 +1574,12 @@ function populateStudentsTable(students) {
 function populatePendingTable(pendingUsers) {
     const tbody = document.getElementById('pendingTableBody');
     if (!tbody) return;
+    
+    // Remove any search empty states before repopulating
+    const searchEmptyState = tbody.querySelector('.search-empty-state');
+    if (searchEmptyState) {
+        searchEmptyState.remove();
+    }
     
     if (pendingUsers.length === 0) {
         tbody.innerHTML = `
