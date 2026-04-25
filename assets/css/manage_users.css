@@ -24,6 +24,8 @@
     --radius-lg: 0.75rem;
     --radius-xl: 1rem;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --new-user-glow: rgba(16, 185, 129, 0.3);
+    --new-user-border: #10b981;
 }
 
 /* Page Wrapper */
@@ -413,6 +415,16 @@
     color: var(--warning-color);
 }
 
+.status-badge.deactivated {
+    background: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+}
+
+.status-badge.rejected {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+}
+
 /* Role Badges */
 .role-badge {
     padding: 0.25rem 0.75rem;
@@ -727,6 +739,7 @@
     .nav-tabs {
         flex-wrap: nowrap;
         overflow-x: auto;
+        padding-top: 12px;
         overflow-y: hidden;
         white-space: nowrap;
         scrollbar-width: thin;
@@ -944,6 +957,7 @@
     
     .nav-tabs {
         flex-wrap: nowrap;
+        padding-top: 12px;
         overflow-x: auto;
         overflow-y: hidden;
         white-space: nowrap;
@@ -2939,3 +2953,143 @@ html {
         height: 250px;
     }
 }
+
+/* Real-time Update Badge Styles */
+
+/* Tab container position for +1 badges */
+.nav-link {
+    position: relative;
+}
+
+/* Real-time update indicator */
+.real-time-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--success-color);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    z-index: 1050;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease;
+}
+
+.real-time-indicator.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Badge animation for count updates */
+.badge-updated {
+    animation: badgePulse 1s ease-in-out;
+}
+
+@keyframes badgePulse {
+    0% {
+        transform: scale(1);
+        background-color: var(--success-color);
+    }
+    50% {
+        transform: scale(1.2);
+        background-color: var(--success-color);
+        box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+    }
+    100% {
+        transform: scale(1);
+        background-color: inherit;
+    }
+}
+
+/* Persistent Badge Indicator */
+.persistent-badge-indicator {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 0.65rem;
+    font-weight: bold;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
+    border: 2px solid white;
+}
+
+.persistent-badge-indicator:empty {
+    display: none;
+}
+
+/* New User Highlight Effect */
+.new-user-highlight {
+    position: relative;
+    background: linear-gradient(135deg, 
+        rgba(16, 185, 129, 0.08) 0%, 
+        rgba(16, 185, 129, 0.12) 50%, 
+        rgba(16, 185, 129, 0.08) 100%);
+    border: 2px solid var(--new-user-border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+    transition: var(--transition);
+}
+
+.new-user-highlight td {
+    position: relative;
+}
+
+.new-user-highlight td:first-child {
+    position: relative;
+}
+
+.new-user-highlight td:first-child::after {
+    content: 'NEW';
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    background: var(--success-color);
+    color: white;
+    font-size: 0.45rem;
+    font-weight: bold;
+    padding: 2px 5px;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+    z-index: 25;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    animation: newBadgePulse 2s ease-in-out infinite;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Subtle glow animation */
+@keyframes newBadgePulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 2px 10px rgba(16, 185, 129, 0.6);
+    }
+}
+
+/* Fade out animation when clearing highlights */
+.new-user-highlight.fade-out {
+    opacity: 0;
+    transform: scale(0.98);
+    transition: all 0.4s ease-out;
+    border-color: rgba(16, 185, 129, 0.3);
+    box-shadow: none;
+}
+
+.new-user-highlight.fade-out td:first-child::after {
+    display: none;
+}
+

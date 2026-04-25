@@ -2,6 +2,15 @@
 // RBAC Permissions API Endpoint
 // Handles all AJAX requests for role-based permission management
 
+session_start();
+
+// Check if admin is logged in (same authentication as manage_users.php)
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
+    exit();
+}
+
 require_once '../config/database.php';
 require_once '../config/permissions.php';
 
@@ -28,6 +37,7 @@ try {
             
         case 'resetRolePermissions':
             $role = $_POST['role'] ?? '';
+            error_log("API: resetRolePermissions called with role: $role");
             echo json_encode(resetRolePermissions($db, $role));
             break;
             
@@ -151,14 +161,14 @@ function resetRolePermissions($db, $role) {
             
             return [
                 'success' => true,
-                'message' => "Reset permissions for $role role was successfully.",
+                'message' => "Reset permissions for $role role was successful.",
                 'resetCount' => $userCount,
                 'totalUsers' => $userCount
             ];
         } else {
             return [
                 'success' => false,
-                'message' => 'Failed to reset role permissions'
+                'message' => 'Failed to reset role permissions: Unable to update or insert role permissions record'
             ];
         }
         

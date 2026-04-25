@@ -776,7 +776,7 @@ function sendBulkRejectionEmails($teacherUsers) {
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/navbar.css">
     <link rel="stylesheet" href="../assets/css/sidebar.css">
-    <link rel="stylesheet" href="../assets/css/manage_users.css?v=30">
+    <link rel="stylesheet" href="../assets/css/manage_users.css?v=32">
     <link rel="stylesheet" href="../assets/css/toast.css">
     
     <!-- Inline script to prevent sidebar flicker -->
@@ -1542,6 +1542,8 @@ function sendBulkRejectionEmails($teacherUsers) {
                                     <select class="form-select" id="editStatus" name="status">
                                         <option value="Active">Active</option>
                                         <option value="Inactive">Inactive</option>
+                                        <option value="Deactivated">Deactivated</option>
+                                        <option value="Rejected">Rejected</option>
                                     </select>
                                 </div>
                             </div>
@@ -1658,7 +1660,8 @@ function sendBulkRejectionEmails($teacherUsers) {
         </div>
     </div>
 
+   
     <!-- Custom JavaScript -->
-    <script src="../assets/js/manage_users.js?v=37"></script>
+    <script src="../assets/js/manage_users.js?v=48"></script>
 </body>
 </html>

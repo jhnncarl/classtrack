@@ -1,5 +1,13 @@
 // Manage Users JavaScript - ClassTrack
 
+// Global variables for tracking new users
+let newlyAddedUsers = {
+    allUsers: [],
+    teachers: [],
+    students: [],
+    pending: []
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     initializeManageUsers();
 });
@@ -21,6 +29,9 @@ function initializeManageUsers() {
     loadTeachers();
     loadStudents();
     loadPendingUsers();
+    
+    // Initialize real-time updates
+    initializeRealTimeUpdates();
 }
 
 // Tab Navigation
@@ -31,6 +42,30 @@ function initializeTabs() {
     tabs.forEach(tab => {
         tab.addEventListener('click', function(e) {
             e.preventDefault();
+            
+            // Clear highlights from the previous tab before switching
+            const previousTab = document.querySelector('#usersTabs .nav-link.active');
+            if (previousTab) {
+                const previousTabId = previousTab.getAttribute('data-bs-target');
+                let previousType;
+                switch(previousTabId) {
+                    case '#all-users':
+                        previousType = 'allUsers';
+                        break;
+                    case '#teachers':
+                        previousType = 'teachers';
+                        break;
+                    case '#students':
+                        previousType = 'students';
+                        break;
+                    case '#pending':
+                        previousType = 'pending';
+                        break;
+                }
+                if (previousType) {
+                    clearNewUserHighlights(previousType);
+                }
+            }
             
             // Remove active class from all tabs and contents
             tabs.forEach(t => t.classList.remove('active'));
@@ -462,7 +497,7 @@ async function toggleUserStatus(userId, action) {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: `action=updateUser&userId=${userId}&userData=${JSON.stringify({account_status: action === 'activate' ? 'Active' : 'Inactive'})}`
+            body: `action=updateUser&userId=${userId}&userData=${JSON.stringify({account_status: action === 'activate' ? 'Active' : 'Deactivated'})}`
         });
         
         const result = await response.json();
@@ -520,6 +555,7 @@ function populateEditModal(user) {
     // Role & Status
     document.getElementById('editRole').value = user.Role || 'Student';
     document.getElementById('editStatus').value = user.AccountStatus || 'Active';
+    
     
     // Profile Image
     updateProfileImage(user.ProfilePicture);
@@ -1298,7 +1334,7 @@ function populateAllUsersTable(users) {
             null;
         
         return `
-        <tr data-user-id="${user.UserID}">
+        <tr data-user-id="${user.UserID}"${newlyAddedUsers.allUsers.includes(user.UserID) ? ' class="new-user-highlight"' : ''}>
             <td>
                 <div class="user-info">
                     <div class="user-avatar">
@@ -1364,7 +1400,7 @@ function populateTeachersTable(teachers) {
             null;
         
         return `
-        <tr data-user-id="${teacher.UserID}">
+        <tr data-user-id="${teacher.UserID}"${newlyAddedUsers.teachers.includes(teacher.UserID) ? ' class="new-user-highlight"' : ''}>
             <td>
                 <div class="user-info">
                     <div class="user-avatar">
@@ -1377,6 +1413,7 @@ function populateTeachersTable(teachers) {
                     <div class="user-details">
                         <div class="user-name">${teacher.first_name} ${teacher.last_name}</div>
                         <div class="user-email">${teacher.Email}</div>
+                        ${teacher.Department ? `<div class="user-id">${teacher.Department}</div>` : ''}
                     </div>
                 </div>
             </td>
@@ -1423,7 +1460,7 @@ function populateStudentsTable(students) {
             null;
         
         return `
-        <tr data-user-id="${student.UserID}">
+        <tr data-user-id="${student.UserID}"${newlyAddedUsers.students.includes(student.UserID) ? ' class="new-user-highlight"' : ''}>
             <td>
                 <div class="user-info">
                     <div class="user-avatar">
@@ -1436,6 +1473,7 @@ function populateStudentsTable(students) {
                     <div class="user-details">
                         <div class="user-name">${student.first_name} ${student.last_name}</div>
                         <div class="user-email">${student.Email}</div>
+                        ${student.StudentNumber ? `<div class="user-id">ID: ${student.StudentNumber}</div>` : ''}
                     </div>
                 </div>
             </td>
@@ -1477,7 +1515,7 @@ function populatePendingTable(pendingUsers) {
     }
     
     tbody.innerHTML = pendingUsers.map(user => `
-        <tr data-user-id="${user.UserID}">
+        <tr data-user-id="${user.UserID}"${newlyAddedUsers.pending.includes(user.UserID) ? ' class="new-user-highlight"' : ''}>
             <td><input type="checkbox" class="form-check-input user-checkbox" value="${user.UserID}"></td>
             <td>
                 <div class="user-info">
@@ -2185,6 +2223,8 @@ function getStatusBadgeClass(status) {
         case 'active': return 'active';
         case 'inactive': return 'inactive';
         case 'pending': return 'pending';
+        case 'deactivated': return 'deactivated';
+        case 'rejected': return 'rejected';
         default: return '';
     }
 }
@@ -2199,11 +2239,345 @@ function getRoleBadgeClass(role) {
 }
 
 
+// Real-time Updates System
+let realTimeUpdateInterval = null;
+let lastUpdateTimestamps = {
+    allUsers: 0,
+    teachers: 0,
+    students: 0,
+    pending: 0
+};
+
+// Persistent badge tracking
+let unreadUpdates = {
+    allUsers: false,
+    teachers: false,
+    students: false,
+    pending: false
+};
+
+let persistentBadgeCounts = {
+    allUsers: 0,
+    teachers: 0,
+    students: 0,
+    pending: 0
+};
+
+// Track if initial load is complete
+let initialLoadComplete = {
+    allUsers: false,
+    teachers: false,
+    students: false,
+    pending: false
+};
+
+function initializeRealTimeUpdates() {
+    // Start polling for updates every 2 seconds
+    realTimeUpdateInterval = setInterval(checkForUpdates, 2000);
+    
+    // Also check when page becomes visible again (user returns to tab)
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            checkForUpdates();
+        }
+    });
+    
+    // Add tab click listeners to clear persistent badges
+    initializeTabBadgeClearing();
+    
+    console.log('Real-time updates initialized');
+}
+
+function initializeTabBadgeClearing() {
+    const tabs = [
+        { id: 'all-users-tab', type: 'allUsers' },
+        { id: 'teachers-tab', type: 'teachers' },
+        { id: 'students-tab', type: 'students' },
+        { id: 'pending-tab', type: 'pending' }
+    ];
+    
+    tabs.forEach(tab => {
+        const tabElement = document.getElementById(tab.id);
+        if (tabElement) {
+            tabElement.addEventListener('click', function() {
+                clearTabBadge(tab.type);
+            });
+        }
+    });
+}
+
+function clearTabBadge(type) {
+    // Mark as read
+    unreadUpdates[type] = false;
+    persistentBadgeCounts[type] = 0;
+    
+    // Remove visual indicator if exists
+    const tabElement = getTabElement(type);
+    if (tabElement) {
+        const persistentIndicator = tabElement.querySelector('.persistent-badge-indicator');
+        if (persistentIndicator) {
+            persistentIndicator.remove();
+        }
+    }
+}
+
+function getTabElement(type) {
+    switch(type) {
+        case 'allUsers': return document.getElementById('all-users-tab');
+        case 'teachers': return document.getElementById('teachers-tab');
+        case 'students': return document.getElementById('students-tab');
+        case 'pending': return document.getElementById('pending-tab');
+        default: return null;
+    }
+}
+
+async function checkForUpdates() {
+    try {
+        // Check for updates in all categories
+        const [allUsersData, teachersData, studentsData, pendingData] = await Promise.all([
+            fetchUpdateData('getAllUsers'),
+            fetchUpdateData('getTeachers'),
+            fetchUpdateData('getStudents'),
+            fetchUpdateData('getPendingUsers')
+        ]);
+        
+        // Update counts and refresh data if needed
+        updateRealTimeCounts('allUsers', allUsersData);
+        updateRealTimeCounts('teachers', teachersData);
+        updateRealTimeCounts('students', studentsData);
+        updateRealTimeCounts('pending', pendingData);
+        
+    } catch (error) {
+        console.error('Error checking for updates:', error);
+    }
+}
+
+async function fetchUpdateData(action) {
+    try {
+        const response = await fetch('manage_users.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `action=${action}&timestamp=${Date.now()}`
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error(`Error fetching ${action}:`, error);
+        return [];
+    }
+}
+
+function updateRealTimeCounts(type, newData) {
+    const currentCount = newData.length || 0;
+    const lastCount = lastUpdateTimestamps[type] || 0;
+    
+    // Update badge count
+    let badgeSelector;
+    let tabSelector;
+    let typeName;
+    switch(type) {
+        case 'allUsers':
+            badgeSelector = '#all-users-tab .badge';
+            tabSelector = '#all-users-tab';
+            typeName = 'All Users';
+            break;
+        case 'teachers':
+            badgeSelector = '#teachers-tab .badge';
+            tabSelector = '#teachers-tab';
+            typeName = 'Teachers';
+            break;
+        case 'students':
+            badgeSelector = '#students-tab .badge';
+            tabSelector = '#students-tab';
+            typeName = 'Students';
+            break;
+        case 'pending':
+            badgeSelector = '#pending-tab .badge';
+            tabSelector = '#pending-tab';
+            typeName = 'Pending Approvals';
+            break;
+    }
+    
+    const badgeElement = document.querySelector(badgeSelector);
+    const tabElement = document.querySelector(tabSelector);
+    
+    if (badgeElement) {
+        badgeElement.textContent = currentCount;
+        
+        // Only show animations and indicators if count actually changed
+        if (currentCount !== lastCount) {
+            if (currentCount > lastCount && tabElement && initialLoadComplete[type]) {
+                const difference = currentCount - lastCount;
+                
+                // Add pulse animation to badge
+                badgeElement.classList.add('badge-updated');
+                setTimeout(() => {
+                    badgeElement.classList.remove('badge-updated');
+                }, 1000);
+                
+                // Show real-time update indicator
+                showRealTimeIndicator(`${typeName} +${difference}`);
+                
+                // Track newly added users for highlighting
+                trackNewlyAddedUsers(type, newData, lastCount);
+                
+                // Mark as unread and update persistent count
+                unreadUpdates[type] = true;
+                persistentBadgeCounts[type] += difference;
+                showPersistentBadge(tabElement, persistentBadgeCounts[type]);
+            } else if (currentCount < lastCount && initialLoadComplete[type]) {
+                // Only show indicator for decreases (no +1 badge)
+                const difference = lastCount - currentCount;
+                showRealTimeIndicator(`${typeName} -${difference}`);
+                
+                // Adjust persistent count for decreases
+                persistentBadgeCounts[type] = Math.max(0, persistentBadgeCounts[type] - difference);
+                if (persistentBadgeCounts[type] === 0) {
+                    unreadUpdates[type] = false;
+                }
+                updatePersistentBadge(tabElement, persistentBadgeCounts[type]);
+            }
+        }
+        
+        // Mark initial load as complete after first data fetch
+        if (!initialLoadComplete[type]) {
+            initialLoadComplete[type] = true;
+        }
+    }
+    
+    // Update data if count changed or if it's the first load
+    if (currentCount !== lastCount || lastCount === 0) {
+        switch(type) {
+            case 'allUsers':
+                if (typeof populateAllUsersTable === 'function') {
+                    populateAllUsersTable(newData);
+                }
+                break;
+            case 'teachers':
+                if (typeof populateTeachersTable === 'function') {
+                    populateTeachersTable(newData);
+                }
+                break;
+            case 'students':
+                if (typeof populateStudentsTable === 'function') {
+                    populateStudentsTable(newData);
+                }
+                break;
+            case 'pending':
+                if (typeof populatePendingTable === 'function') {
+                    populatePendingTable(newData);
+                }
+                break;
+        }
+    }
+    
+    lastUpdateTimestamps[type] = currentCount;
+}
+
+
+function showPersistentBadge(tabElement, count) {
+    if (!tabElement) return;
+    
+    // Remove existing persistent badge
+    const existingBadge = tabElement.querySelector('.persistent-badge-indicator');
+    if (existingBadge) {
+        existingBadge.remove();
+    }
+    
+    // Create new persistent badge
+    const persistentBadge = document.createElement('div');
+    persistentBadge.className = 'persistent-badge-indicator';
+    persistentBadge.textContent = count > 0 ? count : '';
+    
+    // Add to tab
+    tabElement.style.position = 'relative';
+    tabElement.appendChild(persistentBadge);
+}
+
+function updatePersistentBadge(tabElement, count) {
+    if (!tabElement) return;
+    
+    const existingBadge = tabElement.querySelector('.persistent-badge-indicator');
+    if (existingBadge) {
+        if (count > 0) {
+            existingBadge.textContent = count;
+        } else {
+            existingBadge.remove();
+        }
+    }
+}
+
+function showRealTimeIndicator(message) {
+    const indicator = document.getElementById('realTimeIndicator');
+    if (indicator) {
+        indicator.innerHTML = `<i class="bi bi-arrow-clockwise me-2"></i>${message}`;
+        indicator.classList.add('show');
+        
+        // Hide after 3 seconds
+        setTimeout(() => {
+            indicator.classList.remove('show');
+        }, 3000);
+    }
+}
+
+// Track newly added users for highlighting
+function trackNewlyAddedUsers(type, newData, previousCount) {
+    if (!newData || !Array.isArray(newData)) return;
+    
+    // Get the newest users based on the count difference
+    const difference = newData.length - previousCount;
+    if (difference <= 0) return;
+    
+    // Get the newest users (assuming they appear at the end due to ORDER BY CreatedAt DESC)
+    const newUsers = newData.slice(0, difference);
+    
+    // Store their IDs for highlighting
+    newlyAddedUsers[type] = newUsers.map(user => user.UserID);
+    
+    console.log(`Tracking ${newUsers.length} new users for ${type}:`, newlyAddedUsers[type]);
+}
+
+// Clear highlights for a specific tab
+function clearNewUserHighlights(type) {
+    if (!type) {
+        // Clear all highlights
+        Object.keys(newlyAddedUsers).forEach(key => {
+            newlyAddedUsers[key] = [];
+        });
+    } else {
+        newlyAddedUsers[type] = [];
+    }
+    
+    // Remove highlight classes from all rows
+    const highlightedRows = document.querySelectorAll('.new-user-highlight');
+    highlightedRows.forEach(row => {
+        row.classList.add('fade-out');
+        setTimeout(() => {
+            row.classList.remove('new-user-highlight', 'fade-out');
+        }, 500);
+    });
+}
+
+// Stop real-time updates when page is unloaded
+window.addEventListener('beforeunload', function() {
+    if (realTimeUpdateInterval) {
+        clearInterval(realTimeUpdateInterval);
+    }
+});
+
 // Export functions for global access
 window.manageUsers = {
     showToast,
     formatDateTime,
     getStatusBadgeClass,
     getRoleBadgeClass,
-    loadRolePermissions
+    loadRolePermissions,
+    checkForUpdates,
+    initializeRealTimeUpdates
 };

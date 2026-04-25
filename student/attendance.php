@@ -40,75 +40,111 @@ $user_name = isset($_SESSION['user_first_name']) && isset($_SESSION['user_last_n
     (isset($_SESSION['user_first_name']) ? $_SESSION['user_first_name'] : 'Student');
 $user_role = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : 'Student';
 
-// Get subject information from URL parameter or default
-$subject_id = isset($_GET['subject_id']) ? $_GET['subject_id'] : 'WEBDEV101';
-$subject_name = isset($_GET['subject_name']) ? $_GET['subject_name'] : 'Web Development';
+// Get subject information from URL parameter or database
+$subject_id = isset($_GET['subject_id']) ? (int)$_GET['subject_id'] : null;
+$subject_name = '';
+$current_subject = [];
+$attendance_data = [];
 
-// Mock subject data (in real implementation, this would come from database)
-$subjects_data = [
-    'WEBDEV101' => ['name' => 'Web Development', 'section' => 'CS-301', 'teacher' => 'Prof. Sarah Johnson'],
-    'DATA201' => ['name' => 'Data Structures', 'section' => 'CS-201', 'teacher' => 'Dr. Michael Chen'],
-    'DB302' => ['name' => 'Database Systems', 'section' => 'CS-302', 'teacher' => 'Prof. Emily Davis'],
-    'ML401' => ['name' => 'Machine Learning', 'section' => 'CS-401', 'teacher' => 'Dr. Robert Wilson'],
-    'MOB351' => ['name' => 'Mobile Development', 'section' => 'CS-351', 'teacher' => 'Prof. Lisa Anderson'],
-    'NET251' => ['name' => 'Computer Networks', 'section' => 'CS-251', 'teacher' => 'Dr. James Martinez']
-];
+try {
+    // Get student ID from users table based on session user_id
+    $stmt = $db->prepare("SELECT StudentID FROM students WHERE UserID = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $student = $stmt->fetch();
+    
+    if ($student) {
+        $student_id = $student['StudentID'];
+        
+        // If no subject_id provided, get the first subject the student is enrolled in
+        if (!$subject_id) {
+            $stmt = $db->prepare("
+                SELECT s.SubjectID 
+                FROM enrollments e 
+                JOIN subjects s ON e.SubjectID = s.SubjectID 
+                WHERE e.StudentID = ? 
+                LIMIT 1
+            ");
+            $stmt->execute([$student_id]);
+            $first_subject = $stmt->fetch();
+            $subject_id = $first_subject ? $first_subject['SubjectID'] : null;
+        }
+        
+        if ($subject_id) {
+            // Verify student is enrolled in this subject and get subject details
+            $stmt = $db->prepare("
+                SELECT 
+                    s.SubjectID,
+                    s.SubjectCode,
+                    s.SubjectName,
+                    s.SectionName,
+                    s.Schedule,
+                    CONCAT(u.first_name, ' ', u.last_name) AS teacher_name
+                FROM enrollments e
+                JOIN subjects s ON e.SubjectID = s.SubjectID
+                JOIN teachers t ON s.TeacherID = t.TeacherID
+                JOIN users u ON t.UserID = u.UserID
+                WHERE e.StudentID = ? AND s.SubjectID = ?
+                LIMIT 1
+            ");
+            $stmt->execute([$student_id, $subject_id]);
+            $subject_info = $stmt->fetch();
+            
+            if ($subject_info) {
+                $subject_name = $subject_info['SubjectName'];
+                $current_subject = [
+                    'name' => $subject_info['SubjectName'],
+                    'section' => $subject_info['SectionName'],
+                    'teacher' => $subject_info['teacher_name']
+                ];
+                
+                // Get attendance records for this specific subject
+                $query = "
+                    SELECT 
+                        ar.AttendanceStatus,
+                        ar.ScanTime,
+                        s.SessionDate,
+                        s.StartTime,
+                        s.EndTime
+                    FROM attendancerecords ar
+                    JOIN attendancesessions s ON ar.SessionID = s.SessionID
+                    WHERE ar.StudentID = ? AND s.SubjectID = ?
+                    ORDER BY s.SessionDate DESC, s.StartTime DESC
+                ";
+                
+                $stmt = $db->prepare($query);
+                $stmt->execute([$student_id, $subject_id]);
+                $records = $stmt->fetchAll();
+                
+                // Format the data to match the expected structure
+                foreach ($records as $record) {
+                    $date = date('Y-m-d', strtotime($record['SessionDate']));
+                    $day = date('l', strtotime($record['SessionDate']));
+                    $start_time = date('h:i A', strtotime($record['StartTime']));
+                    $end_time = $record['EndTime'] ? date('h:i A', strtotime($record['EndTime'])) : 'Ongoing';
+                    
+                    $attendance_data[] = [
+                        'date' => $date,
+                        'day' => $day,
+                        'time' => $start_time . ' - ' . $end_time,
+                        'status' => strtolower($record['AttendanceStatus']),
+                        'subject_name' => $subject_name
+                    ];
+                }
+            }
+        }
+    }
+} catch (Exception $e) {
+    error_log("Error fetching attendance data: " . $e->getMessage());
+    // Keep empty arrays if there's an error
+}
 
-$current_subject = isset($subjects_data[$subject_id]) ? $subjects_data[$subject_id] : $subjects_data['WEBDEV101'];
-$subject_name = $current_subject['name'];
-
-// Mock attendance data (in real implementation, this would come from database)
-$attendance_data = [
-    [
-        'date' => '2024-03-15',
-        'day' => 'Friday',
-        'time' => '10:00 AM - 11:30 AM',
-        'status' => 'present',
-        'subject_name' => $subject_name
-    ],
-    [
-        'date' => '2024-03-13',
-        'day' => 'Wednesday',
-        'time' => '10:00 AM - 11:30 AM',
-        'status' => 'present',
-        'subject_name' => $subject_name
-    ],
-    [
-        'date' => '2024-03-11',
-        'day' => 'Monday',
-        'time' => '10:00 AM - 11:30 AM',
-        'status' => 'absent',
-        'subject_name' => $subject_name
-    ],
-    [
-        'date' => '2024-03-08',
-        'day' => 'Friday',
-        'time' => '10:00 AM - 11:30 AM',
-        'status' => 'present',
-        'subject_name' => $subject_name
-    ],
-    [
-        'date' => '2024-03-06',
-        'day' => 'Wednesday',
-        'time' => '10:00 AM - 11:30 AM',
-        'status' => 'late',
-        'subject_name' => $subject_name
-    ],
-    [
-        'date' => '2024-03-04',
-        'day' => 'Monday',
-        'time' => '10:00 AM - 11:30 AM',
-        'status' => 'present',
-        'subject_name' => $subject_name
-    ],
-    [
-        'date' => '2024-03-01',
-        'day' => 'Friday',
-        'time' => '10:00 AM - 11:30 AM',
-        'status' => 'present',
-        'subject_name' => $subject_name
-    ]
-];
+// Ensure variables are defined for metrics calculation
+if (!isset($student_id) || !$student_id) {
+    $student_id = 0;
+}
+if (!isset($subject_id) || !$subject_id) {
+    $subject_id = 0;
+}
 
 $user_initials = strtoupper(substr($user_name, 0, 2));
 ?>
@@ -295,12 +331,68 @@ $user_initials = strtoupper(substr($user_name, 0, 2));
                     </div>
                     <div class="percentage-grid">
                         <?php
-                        // Calculate percentages
-                        $total_classes = count($attendance_data);
-                        $present_count = count(array_filter($attendance_data, fn($a) => $a['status'] === 'present'));
-                        $absent_count = count(array_filter($attendance_data, fn($a) => $a['status'] === 'absent'));
-                        $late_count = count(array_filter($attendance_data, fn($a) => $a['status'] === 'late'));
+                        // Get accurate attendance metrics from database
+                        $total_classes = 0;
+                        $present_count = 0;
+                        $absent_count = 0;
+                        $late_count = 0;
                         
+                        try {
+                            // Get all sessions for this subject (only up to current date)
+                            $sessions_query = "
+                                SELECT COUNT(*) as total_sessions
+                                FROM attendancesessions 
+                                WHERE SubjectID = ? AND SessionDate <= CURDATE()
+                            ";
+                            $stmt = $db->prepare($sessions_query);
+                            $stmt->execute([$subject_id]);
+                            $sessions_result = $stmt->fetch();
+                            $total_classes = $sessions_result ? $sessions_result['total_sessions'] : 0;
+                            
+                            // Get attendance counts for this student
+                            $attendance_query = "
+                                SELECT 
+                                    AttendanceStatus,
+                                    COUNT(*) as count
+                                FROM attendancerecords ar
+                                JOIN attendancesessions s ON ar.SessionID = s.SessionID
+                                WHERE ar.StudentID = ? AND s.SubjectID = ? AND s.SessionDate <= CURDATE()
+                                GROUP BY AttendanceStatus
+                            ";
+                            $stmt = $db->prepare($attendance_query);
+                            $stmt->execute([$student_id, $subject_id]);
+                            $attendance_counts = $stmt->fetchAll();
+                            
+                            // Count each status
+                            foreach ($attendance_counts as $count) {
+                                switch(strtolower($count['AttendanceStatus'])) {
+                                    case 'present':
+                                        $present_count = $count['count'];
+                                        break;
+                                    case 'absent':
+                                        $absent_count = $count['count'];
+                                        break;
+                                    case 'late':
+                                        $late_count = $count['count'];
+                                        break;
+                                }
+                            }
+                            
+                            // Calculate absent count for sessions without records
+                            $recorded_sessions = $present_count + $absent_count + $late_count;
+                            $unrecorded_absences = max(0, $total_classes - $recorded_sessions);
+                            $absent_count += $unrecorded_absences;
+                            
+                        } catch (Exception $e) {
+                            error_log("Error calculating attendance metrics: " . $e->getMessage());
+                            // Fallback to current data if database query fails
+                            $total_classes = count($attendance_data);
+                            $present_count = count(array_filter($attendance_data, fn($a) => $a['status'] === 'present'));
+                            $absent_count = count(array_filter($attendance_data, fn($a) => $a['status'] === 'absent'));
+                            $late_count = count(array_filter($attendance_data, fn($a) => $a['status'] === 'late'));
+                        }
+                        
+                        // Calculate percentages
                         $present_percentage = $total_classes > 0 ? round(($present_count / $total_classes) * 100, 1) : 0;
                         $absent_percentage = $total_classes > 0 ? round(($absent_count / $total_classes) * 100, 1) : 0;
                         $late_percentage = $total_classes > 0 ? round(($late_count / $total_classes) * 100, 1) : 0;
@@ -402,14 +494,44 @@ $user_initials = strtoupper(substr($user_name, 0, 2));
                     </div>
                     <div class="filter-controls">
                         <div class="filter-group">
-                            <label for="dateFilter" class="filter-label">Date Range</label>
-                            <select id="dateFilter" class="filter-select">
-                                <option value="all">All Time</option>
-                                <option value="today">Today</option>
-                                <option value="week">This Week</option>
-                                <option value="month">This Month</option>
-                                <option value="custom">Custom Range</option>
-                            </select>
+                            <label class="filter-label">Date Range</label>
+                            <div class="calendar-dropdown-container">
+                                <div class="calendar-input-wrapper">
+                                    <input type="text" id="dateRangeInput" class="calendar-input" placeholder="Select date" readonly>
+                                    <button type="button" class="calendar-toggle" id="calendarToggle">
+                                        <i class="bi bi-calendar3"></i>
+                                    </button>
+                                </div>
+                                <div class="calendar-dropdown" id="calendarDropdown">
+                                    <div class="calendar-header">
+                                        <button type="button" class="calendar-nav" id="prevMonth">
+                                            <i class="bi bi-chevron-left"></i>
+                                        </button>
+                                        <h4 class="calendar-title" id="calendarTitle">April 2026</h4>
+                                        <button type="button" class="calendar-nav" id="nextMonth">
+                                            <i class="bi bi-chevron-right"></i>
+                                        </button>
+                                    </div>
+                                    <div class="calendar-grid">
+                                        <div class="calendar-weekdays">
+                                            <div class="calendar-weekday">Sun</div>
+                                            <div class="calendar-weekday">Mon</div>
+                                            <div class="calendar-weekday">Tue</div>
+                                            <div class="calendar-weekday">Wed</div>
+                                            <div class="calendar-weekday">Thu</div>
+                                            <div class="calendar-weekday">Fri</div>
+                                            <div class="calendar-weekday">Sat</div>
+                                        </div>
+                                        <div class="calendar-days" id="calendarDays">
+                                            <!-- Days will be generated by JavaScript -->
+                                        </div>
+                                    </div>
+                                    <div class="calendar-footer">
+                                        <button type="button" class="calendar-btn calendar-btn-clear" id="clearDateRange">Clear</button>
+                                        <button type="button" class="calendar-btn calendar-btn-today" id="todayDateRange">Today</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="filter-group">
                             <label for="statusFilter" class="filter-label">Status</label>
@@ -420,16 +542,7 @@ $user_initials = strtoupper(substr($user_name, 0, 2));
                                 <option value="late">Late</option>
                             </select>
                         </div>
-                        <div class="filter-group">
-                            <label for="monthFilter" class="filter-label">Month</label>
-                            <select id="monthFilter" class="filter-select">
-                                <option value="all">All Months</option>
-                                <option value="2024-03">March 2024</option>
-                                <option value="2024-02">February 2024</option>
-                                <option value="2024-01">January 2024</option>
-                            </select>
-                        </div>
-                        <button class="btn-filter-apply" onclick="applyFilters()">
+                                                <button class="btn-filter-apply" onclick="applyFilters()">
                             <i class="bi bi-funnel me-2"></i>Apply Filters
                         </button>
                         <button class="btn-filter-clear" onclick="clearFilters()">
@@ -449,6 +562,7 @@ $user_initials = strtoupper(substr($user_name, 0, 2));
                         </div>
                     </div>
                     
+                    <?php if (count($attendance_data) > 0): ?>
                     <div class="attendance-list" id="attendanceList">
                         <?php foreach ($attendance_data as $index => $record): ?>
                             <div class="attendance-record" data-date="<?php echo $record['date']; ?>" data-status="<?php echo $record['status']; ?>" data-month="<?php echo date('Y-m', strtotime($record['date'])); ?>">
@@ -485,14 +599,15 @@ $user_initials = strtoupper(substr($user_name, 0, 2));
                             </div>
                         <?php endforeach; ?>
                     </div>
+                    <?php endif; ?>
                     
-                    <!-- Empty State (hidden by default) -->
+                    <!-- Empty State -->
                     <div class="empty-records" id="emptyRecords" style="display: none;">
                         <div class="empty-icon">
-                            <i class="bi bi-calendar-x"></i>
+                            <i class="bi bi-calendar-x" id="emptyIcon"></i>
                         </div>
-                        <h3 class="empty-title">No attendance records found</h3>
-                        <p class="empty-message">Try adjusting your filters or check back later for new records.</p>
+                        <h3 class="empty-title" id="emptyTitle">No attendance records found</h3>
+                        <p class="empty-message" id="emptyMessage">Try adjusting your filters or check back later for new records.</p>
                     </div>
                 </div>
             </div>
@@ -505,7 +620,7 @@ $user_initials = strtoupper(substr($user_name, 0, 2));
     <?php include '../assets/components/toast.php'; ?>
     <!-- Custom JavaScript -->
     <script src="../assets/js/sidebar.js"></script>
-    <script src="../assets/js/attendance.js"></script>
+    <script src="../assets/js/attendance.js?v=<?php echo time(); ?>"></script>
     
     <?php if (!$canViewAttendanceRecord): ?>
     <script>

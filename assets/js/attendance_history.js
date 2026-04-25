@@ -35,6 +35,11 @@ function initializeFilters() {
             });
         }
     });
+    
+    // Initialize record count with actual visible records on page load
+    setTimeout(() => {
+        applyFilters();
+    }, 100);
 }
 
 // Apply filters to attendance records
@@ -228,8 +233,6 @@ function initializeAnimations() {
 // Handle page visibility change
 document.addEventListener('visibilitychange', function() {
     if (!document.hidden) {
-        // Refresh data when page becomes visible again
-        // In a real implementation, this would fetch fresh data from the server
         console.log('Page became visible - refreshing attendance history data');
     }
 });

@@ -39,129 +39,66 @@ $user_name = isset($_SESSION['user_first_name']) && isset($_SESSION['user_last_n
     (isset($_SESSION['user_first_name']) ? $_SESSION['user_first_name'] : 'Student');
 $user_role = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : 'Student';
 
-// Mock attendance history data (in real implementation, this would come from database)
-$attendance_history_data = [
-    [
-        'date' => '2024-03-15',
-        'day' => 'Friday',
-        'time' => '10:00 AM - 11:30 AM',
-        'status' => 'present',
-        'subject_name' => 'Web Development',
-        'subject_code' => 'WEBDEV101',
-        'section' => 'CS-301',
-        'teacher' => 'Prof. Sarah Johnson'
-    ],
-    [
-        'date' => '2024-03-13',
-        'day' => 'Wednesday',
-        'time' => '10:00 AM - 11:30 AM',
-        'status' => 'present',
-        'subject_name' => 'Web Development',
-        'subject_code' => 'WEBDEV101',
-        'section' => 'CS-301',
-        'teacher' => 'Prof. Sarah Johnson'
-    ],
-    [
-        'date' => '2024-03-11',
-        'day' => 'Monday',
-        'time' => '10:00 AM - 11:30 AM',
-        'status' => 'absent',
-        'subject_name' => 'Web Development',
-        'subject_code' => 'WEBDEV101',
-        'section' => 'CS-301',
-        'teacher' => 'Prof. Sarah Johnson'
-    ],
-    [
-        'date' => '2024-03-08',
-        'day' => 'Friday',
-        'time' => '10:00 AM - 11:30 AM',
-        'status' => 'present',
-        'subject_name' => 'Web Development',
-        'subject_code' => 'WEBDEV101',
-        'section' => 'CS-301',
-        'teacher' => 'Prof. Sarah Johnson'
-    ],
-    [
-        'date' => '2024-03-06',
-        'day' => 'Wednesday',
-        'time' => '10:00 AM - 11:30 AM',
-        'status' => 'late',
-        'subject_name' => 'Web Development',
-        'subject_code' => 'WEBDEV101',
-        'section' => 'CS-301',
-        'teacher' => 'Prof. Sarah Johnson'
-    ],
-    [
-        'date' => '2024-03-04',
-        'day' => 'Monday',
-        'time' => '10:00 AM - 11:30 AM',
-        'status' => 'present',
-        'subject_name' => 'Web Development',
-        'subject_code' => 'WEBDEV101',
-        'section' => 'CS-301',
-        'teacher' => 'Prof. Sarah Johnson'
-    ],
-    [
-        'date' => '2024-03-01',
-        'day' => 'Friday',
-        'time' => '10:00 AM - 11:30 AM',
-        'status' => 'present',
-        'subject_name' => 'Web Development',
-        'subject_code' => 'WEBDEV101',
-        'section' => 'CS-301',
-        'teacher' => 'Prof. Sarah Johnson'
-    ],
-    [
-        'date' => '2024-02-28',
-        'day' => 'Wednesday',
-        'time' => '2:00 PM - 3:30 PM',
-        'status' => 'present',
-        'subject_name' => 'Data Structures',
-        'subject_code' => 'DATA201',
-        'section' => 'CS-201',
-        'teacher' => 'Dr. Michael Chen'
-    ],
-    [
-        'date' => '2024-02-26',
-        'day' => 'Monday',
-        'time' => '2:00 PM - 3:30 PM',
-        'status' => 'present',
-        'subject_name' => 'Data Structures',
-        'subject_code' => 'DATA201',
-        'section' => 'CS-201',
-        'teacher' => 'Dr. Michael Chen'
-    ],
-    [
-        'date' => '2024-02-23',
-        'day' => 'Friday',
-        'time' => '2:00 PM - 3:30 PM',
-        'status' => 'late',
-        'subject_name' => 'Data Structures',
-        'subject_code' => 'DATA201',
-        'section' => 'CS-201',
-        'teacher' => 'Dr. Michael Chen'
-    ],
-    [
-        'date' => '2024-02-21',
-        'day' => 'Wednesday',
-        'time' => '2:00 PM - 3:30 PM',
-        'status' => 'present',
-        'subject_name' => 'Data Structures',
-        'subject_code' => 'DATA201',
-        'section' => 'CS-201',
-        'teacher' => 'Dr. Michael Chen'
-    ],
-    [
-        'date' => '2024-02-19',
-        'day' => 'Monday',
-        'time' => '2:00 PM - 3:30 PM',
-        'status' => 'absent',
-        'subject_name' => 'Data Structures',
-        'subject_code' => 'DATA201',
-        'section' => 'CS-201',
-        'teacher' => 'Dr. Michael Chen'
-    ]
-];
+// Get attendance history data from database
+$attendance_history_data = [];
+try {
+    // Get student ID from users table based on session user_id
+    $stmt = $db->prepare("SELECT StudentID FROM students WHERE UserID = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $student = $stmt->fetch();
+    
+    if ($student) {
+        $student_id = $student['StudentID'];
+        
+        // Get attendance records with all related information
+        $query = "
+            SELECT 
+                ar.RecordID,
+                ar.AttendanceStatus,
+                ar.ScanTime,
+                s.SessionDate,
+                s.StartTime,
+                s.EndTime,
+                sub.SubjectCode,
+                sub.SubjectName,
+                sub.SectionName,
+                CONCAT(u.first_name, ' ', u.last_name) AS teacher_name
+            FROM attendancerecords ar
+            JOIN attendancesessions s ON ar.SessionID = s.SessionID
+            JOIN subjects sub ON s.SubjectID = sub.SubjectID
+            JOIN teachers t ON sub.TeacherID = t.TeacherID
+            JOIN users u ON t.UserID = u.UserID
+            WHERE ar.StudentID = ?
+            ORDER BY s.SessionDate DESC, s.StartTime DESC
+        ";
+        
+        $stmt = $db->prepare($query);
+        $stmt->execute([$student_id]);
+        $records = $stmt->fetchAll();
+        
+        // Format the data to match the expected structure
+        foreach ($records as $record) {
+            $date = date('Y-m-d', strtotime($record['SessionDate']));
+            $day = date('l', strtotime($record['SessionDate']));
+            $start_time = date('h:i A', strtotime($record['StartTime']));
+            $end_time = $record['EndTime'] ? date('h:i A', strtotime($record['EndTime'])) : 'Ongoing';
+            
+            $attendance_history_data[] = [
+                'date' => $date,
+                'day' => $day,
+                'time' => $start_time . ' - ' . $end_time,
+                'status' => strtolower($record['AttendanceStatus']),
+                'subject_name' => $record['SubjectName'],
+                'subject_code' => $record['SubjectCode'],
+                'section' => $record['SectionName'],
+                'teacher' => $record['teacher_name']
+            ];
+        }
+    }
+} catch (Exception $e) {
+    error_log("Error fetching attendance history: " . $e->getMessage());
+    // Keep empty array if there's an error
+}
 
 $user_initials = strtoupper(substr($user_name, 0, 2));
 ?>
@@ -382,6 +319,7 @@ $user_initials = strtoupper(substr($user_name, 0, 2));
                         </div>
                     </div>
                     
+                    <?php if (count($attendance_history_data) > 0): ?>
                     <div class="attendance-list" id="attendanceList">
                         <?php foreach ($attendance_history_data as $index => $record): ?>
                             <div class="attendance-record" data-date="<?php echo $record['date']; ?>" data-status="<?php echo $record['status']; ?>" data-subject="<?php echo $record['subject_code']; ?>" data-month="<?php echo date('Y-m', strtotime($record['date'])); ?>">
@@ -419,15 +357,18 @@ $user_initials = strtoupper(substr($user_name, 0, 2));
                             </div>
                         <?php endforeach; ?>
                     </div>
+                    <?php endif; ?>
                     
-                    <!-- Empty State (hidden by default) -->
-                    <div class="empty-records" id="emptyRecords" style="display: none;">
+                    <!-- Empty State -->
+                    <?php if (count($attendance_history_data) == 0): ?>
+                    <div class="empty-records" id="emptyRecords">
                         <div class="empty-icon">
                             <i class="bi bi-calendar-x"></i>
                         </div>
                         <h3 class="empty-title">No attendance records found</h3>
                         <p class="empty-message">Try adjusting your filters or check back later for new records.</p>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

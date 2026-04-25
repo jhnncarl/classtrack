@@ -397,6 +397,68 @@ html {
     border-radius: 4px;
 }
 
+/* Real-time Update Badge Animations */
+.badge-updated {
+    animation: badgePulse 1s ease-in-out;
+}
+
+@keyframes badgePulse {
+    0% {
+        transform: scale(1);
+        background-color: var(--success-color);
+    }
+    50% {
+        transform: scale(1.2);
+        background-color: var(--success-color);
+        box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+    }
+    100% {
+        transform: scale(1);
+        background-color: inherit;
+    }
+}
+
+/* Real-time update indicator */
+.real-time-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--success-color);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    z-index: 1050;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease;
+}
+
+.real-time-indicator.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Subtle table row highlight for new data */
+.table-row-new {
+    animation: rowHighlight 2s ease-in-out;
+}
+
+@keyframes rowHighlight {
+    0% {
+        background-color: transparent;
+    }
+    20% {
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+    80% {
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
 ::-webkit-scrollbar-thumb:hover {
     background: var(--primary-color);
 }

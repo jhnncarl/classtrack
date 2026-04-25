@@ -11,6 +11,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeAdminSettings() {
+    // Store original form values FIRST before any other initialization
+    storeOriginalFormValues();
+    
+    // Initialize tab navigation (always available, same as settings.js)
+    initializeTabNavigation();
+    
     // Check if user has editProfile permission before initializing form features
     checkEditProfilePermission().then(hasPermission => {
         if (!hasPermission) {
@@ -20,14 +26,8 @@ function initializeAdminSettings() {
             return;
         }
         
-        // User has permission, proceed with normal initialization
+        // User has permission, proceed with form-related initialization
         console.log('Edit Profile permission granted - initializing form features');
-        
-        // Store original form values FIRST before any other initialization
-        storeOriginalFormValues();
-        
-        // Initialize tab navigation
-        initializeTabNavigation();
         
         // Initialize form validation
         initializeFormValidation();

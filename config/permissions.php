@@ -20,6 +20,8 @@ class Permissions {
      * @return array
      */
     public function getDefaultRolePermissions($role) {
+        error_log("Getting default permissions for role: $role");
+        
         $defaults = [
             'Teacher' => [
                 'createClass' => true,                     // Create Class – True
@@ -71,7 +73,10 @@ class Permissions {
             ]
         ];
         
-        return $defaults[$role] ?? [];
+        $result = $defaults[$role] ?? [];
+        error_log("Default permissions result for $role: " . json_encode($result));
+        
+        return $result;
     }
     
     /**
@@ -153,7 +158,19 @@ class Permissions {
      */
     public function updateRolePermissions($role, $permissions) {
         try {
-            // Build update query
+            // Validate and normalize role name
+            $validRoles = ['Student', 'Teacher', 'Administrator'];
+            $normalizedRole = ucfirst(strtolower($role));
+            
+            if (!in_array($normalizedRole, $validRoles)) {
+                error_log("Invalid role: $role (normalized: $normalizedRole)");
+                return false;
+            }
+            
+            error_log("Attempting to update permissions for role: $normalizedRole");
+            error_log("Permissions data: " . json_encode($permissions));
+            
+            // First try to update existing record
             $setParts = [];
             $values = [];
             
@@ -162,15 +179,39 @@ class Permissions {
                 $values[] = $value ? 1 : 0;
             }
             
-            $values[] = $role; // For WHERE clause
+            $values[] = $normalizedRole; // For WHERE clause
             
             $sql = "UPDATE role_permissions SET " . implode(', ', $setParts) . " WHERE role = ?";
-            $stmt = $this->db->prepare($sql);
+            error_log("Update SQL: $sql");
+            error_log("Update values: " . json_encode($values));
             
-            return $stmt->execute($values);
+            $stmt = $this->db->prepare($sql);
+            $result = $stmt->execute($values);
+            
+            error_log("Update result: " . ($result ? 'true' : 'false'));
+            error_log("Update row count: " . $stmt->rowCount());
+            
+            // If update affected 0 rows, try to insert new record
+            if ($result && $stmt->rowCount() === 0) {
+                error_log("No rows updated, attempting to insert new record");
+                
+                $insertSql = "INSERT INTO role_permissions (role, " . implode(', ', array_keys($permissions)) . ") VALUES (?, " . str_repeat('?,', count($permissions) - 1) . "?)";
+                $insertValues = array_merge([$normalizedRole], array_map(function($value) { return $value ? 1 : 0; }, $permissions));
+                
+                error_log("Insert SQL: $insertSql");
+                error_log("Insert values: " . json_encode($insertValues));
+                
+                $insertStmt = $this->db->prepare($insertSql);
+                $result = $insertStmt->execute($insertValues);
+                
+                error_log("Insert result: " . ($result ? 'true' : 'false'));
+            }
+            
+            return $result;
             
         } catch(PDOException $e) {
             error_log("Error updating permissions for role $role: " . $e->getMessage());
+            error_log("PDO Error info: " . json_encode($e->errorInfo));
             return false;
         }
     }
@@ -201,12 +242,83 @@ class Permissions {
      * @return bool
      */
     public function resetRolePermissions($role) {
+        error_log("RESET FUNCTION CALLED WITH ROLE: $role");
+        
         try {
-            $defaults = $this->getDefaultRolePermissions($role);
-            return $this->updateRolePermissions($role, $defaults);
+            // Validate and normalize role name
+            $validRoles = ['Student', 'Teacher', 'Administrator'];
+            $normalizedRole = ucfirst(strtolower($role));
+            
+            if (!in_array($normalizedRole, $validRoles)) {
+                error_log("Invalid role for reset: $role (normalized: $normalizedRole)");
+                return false;
+            }
+            
+            error_log("Reset permissions - normalized role: $normalizedRole");
+            
+            // Delete existing permissions for this role
+            $deleteSql = "DELETE FROM role_permissions WHERE role = ?";
+            $deleteStmt = $this->db->prepare($deleteSql);
+            $deleteResult = $deleteStmt->execute([$normalizedRole]);
+            
+            error_log("Delete existing permissions result: " . ($deleteResult ? 'true' : 'false'));
+            
+            // Get actual columns from the database table
+            $columnsQuery = "SHOW COLUMNS FROM role_permissions";
+            $columnsStmt = $this->db->query($columnsQuery);
+            $dbColumns = [];
+            
+            while ($row = $columnsStmt->fetch(PDO::FETCH_ASSOC)) {
+                if ($row['Field'] !== 'role' && $row['Field'] !== 'updated_at') {
+                    $dbColumns[] = $row['Field'];
+                }
+            }
+            
+            error_log("Database columns: " . json_encode($dbColumns));
+            
+            // Get default permissions for this role
+            $defaults = $this->getDefaultRolePermissions($normalizedRole);
+            
+            if (empty($defaults)) {
+                error_log("No default permissions found for role: $normalizedRole");
+                return false;
+            }
+            
+            // Filter defaults to only include columns that exist in database
+            $filteredDefaults = [];
+            $filteredColumns = [];
+            
+            foreach ($dbColumns as $column) {
+                if (isset($defaults[$column])) {
+                    $filteredDefaults[$column] = $defaults[$column];
+                    $filteredColumns[] = $column;
+                }
+            }
+            
+            error_log("Filtered defaults: " . json_encode($filteredDefaults));
+            
+            // Build INSERT query with only existing columns
+            if (!empty($filteredColumns)) {
+                $insertSql = "INSERT INTO role_permissions (role, " . implode(', ', $filteredColumns) . ") VALUES (?, " . str_repeat('?,', count($filteredColumns) - 1) . "?)";
+                $insertValues = array_merge([$normalizedRole], array_values($filteredDefaults));
+                
+                error_log("Insert SQL: $insertSql");
+                error_log("Insert values: " . json_encode($insertValues));
+                
+                $insertStmt = $this->db->prepare($insertSql);
+                $insertResult = $insertStmt->execute($insertValues);
+                
+                error_log("Insert result: " . ($insertResult ? 'true' : 'false'));
+            } else {
+                error_log("No valid columns to insert");
+                $insertResult = false;
+            }
+            
+            return $insertResult;
             
         } catch(PDOException $e) {
             error_log("Error resetting permissions for role $role: " . $e->getMessage());
+            error_log("PDO Error info: " . json_encode($e->errorInfo));
             return false;
         }
     }

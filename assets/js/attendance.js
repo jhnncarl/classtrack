@@ -15,9 +15,6 @@ function initializeAttendancePage() {
     
     // Setup toast close button
     setupToastCloseButton();
-    
-    // Load attendance data (for future database integration)
-    loadAttendanceData();
 }
 
 // Show Toast Notification using existing toast system
@@ -126,6 +123,193 @@ function showToast(message, type = 'info') {
 }
 
 
+// Calendar functionality for Date Range
+class DateRangeCalendar {
+    constructor() {
+        this.currentDate = new Date();
+        this.selectedDate = null;
+        this.calendarDropdown = document.getElementById('calendarDropdown');
+        this.calendarToggle = document.getElementById('calendarToggle');
+        this.dateRangeInput = document.getElementById('dateRangeInput');
+        this.calendarTitle = document.getElementById('calendarTitle');
+        this.calendarDays = document.getElementById('calendarDays');
+        this.prevMonth = document.getElementById('prevMonth');
+        this.nextMonth = document.getElementById('nextMonth');
+        this.clearDateRange = document.getElementById('clearDateRange');
+        this.todayDateRange = document.getElementById('todayDateRange');
+        
+        this.init();
+    }
+    
+    init() {
+        // Event listeners
+        this.calendarToggle.addEventListener('click', () => this.toggleCalendar());
+        this.prevMonth.addEventListener('click', () => this.navigateMonth(-1));
+        this.nextMonth.addEventListener('click', () => this.navigateMonth(1));
+        this.clearDateRange.addEventListener('click', () => this.clearSelection());
+        this.todayDateRange.addEventListener('click', () => this.selectToday());
+        
+        // Close calendar when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.calendar-dropdown-container')) {
+                this.closeCalendar();
+            }
+        });
+        
+        // Initialize calendar
+        this.renderCalendar();
+        this.updateInput();
+    }
+    
+    toggleCalendar() {
+        this.calendarDropdown.classList.toggle('active');
+    }
+    
+    closeCalendar() {
+        this.calendarDropdown.classList.remove('active');
+    }
+    
+    navigateMonth(direction) {
+        this.currentDate.setMonth(this.currentDate.getMonth() + direction);
+        this.renderCalendar();
+    }
+    
+    renderCalendar() {
+        const year = this.currentDate.getFullYear();
+        const month = this.currentDate.getMonth();
+        
+        // Update title
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        this.calendarTitle.textContent = `${monthNames[month]} ${year}`;
+        
+        // Clear days
+        this.calendarDays.innerHTML = '';
+        
+        // Get first day of month and number of days
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+        
+        // Add previous month's trailing days
+        for (let i = firstDay - 1; i >= 0; i--) {
+            const day = daysInPrevMonth - i;
+            const dayElement = this.createDayElement(day, true, new Date(year, month - 1, day));
+            this.calendarDays.appendChild(dayElement);
+        }
+        
+        // Add current month's days
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const dayElement = this.createDayElement(day, false, date);
+            this.calendarDays.appendChild(dayElement);
+        }
+        
+        // Add next month's leading days
+        const totalCells = this.calendarDays.children.length;
+        const remainingCells = 42 - totalCells; // 6 rows * 7 days
+        for (let day = 1; day <= remainingCells; day++) {
+            const dayElement = this.createDayElement(day, true, new Date(year, month + 1, day));
+            this.calendarDays.appendChild(dayElement);
+        }
+    }
+    
+    createDayElement(day, isOtherMonth, date) {
+        const dayElement = document.createElement('div');
+        dayElement.className = 'calendar-day';
+        dayElement.textContent = day;
+        
+        if (isOtherMonth) {
+            dayElement.classList.add('other-month');
+        }
+        
+        // Check if today
+        const today = new Date();
+        if (date.toDateString() === today.toDateString()) {
+            dayElement.classList.add('today');
+        }
+        
+        // Check if selected
+        if (this.selectedDate && date.toDateString() === this.selectedDate.toDateString()) {
+            dayElement.classList.add('selected');
+        }
+        
+        // Check if has records
+        if (this.hasRecordsForDate(date)) {
+            dayElement.classList.add('has-records');
+        }
+        
+        // Add click event
+        dayElement.addEventListener('click', () => this.selectDate(date));
+        
+        return dayElement;
+    }
+    
+    hasRecordsForDate(date) {
+        // Check if there are attendance records for this date
+        const dateString = date.toISOString().split('T')[0];
+        const records = document.querySelectorAll('.attendance-record');
+        
+        for (let record of records) {
+            if (record.dataset.date === dateString) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    selectDate(date) {
+        this.selectedDate = date;
+        this.currentDate = new Date(date);
+        this.renderCalendar();
+        this.updateInput();
+        this.closeCalendar();
+        
+        // Trigger filter change
+        this.triggerFilterChange();
+    }
+    
+    selectToday() {
+        this.selectDate(new Date());
+    }
+    
+    clearSelection() {
+        this.selectedDate = null;
+        this.renderCalendar();
+        this.updateInput();
+        this.closeCalendar();
+        
+        // Trigger filter change
+        this.triggerFilterChange();
+    }
+    
+    updateInput() {
+        if (this.dateRangeInput) {
+            if (this.selectedDate) {
+                const dateStr = this.selectedDate.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                });
+                this.dateRangeInput.value = dateStr;
+                this.dateRangeInput.placeholder = 'Select date';
+            } else {
+                this.dateRangeInput.value = '';
+                this.dateRangeInput.placeholder = 'Select date';
+            }
+        }
+    }
+    
+    getSelectedDate() {
+        return this.selectedDate;
+    }
+    
+    triggerFilterChange() {
+        // Trigger the filter application
+        applyFilters();
+    }
+}
+
 // Setup Event Listeners
 function setupEventListeners() {
     // Add hover effects to attendance records
@@ -144,34 +328,33 @@ function setupEventListeners() {
     const filterSelects = document.querySelectorAll('.filter-select');
     filterSelects.forEach(select => {
         select.addEventListener('change', function() {
-            // Auto-apply filters on change
-            if (this.value !== 'all') {
-                applyFilters();
-            }
+            // Auto-apply filters on any change
+            applyFilters();
         });
     });
 }
 
 // Initialize Filters
 function initializeFilters() {
-    // Get current month and set as default
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const monthFilter = document.getElementById('monthFilter');
-    if (monthFilter) {
-        // Check if current month option exists, if not, add it
-        const currentMonthOption = Array.from(monthFilter.options).find(option => option.value === currentMonth);
-        if (!currentMonthOption) {
-            const option = new Option(new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }), currentMonth);
-            monthFilter.add(option, 1); // Add after "All Months"
+    // Initialize record count with actual visible records on page load
+    setTimeout(() => {
+        applyFilters();
+        
+        // Check if there are no records initially and update empty state
+        const attendanceRecords = document.querySelectorAll('.attendance-record');
+        if (attendanceRecords.length === 0) {
+            const emptyRecords = document.getElementById('emptyRecords');
+            if (emptyRecords) {
+                emptyRecords.style.display = 'block';
+                updateEmptyState('all', 'all');
+            }
         }
-    }
+    }, 100);
 }
 
-// Apply Filters
 function applyFilters() {
-    const dateFilter = document.getElementById('dateFilter').value;
     const statusFilter = document.getElementById('statusFilter').value;
-    const monthFilter = document.getElementById('monthFilter').value;
+    const selectedDate = window.dateRangeCalendar ? window.dateRangeCalendar.getSelectedDate() : null;
     
     const attendanceRecords = document.querySelectorAll('.attendance-record');
     const attendanceList = document.getElementById('attendanceList');
@@ -179,36 +362,17 @@ function applyFilters() {
     const recordCount = document.getElementById('recordCount');
     
     let visibleCount = 0;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set to start of day
     
     attendanceRecords.forEach(record => {
         let shouldShow = true;
         
-        // Date filter
-        if (dateFilter !== 'all') {
+        // Date filter from calendar selection
+        if (selectedDate) {
             const recordDate = new Date(record.dataset.date);
-            recordDate.setHours(0, 0, 0, 0);
+            const selectedDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+            const recordDateOnly = new Date(recordDate.getFullYear(), recordDate.getMonth(), recordDate.getDate());
             
-            switch(dateFilter) {
-                case 'today':
-                    shouldShow = shouldShow && recordDate.getTime() === today.getTime();
-                    break;
-                case 'week':
-                    const weekStart = new Date(today);
-                    weekStart.setDate(today.getDate() - today.getDay());
-                    const weekEnd = new Date(weekStart);
-                    weekEnd.setDate(weekStart.getDate() + 6);
-                    shouldShow = shouldShow && recordDate >= weekStart && recordDate <= weekEnd;
-                    break;
-                case 'month':
-                    shouldShow = shouldShow && recordDate.getMonth() === today.getMonth() && 
-                                           recordDate.getFullYear() === today.getFullYear();
-                    break;
-                case 'custom':
-                    // For custom range, we would need date pickers (future enhancement)
-                    break;
-            }
+            shouldShow = shouldShow && recordDateOnly.getTime() === selectedDateOnly.getTime();
         }
         
         // Status filter
@@ -216,32 +380,29 @@ function applyFilters() {
             shouldShow = shouldShow && record.dataset.status === statusFilter;
         }
         
-        // Month filter
-        if (monthFilter !== 'all') {
-            shouldShow = shouldShow && record.dataset.month === monthFilter;
-        }
-        
         // Show or hide record
         if (shouldShow) {
-            record.classList.remove('filtered-out');
-            record.classList.add('filtered-in');
+            record.style.display = 'flex';
             visibleCount++;
         } else {
-            record.classList.add('filtered-out');
-            record.classList.remove('filtered-in');
+            record.style.display = 'none';
         }
     });
     
     // Update record count
-    recordCount.textContent = visibleCount;
+    if (recordCount) recordCount.textContent = visibleCount;
     
     // Show/hide empty state
     if (visibleCount === 0) {
-        attendanceList.style.display = 'none';
-        emptyRecords.style.display = 'block';
+        if (attendanceList) attendanceList.style.display = 'none';
+        if (emptyRecords) {
+            emptyRecords.style.display = 'block';
+            // Update empty state content based on active filters
+            updateEmptyState(selectedDate, statusFilter);
+        }
     } else {
-        attendanceList.style.display = 'flex';
-        emptyRecords.style.display = 'none';
+        if (attendanceList) attendanceList.style.display = 'flex';
+        if (emptyRecords) emptyRecords.style.display = 'none';
     }
 }
 
@@ -253,6 +414,11 @@ function clearFilters() {
         select.value = 'all';
     });
     
+    // Clear calendar selection if it exists
+    if (window.dateRangeCalendar) {
+        window.dateRangeCalendar.clearSelection();
+    }
+    
     // Show all records
     const attendanceRecords = document.querySelectorAll('.attendance-record');
     const attendanceList = document.getElementById('attendanceList');
@@ -260,43 +426,68 @@ function clearFilters() {
     const recordCount = document.getElementById('recordCount');
     
     attendanceRecords.forEach(record => {
-        record.classList.remove('filtered-out', 'filtered-in');
+        record.style.display = 'flex';
     });
     
     // Update record count
-    recordCount.textContent = attendanceRecords.length;
+    if (recordCount) recordCount.textContent = attendanceRecords.length;
     
     // Show list, hide empty state
-    attendanceList.style.display = 'flex';
-    emptyRecords.style.display = 'none';
+    if (attendanceList) attendanceList.style.display = 'flex';
+    if (emptyRecords) emptyRecords.style.display = 'none';
 }
 
-// Load Attendance Data (for future database integration)
-function loadAttendanceData() {
-    // This function will be used to load attendance data from the database
-    // For now, we're using static HTML content
+// Update empty state content based on active filters
+function updateEmptyState(selectedDate, statusFilter) {
+    const emptyIcon = document.getElementById('emptyIcon');
+    const emptyTitle = document.getElementById('emptyTitle');
+    const emptyMessage = document.getElementById('emptyMessage');
     
-    // Future implementation:
-    /*
-    const subjectId = getUrlParameter('subject_id');
-    if (subjectId) {
-        fetch(`../api/get_attendance_records.php?subject_id=${subjectId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    renderAttendanceRecords(data.records);
-                    updateStatistics(data.statistics);
-                } else {
-                    showAttendanceToast('error', 'Failed to load attendance records');
-                }
-            })
-            .catch(error => {
-                console.error('Error loading attendance records:', error);
-                showAttendanceToast('error', 'Error loading attendance records');
-            });
+    if (!emptyIcon || !emptyTitle || !emptyMessage) return;
+    
+    let icon = 'bi-calendar-x';
+    let title = 'No attendance records found';
+    let message = 'Try adjusting your filters or check back later for new records.';
+    
+    // Check if date filter is active
+    if (selectedDate) {
+        const dateStr = selectedDate.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        icon = 'bi-calendar-day';
+        title = `No attendance records for ${dateStr}`;
+        message = `You don't have any attendance records scheduled for ${dateStr}.`;
     }
-    */
+    // Check if status filter is active
+    else if (statusFilter !== 'all') {
+        switch(statusFilter) {
+            case 'present':
+                icon = 'bi-check-circle';
+                title = 'No present attendance records';
+                message = 'You don\'t have any present attendance records for the selected period.';
+                break;
+            case 'absent':
+                icon = 'bi-x-circle';
+                title = 'No absent attendance records';
+                message = 'You don\'t have any absent attendance records for the selected period.';
+                break;
+            case 'late':
+                icon = 'bi-clock';
+                title = 'No late attendance records';
+                message = 'You don\'t have any late attendance records for the selected period.';
+                break;
+        }
+    }
+    
+    // Update the empty state content
+    emptyIcon.className = `bi ${icon}`;
+    emptyTitle.textContent = title;
+    emptyMessage.textContent = message;
 }
+
 
 // Render Attendance Records Dynamically (for future use)
 function renderAttendanceRecords(records) {
@@ -461,9 +652,19 @@ document.addEventListener('keydown', function(event) {
 // Handle page visibility changes
 document.addEventListener('visibilitychange', function() {
     if (!document.hidden) {
-        // Refresh data when page becomes visible again
-        // loadAttendanceData(); // Uncomment when database integration is ready
+        // Page became visible again - could add refresh logic here if needed in future
     }
+});
+
+
+// Initialize calendar when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait a bit to ensure all elements are loaded
+    setTimeout(() => {
+        if (!window.dateRangeCalendar) {
+            window.dateRangeCalendar = new DateRangeCalendar();
+        }
+    }, 100);
 });
 
 // Export functions for global access

@@ -460,6 +460,9 @@ body {
     flex-direction: column;
     gap: 20px;
     transition: all 0.3s ease;
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 8px;
 }
 
 .attendance-record {
@@ -684,6 +687,9 @@ body {
     
     .attendance-list {
         gap: 16px;
+        max-height: 400px;
+        padding-right: 6px;
+        overflow-y: auto;
     }
     
     .record-date {
@@ -739,6 +745,9 @@ body {
     
     .attendance-list {
         gap: 18px;
+        max-height: 500px;
+        padding-right: 7px;
+        overflow-y: auto;
     }
 }
 
@@ -775,4 +784,45 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
+}
+
+/* Custom scrollbar specifically for attendance list - hidden by default, visible only on scroll */
+.attendance-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.attendance-list::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+}
+
+.attendance-list::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+/* Show scrollbar only when user is actively scrolling or hovering */
+.attendance-list:hover::-webkit-scrollbar-thumb,
+.attendance-list:active::-webkit-scrollbar-thumb,
+.attendance-list:focus::-webkit-scrollbar-thumb {
+    background: #e0e0e0;
+}
+
+.attendance-list:hover::-webkit-scrollbar-thumb:hover {
+    background: #c1c1c1;
+}
+
+.attendance-list::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* For Firefox - hide scrollbar by default, show on hover */
+.attendance-list {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+
+.attendance-list:hover {
+    scrollbar-color: #e0e0e0 transparent;
 }
