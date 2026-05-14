@@ -394,28 +394,21 @@ function setupSignOutModal() {
                 setTimeout(() => {
                     
                     try {
-                        // Redirect to sidebar logout handler (handles both admin and regular users)
-                        console.log('Redirecting to sidebar logout handler'); // Debug
-                        
-                        // Get the correct path to sidebar.php based on current location
-                        let sidebarPath;
-                        if (window.location.pathname.includes('/admin/')) {
-                            // From admin pages, go up one level to reach assets/components
-                            sidebarPath = window.location.pathname.replace(/\/admin\/[^\/]*$/, '/assets/components/sidebar.php');
-                        } else {
-                            // From other pages, navigate to assets/components/sidebar.php
-                            sidebarPath = '/classtrack/assets/components/sidebar.php';
-                        }
-                        
-                        window.location.href = sidebarPath + '?action=logout';
+                        console.log('Redirecting to logout handler'); // Debug
+
+                        const basePath = (window.classtrackBasePath || '').replace(/\/+$/, '');
+                        const logoutPath = window.classtrackLogoutPath || `${basePath}/auth/logout.php`;
+                        window.location.href = logoutPath;
                         
                     } catch (error) {
                         console.error('Redirect error:', error); // Debug
                         // Fallback: try appropriate login page based on current path
                         if (window.location.pathname.includes('/admin/')) {
-                            window.location.href = '/classtrack/auth/admin/admin_login.php';
+                            const basePath = (window.classtrackBasePath || '').replace(/\/+$/, '');
+                            window.location.href = `${basePath}/auth/admin/admin_login.php`;
                         } else {
-                            window.location.href = '/classtrack/auth/login.php';
+                            const basePath = (window.classtrackBasePath || '').replace(/\/+$/, '');
+                            window.location.href = `${basePath}/auth/login.php`;
                         }
                     }
                 }, 1500); // Wait 1.5 seconds for user to see the toast

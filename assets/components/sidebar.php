@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../../config/env.php';
+
 // Handle logout request
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     // Start session if not already started
@@ -141,7 +143,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
                 
                 <!-- Log Out (Common for all roles) -->
                 <li class="sidebar-item">
-                    <a href="?action=logout" class="sidebar-link" data-page="logout">
+                    <a href="<?php echo htmlspecialchars(appPath('auth/logout.php')); ?>" class="sidebar-link" data-page="logout">
                         <i class="bi bi-box-arrow-right sidebar-icon"></i>
                         <span class="sidebar-text">Sign Out</span>
                     </a>
@@ -185,4 +187,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
 <link rel="stylesheet" href="../assets/css/toast.css">
 
 <!-- Include Sidebar JavaScript -->
-<script src="../assets/js/sidebar.js?v=3"></script>
+<script>
+    window.classtrackBasePath = window.classtrackBasePath || <?php echo json_encode(appBasePath()); ?>;
+    window.classtrackLogoutPath = <?php echo json_encode(appPath('auth/logout.php')); ?>;
+</script>
+<script src="../assets/js/sidebar.js?v=4"></script>
