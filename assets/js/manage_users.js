@@ -1,4 +1,6 @@
 // Manage Users JavaScript - ClassTrack
+const classtrackBasePath = window.classtrackBasePath || '';
+const classtrackPath = (path) => `${classtrackBasePath}/${path.replace(/^\/+/, '')}`;
 
 // Global variables for tracking new users
 let newlyAddedUsers = {
@@ -641,7 +643,7 @@ function updateProfileImage(imagePath) {
     if (imagePath && imagePath.trim() !== '') {
         const fullImagePath = imagePath.startsWith('http') ? 
             imagePath : 
-            '/classtrack/' + imagePath.replace(/^\/+/, '');
+            classtrackPath(imagePath);
         
         profileImg.src = fullImagePath;
         profileImg.style.display = 'block';
@@ -1394,7 +1396,7 @@ function populateAllUsersTable(users) {
     
     tbody.innerHTML = users.map(user => {
         const imagePath = user.ProfilePicture && user.ProfilePicture.trim() !== '' ? 
-            (user.ProfilePicture.startsWith('http') ? user.ProfilePicture : '/classtrack/' + user.ProfilePicture.replace(/^\/+/, '')) : 
+            (user.ProfilePicture.startsWith('http') ? user.ProfilePicture : classtrackPath(user.ProfilePicture)) : 
             null;
         
         return `
@@ -1466,7 +1468,7 @@ function populateTeachersTable(teachers) {
     
     tbody.innerHTML = teachers.map(teacher => {
         const imagePath = teacher.ProfilePicture && teacher.ProfilePicture.trim() !== '' ? 
-            (teacher.ProfilePicture.startsWith('http') ? teacher.ProfilePicture : '/classtrack/' + teacher.ProfilePicture.replace(/^\/+/, '')) : 
+            (teacher.ProfilePicture.startsWith('http') ? teacher.ProfilePicture : classtrackPath(teacher.ProfilePicture)) : 
             null;
         
         return `
@@ -1532,7 +1534,7 @@ function populateStudentsTable(students) {
     
     tbody.innerHTML = students.map(student => {
         const imagePath = student.ProfilePicture && student.ProfilePicture.trim() !== '' ? 
-            (student.ProfilePicture.startsWith('http') ? student.ProfilePicture : '/classtrack/' + student.ProfilePicture.replace(/^\/+/, '')) : 
+            (student.ProfilePicture.startsWith('http') ? student.ProfilePicture : classtrackPath(student.ProfilePicture)) : 
             null;
         
         return `

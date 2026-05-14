@@ -50,5 +50,20 @@ function envValue($key, $default = null) {
     return $value;
 }
 
+function appBasePath() {
+    $appUrl = envValue('APP_URL', 'http://localhost/classtrack');
+    $path = parse_url($appUrl, PHP_URL_PATH);
+
+    if (!$path || $path === '/') {
+        return '';
+    }
+
+    return rtrim($path, '/');
+}
+
+function appPath($path = '') {
+    return appBasePath() . '/' . ltrim($path, '/');
+}
+
 loadEnvFile(__DIR__ . '/../.env');
 ?>

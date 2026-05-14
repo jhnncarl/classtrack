@@ -437,7 +437,7 @@ if (isset($_SESSION['admin_id']) && is_numeric($_SESSION['admin_id'])) {
                     <div class="profile-icon-section">
                         <div class="profile-avatar-container">
                             <div class="profile-avatar">
-                                <img id="profileImagePreview" src="<?php echo !empty($profile_picture) ? '/classtrack/' . ltrim($profile_picture, '/') : ''; ?>" alt="Profile" style="display: <?php echo !empty($profile_picture) ? 'block' : 'none'; ?>; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                <img id="profileImagePreview" src="<?php echo !empty($profile_picture) ? htmlspecialchars(appPath($profile_picture)) : ''; ?>" alt="Profile" style="display: <?php echo !empty($profile_picture) ? 'block' : 'none'; ?>; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                                 <i class="bi bi-person-circle" id="defaultAvatarIcon" style="display: <?php echo !empty($profile_picture) ? 'none' : 'block'; ?>;"></i>
                                 <div class="avatar-overlay" onclick="changeProfilePicture()">
                                     <i class="bi bi-camera"></i>

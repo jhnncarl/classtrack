@@ -167,8 +167,7 @@ error_log("Student Join Class visible: YES (always)");
                             // Admin users get profile picture or default admin icon
                             $adminProfilePath = $_SESSION['admin_profile_path'] ?? null;
                             if ($adminProfilePath && !empty($adminProfilePath)) {
-                                // Ensure proper path resolution from web root with classtrack prefix
-                                $fullPath = '/classtrack/' . ltrim($adminProfilePath, '/');
+                                $fullPath = appPath($adminProfilePath);
                                 echo '<img src="' . htmlspecialchars($fullPath) . '" alt="Admin Profile" class="rounded-circle">';
                             } else {
                                 echo '<i class="bi bi-shield-fill" style="font-size: 40px; color: #6c757d;"></i>';
@@ -177,8 +176,7 @@ error_log("Student Join Class visible: YES (always)");
                             // Regular users get profile picture or default icon
                             $profilePath = $_SESSION['user_profile_path'] ?? null;
                             if ($profilePath && !empty($profilePath)) {
-                                // Ensure proper path resolution from web root with classtrack prefix
-                                $fullPath = '/classtrack/' . ltrim($profilePath, '/');
+                                $fullPath = appPath($profilePath);
                                 echo '<img src="' . htmlspecialchars($fullPath) . '" alt="Profile" class="rounded-circle">';
                             } else {
                                 echo '<i class="bi bi-person-circle" style="font-size: 40px; color: #9b9b9b;"></i>';
@@ -214,8 +212,7 @@ error_log("Student Join Class visible: YES (always)");
                             <?php 
                             $profilePath = $_SESSION['user_profile_path'] ?? null;
                             if ($profilePath && !empty($profilePath)) {
-                                // Ensure proper path resolution from web root with classtrack prefix
-                                $fullPath = '/classtrack/' . ltrim($profilePath, '/');
+                                $fullPath = appPath($profilePath);
                                 echo '<img src="' . htmlspecialchars($fullPath) . '" alt="Profile" class="account-avatar rounded-circle">';
                             } else {
                                  echo '<i class="bi bi-person-circle" style="font-size: 40px; color: #9b9b9b;"></i>';
@@ -284,8 +281,7 @@ error_log("Student Join Class visible: YES (always)");
                             <?php 
                             $profilePath = $_SESSION['user_profile_path'] ?? null;
                             if ($profilePath && !empty($profilePath)) {
-                                // Ensure proper path resolution from web root with classtrack prefix
-                                $fullPath = '/classtrack/' . ltrim($profilePath, '/');
+                                $fullPath = appPath($profilePath);
                                 echo '<img src="' . htmlspecialchars($fullPath) . '" alt="Profile" class="account-avatar rounded-circle">';
                             } else {
                                  echo '<i class="bi bi-person-circle" style="font-size: 40px; color: #9b9b9b;"></i>';
@@ -418,10 +414,11 @@ error_log("Student Join Class visible: YES (always)");
         window.canCreateClass = <?php echo json_encode($canCreateClass); ?>;
         window.canJoinClass = <?php echo json_encode($canJoinClass); ?>;
         <?php endif; ?>
+        window.classtrackBasePath = <?php echo json_encode(appBasePath()); ?>;
     </script>
-    <link rel="stylesheet" href="/classtrack/assets/css/toast.css?v=4">
-    <link rel="stylesheet" href="/classtrack/assets/css/navbar.css?v=30">
-    <script src="/classtrack/assets/js/navbar.js?v=36"></script>
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(appPath('assets/css/toast.css')); ?>?v=4">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(appPath('assets/css/navbar.css')); ?>?v=30">
+    <script src="<?php echo htmlspecialchars(appPath('assets/js/navbar.js')); ?>?v=36"></script>
     
     <!-- Toast Notification Container -->
     <?php include __DIR__ . '/toast.php'; ?>

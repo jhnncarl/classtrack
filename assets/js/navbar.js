@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
+    const basePath = window.classtrackBasePath || '';
+    const appPath = (path) => `${basePath}/${path.replace(/^\/+/, '')}`;
     const classCodeInput = document.getElementById('classCodeInput');
     const joinClassBtn = document.getElementById('joinClassBtn');
     const cancelBtn = document.querySelector('.btn-cancel');
@@ -210,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 
                 // Send AJAX request to create class
-                fetch('/classtrack/api/create_class.php', {
+                fetch(appPath('api/create_class.php'), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -439,7 +441,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to join class via API
     function joinClassViaAPI(classCode) {
         
-        return fetch('/classtrack/api/join_class.php', {
+        return fetch(appPath('api/join_class.php'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -683,7 +685,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success && data.profilePath) {
                 // Update profile picture in navbar
                 const profilePath = data.profilePath;
-                const fullPath = '/classtrack/' + profilePath.replace(/^\/+/, '');
+                const fullPath = appPath(profilePath);
                 
                 // Check if current element has image or default icon
                 const currentImg = navbarProfileBtn.querySelector('img');
