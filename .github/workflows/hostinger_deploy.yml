@@ -44,6 +44,7 @@ jobs:
           SSH_PORT="$(printf '%s' "$HOSTINGER_PORT" | tr -d '[:space:]')"
           SSH_USER="$(printf '%s' "$HOSTINGER_USER" | tr -d '[:space:]')"
           SSH_USER="${SSH_USER%@*}"
+          SSH_PATH="$(printf '%s' "$HOSTINGER_PATH" | tr -d '[:space:]')"
           if [[ ! "$SSH_PORT" =~ ^[0-9]+$ ]]; then
             echo "HOSTINGER_PORT must be only the port number, for example: 65002"
             exit 1
@@ -54,6 +55,10 @@ jobs:
           fi
           if [[ -z "$SSH_USER" ]]; then
             echo "HOSTINGER_USER is empty after cleanup"
+            exit 1
+          fi
+          if [[ "$SSH_PATH" != /* ]]; then
+            echo "HOSTINGER_PATH must be an absolute path, for example: /home/u260588187/domains/white-dugong-883928.hostingersite.com/public_html"
             exit 1
           fi
           # Create SSH folder used by the runner
@@ -77,7 +82,8 @@ jobs:
           SSH_PORT="$(printf '%s' "$HOSTINGER_PORT" | tr -d '[:space:]')"
           SSH_USER="$(printf '%s' "$HOSTINGER_USER" | tr -d '[:space:]')"
           SSH_USER="${SSH_USER%@*}"
-          ssh -i ~/.ssh/hostinger_key -p "$SSH_PORT" -o StrictHostKeyChecking=accept-new "$SSH_USER@$SSH_HOST" "mkdir -p '$HOSTINGER_PATH' '$HOSTINGER_PATH/uploads/profiles' '$HOSTINGER_PATH/uploads/qrcodes'"
+          SSH_PATH="$(printf '%s' "$HOSTINGER_PATH" | tr -d '[:space:]')"
+          ssh -i ~/.ssh/hostinger_key -p "$SSH_PORT" -o StrictHostKeyChecking=accept-new "$SSH_USER@$SSH_HOST" "mkdir -p '$SSH_PATH' '$SSH_PATH/uploads/profiles' '$SSH_PATH/uploads/qrcodes'"
 
       - name: Upload application files
         shell: bash
@@ -93,6 +99,7 @@ jobs:
           SSH_PORT="$(printf '%s' "$HOSTINGER_PORT" | tr -d '[:space:]')"
           SSH_USER="$(printf '%s' "$HOSTINGER_USER" | tr -d '[:space:]')"
           SSH_USER="${SSH_USER%@*}"
+          SSH_PATH="$(printf '%s' "$HOSTINGER_PATH" | tr -d '[:space:]')"
           # Store the SSH command so that RSYNC will be able to connect to Hostinger
           RSYNC_SSH="ssh -i ~/.ssh/hostinger_key -p $SSH_PORT -o StrictHostKeyChecking=accept-new"
           # Build the RSYNC option list
@@ -114,7 +121,7 @@ jobs:
             --exclude "uploads/profiles/*"
             --exclude "uploads/qrcodes/*"
           )
-          rsync "${RSYNC_OPTIONS[@]}" -e "$RSYNC_SSH" ./ "$SSH_USER@$SSH_HOST:$HOSTINGER_PATH/"
+          rsync "${RSYNC_OPTIONS[@]}" -e "$RSYNC_SSH" ./ "$SSH_USER@$SSH_HOST:$SSH_PATH/"
 
       - name: Create production environment file
         shell: bash
@@ -170,5 +177,6 @@ jobs:
           SSH_PORT="$(printf '%s' "$HOSTINGER_PORT" | tr -d '[:space:]')"
           SSH_USER="$(printf '%s' "$HOSTINGER_USER" | tr -d '[:space:]')"
           SSH_USER="${SSH_USER%@*}"
-          scp -i ~/.ssh/hostinger_key -P "$SSH_PORT" -o StrictHostKeyChecking=accept-new .env.deploy "$SSH_USER@$SSH_HOST:$HOSTINGER_PATH/.env"
+          SSH_PATH="$(printf '%s' "$HOSTINGER_PATH" | tr -d '[:space:]')"
+          scp -i ~/.ssh/hostinger_key -P "$SSH_PORT" -o StrictHostKeyChecking=accept-new .env.deploy "$SSH_USER@$SSH_HOST:$SSH_PATH/.env"
           rm -f .env.deploy
