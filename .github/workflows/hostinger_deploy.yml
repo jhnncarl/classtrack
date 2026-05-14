@@ -54,15 +54,13 @@ jobs:
           printf '%s\n' "$HOSTINGER_SSH_PRIVATE_KEY" > ~/.ssh/hostinger_key
           # Restrict the key permissions to read and write
           chmod 600 ~/.ssh/hostinger_key
-          # Save Hostinger's server fingerprint so SSH can connect from GitHub to Hostinger
-          ssh-keyscan -p "$HOSTINGER_PORT" "$HOSTINGER_HOST" >> ~/.ssh/known_hosts
 
       - name: Prepare remote folders
         shell: bash
         run: |
           # Stop the workflow if any command fails
           set -euo pipefail
-          ssh -i ~/.ssh/hostinger_key -p "$HOSTINGER_PORT" "$HOSTINGER_USER@$HOSTINGER_HOST" "mkdir -p '$HOSTINGER_PATH' '$HOSTINGER_PATH/uploads/profiles' '$HOSTINGER_PATH/uploads/qrcodes'"
+          ssh -i ~/.ssh/hostinger_key -p "$HOSTINGER_PORT" -o StrictHostKeyChecking=accept-new "$HOSTINGER_USER@$HOSTINGER_HOST" "mkdir -p '$HOSTINGER_PATH' '$HOSTINGER_PATH/uploads/profiles' '$HOSTINGER_PATH/uploads/qrcodes'"
 
       - name: Upload application files
         shell: bash
@@ -70,7 +68,7 @@ jobs:
           # Stop the workflow if any command fails
           set -euo pipefail
           # Store the SSH command so that RSYNC will be able to connect to Hostinger
-          RSYNC_SSH="ssh -i ~/.ssh/hostinger_key -p $HOSTINGER_PORT"
+          RSYNC_SSH="ssh -i ~/.ssh/hostinger_key -p $HOSTINGER_PORT -o StrictHostKeyChecking=accept-new"
           # Build the RSYNC option list
           RSYNC_OPTIONS=(
             # Archive mode
@@ -117,5 +115,5 @@ jobs:
             printf 'SMTP_FROM_EMAIL=%s\n' "${SMTP_FROM_EMAIL:-$SMTP_USERNAME}"
             printf 'SMTP_FROM_NAME="%s"\n' "${SMTP_FROM_NAME:-ClassTrack}"
           } > .env.deploy
-          scp -i ~/.ssh/hostinger_key -P "$HOSTINGER_PORT" .env.deploy "$HOSTINGER_USER@$HOSTINGER_HOST:$HOSTINGER_PATH/.env"
+          scp -i ~/.ssh/hostinger_key -P "$HOSTINGER_PORT" -o StrictHostKeyChecking=accept-new .env.deploy "$HOSTINGER_USER@$HOSTINGER_HOST:$HOSTINGER_PATH/.env"
           rm -f .env.deploy
