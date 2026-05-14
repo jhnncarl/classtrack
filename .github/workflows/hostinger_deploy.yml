@@ -119,6 +119,14 @@ jobs:
       - name: Create production environment file
         shell: bash
         env:
+          APP_ENV: ${{ secrets.APP_ENV }}
+          APP_URL: ${{ secrets.APP_URL }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_CHARSET: ${{ secrets.DB_CHARSET }}
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
@@ -129,10 +137,22 @@ jobs:
         run: |
           # Stop the workflow if any command fails
           set -euo pipefail
+          : "${APP_URL:?Missing GitHub secret APP_URL}"
+          : "${DB_HOST:?Missing GitHub secret DB_HOST}"
+          : "${DB_DATABASE:?Missing GitHub secret DB_DATABASE}"
+          : "${DB_USERNAME:?Missing GitHub secret DB_USERNAME}"
           : "${SMTP_USERNAME:?Missing GitHub secret SMTP_USERNAME}"
           : "${SMTP_PASSWORD:?Missing GitHub secret SMTP_PASSWORD}"
           # Build the production .env from GitHub Secrets. Keep the real .env out of git.
           {
+            printf 'APP_ENV=%s\n' "${APP_ENV:-production}"
+            printf 'APP_URL=%s\n' "$APP_URL"
+            printf 'DB_HOST=%s\n' "$DB_HOST"
+            printf 'DB_PORT=%s\n' "${DB_PORT:-3306}"
+            printf 'DB_DATABASE=%s\n' "$DB_DATABASE"
+            printf 'DB_USERNAME=%s\n' "$DB_USERNAME"
+            printf 'DB_PASSWORD="%s"\n' "$DB_PASSWORD"
+            printf 'DB_CHARSET=%s\n' "${DB_CHARSET:-utf8mb4}"
             printf 'SMTP_HOST=%s\n' "${SMTP_HOST:-smtp.gmail.com}"
             printf 'SMTP_PORT=%s\n' "${SMTP_PORT:-587}"
             printf 'SMTP_USERNAME=%s\n' "$SMTP_USERNAME"

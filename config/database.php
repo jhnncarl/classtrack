@@ -1,15 +1,24 @@
 <?php
 
+require_once 'env.php';
+
 class Database {
-    private $host = "localhost";
-    private $dbname = "classtrack_db";
-    private $username = "root";
-    private $password = "";
-    private $charset = "utf8mb4";
+    private $host;
+    private $port;
+    private $dbname;
+    private $username;
+    private $password;
+    private $charset;
     
     public $conn;
     
     public function __construct() {
+        $this->host = envValue('DB_HOST', 'localhost');
+        $this->port = envValue('DB_PORT', '3306');
+        $this->dbname = envValue('DB_DATABASE', 'classtrack_db');
+        $this->username = envValue('DB_USERNAME', 'root');
+        $this->password = envValue('DB_PASSWORD', '');
+        $this->charset = envValue('DB_CHARSET', 'utf8mb4');
         $this->connect();
     }
     
@@ -18,7 +27,7 @@ class Database {
      */
     private function connect() {
         try {
-            $dsn = "mysql:host={$this->host};dbname={$this->dbname};charset={$this->charset}";
+            $dsn = "mysql:host={$this->host};port={$this->port};dbname={$this->dbname};charset={$this->charset}";
             
             $options = [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
