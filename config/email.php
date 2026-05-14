@@ -4,15 +4,27 @@
  * Handles Gmail SMTP settings for sending OTP emails
  */
 
+require_once 'env.php';
+
 class EmailConfig {
     // Gmail SMTP Configuration
-    private $host = 'smtp.gmail.com';
-    private $port = 587;
-    private $username = 'classtrack.admin@gmail.com'; // Your Gmail address
-    private $password = 'pemc ckxu rmwr lezr'; // Your App Password (not regular password)
-    private $encryption = 'tls';
-    private $fromEmail = 'classtrack.admin@gmail.com'; // Same as username
-    private $fromName = 'ClassTrack';
+    private $host;
+    private $port;
+    private $username;
+    private $password;
+    private $encryption;
+    private $fromEmail;
+    private $fromName;
+
+    public function __construct() {
+        $this->host = envValue('SMTP_HOST', 'smtp.gmail.com');
+        $this->port = (int) envValue('SMTP_PORT', 587);
+        $this->username = envValue('SMTP_USERNAME', '');
+        $this->password = envValue('SMTP_PASSWORD', '');
+        $this->encryption = envValue('SMTP_ENCRYPTION', 'tls');
+        $this->fromEmail = envValue('SMTP_FROM_EMAIL', $this->username);
+        $this->fromName = envValue('SMTP_FROM_NAME', 'ClassTrack');
+    }
     
     /**
      * Get SMTP configuration

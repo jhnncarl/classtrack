@@ -1,0 +1,108 @@
+name: Deploy ClassTrack to Hostinger
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: hostinger-prod-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Upload ClassTrack files
+    runs-on: ubuntu-latest
+    env:
+      HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
+      HOSTINGER_PORT: ${{ secrets.HOSTINGER_PORT }}
+      HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
+      HOSTINGER_PATH: ${{ secrets.HOSTINGER_PATH }}
+    steps:
+      - name: Checkout ClassTrack code
+        uses: actions/checkout@v4
+
+      - name: Configure SSH access
+        shell: bash
+        env:
+          HOSTINGER_SSH_PRIVATE_KEY: ${{ secrets.HOSTINGER_SSH_PRIVATE_KEY }}
+        run: |
+          # Stop the workflow if any command fails
+          set -euo pipefail
+          : "${HOSTINGER_HOST:?Missing GitHub secret HOSTINGER_HOST}"
+          : "${HOSTINGER_PORT:?Missing GitHub secret HOSTINGER_PORT}"
+          : "${HOSTINGER_USER:?Missing GitHub secret HOSTINGER_USER}"
+          : "${HOSTINGER_PATH:?Missing GitHub secret HOSTINGER_PATH}"
+          : "${HOSTINGER_SSH_PRIVATE_KEY:?Missing GitHub secret HOSTINGER_SSH_PRIVATE_KEY}"
+          # Create SSH folder used by the runner
+          mkdir -p ~/.ssh
+          # Write the Hostinger private key from GitHub Secrets into a temporary key file
+          printf '%s\n' "$HOSTINGER_SSH_PRIVATE_KEY" > ~/.ssh/hostinger_key
+          # Restrict the key permissions to read and write
+          chmod 600 ~/.ssh/hostinger_key
+          # Save Hostinger's server fingerprint so SSH can connect from GitHub to Hostinger
+          ssh-keyscan -p "$HOSTINGER_PORT" "$HOSTINGER_HOST" >> ~/.ssh/known_hosts
+
+      - name: Prepare remote folders
+        shell: bash
+        run: |
+          # Stop the workflow if any command fails
+          set -euo pipefail
+          ssh -i ~/.ssh/hostinger_key -p "$HOSTINGER_PORT" "$HOSTINGER_USER@$HOSTINGER_HOST" "mkdir -p '$HOSTINGER_PATH' '$HOSTINGER_PATH/uploads/profiles' '$HOSTINGER_PATH/uploads/qrcodes'"
+
+      - name: Upload application files
+        shell: bash
+        run: |
+          # Stop the workflow if any command fails
+          set -euo pipefail
+          # Store the SSH command so that RSYNC will be able to connect to Hostinger
+          RSYNC_SSH="ssh -i ~/.ssh/hostinger_key -p $HOSTINGER_PORT"
+          # Build the RSYNC option list
+          RSYNC_OPTIONS=(
+            # Archive mode
+            -a
+            # Compression mode
+            -z
+            # Folders and files below are excluded to be uploaded to Hostinger
+            --exclude ".git/"
+            --exclude ".github/"
+            --exclude ".ssh/"
+            --exclude "node_modules/"
+            --exclude ".env"
+            --exclude ".env.*"
+            --exclude ".gitignore"
+            --exclude "package-lock.json"
+            --exclude "package.json"
+            --exclude "uploads/profiles/*"
+            --exclude "uploads/qrcodes/*"
+          )
+          rsync "${RSYNC_OPTIONS[@]}" -e "$RSYNC_SSH" ./ "$HOSTINGER_USER@$HOSTINGER_HOST:$HOSTINGER_PATH/"
+
+      - name: Create production environment file
+        shell: bash
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_ENCRYPTION: ${{ secrets.SMTP_ENCRYPTION }}
+          SMTP_FROM_EMAIL: ${{ secrets.SMTP_FROM_EMAIL }}
+          SMTP_FROM_NAME: ${{ secrets.SMTP_FROM_NAME }}
+        run: |
+          # Stop the workflow if any command fails
+          set -euo pipefail
+          : "${SMTP_USERNAME:?Missing GitHub secret SMTP_USERNAME}"
+          : "${SMTP_PASSWORD:?Missing GitHub secret SMTP_PASSWORD}"
+          # Build the production .env from GitHub Secrets. Keep the real .env out of git.
+          {
+            printf 'SMTP_HOST=%s\n' "${SMTP_HOST:-smtp.gmail.com}"
+            printf 'SMTP_PORT=%s\n' "${SMTP_PORT:-587}"
+            printf 'SMTP_USERNAME=%s\n' "$SMTP_USERNAME"
+            printf 'SMTP_PASSWORD="%s"\n' "$SMTP_PASSWORD"
+            printf 'SMTP_ENCRYPTION=%s\n' "${SMTP_ENCRYPTION:-tls}"
+            printf 'SMTP_FROM_EMAIL=%s\n' "${SMTP_FROM_EMAIL:-$SMTP_USERNAME}"
+            printf 'SMTP_FROM_NAME="%s"\n' "${SMTP_FROM_NAME:-ClassTrack}"
+          } > .env.deploy
+          scp -i ~/.ssh/hostinger_key -P "$HOSTINGER_PORT" .env.deploy "$HOSTINGER_USER@$HOSTINGER_HOST:$HOSTINGER_PATH/.env"
+          rm -f .env.deploy
