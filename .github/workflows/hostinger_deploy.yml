@@ -35,8 +35,25 @@ jobs:
           : "${HOSTINGER_USER:?Missing GitHub secret HOSTINGER_USER}"
           : "${HOSTINGER_PATH:?Missing GitHub secret HOSTINGER_PATH}"
           : "${HOSTINGER_SSH_PRIVATE_KEY:?Missing GitHub secret HOSTINGER_SSH_PRIVATE_KEY}"
-          if [[ ! "$HOSTINGER_PORT" =~ ^[0-9]+$ ]]; then
+          SSH_HOST="$(printf '%s' "$HOSTINGER_HOST" | tr -d '[:space:]')"
+          SSH_HOST="${SSH_HOST#ssh://}"
+          SSH_HOST="${SSH_HOST#sftp://}"
+          SSH_HOST="${SSH_HOST#*@}"
+          SSH_HOST="${SSH_HOST%%/*}"
+          SSH_HOST="${SSH_HOST%%:*}"
+          SSH_PORT="$(printf '%s' "$HOSTINGER_PORT" | tr -d '[:space:]')"
+          SSH_USER="$(printf '%s' "$HOSTINGER_USER" | tr -d '[:space:]')"
+          SSH_USER="${SSH_USER%@*}"
+          if [[ ! "$SSH_PORT" =~ ^[0-9]+$ ]]; then
             echo "HOSTINGER_PORT must be only the port number, for example: 65002"
+            exit 1
+          fi
+          if [[ ! "$SSH_HOST" =~ ^[A-Za-z0-9.-]+$ ]]; then
+            echo "HOSTINGER_HOST must be only a hostname or IP address, for example: 147.93.80.66"
+            exit 1
+          fi
+          if [[ -z "$SSH_USER" ]]; then
+            echo "HOSTINGER_USER is empty after cleanup"
             exit 1
           fi
           # Create SSH folder used by the runner
@@ -51,15 +68,33 @@ jobs:
         run: |
           # Stop the workflow if any command fails
           set -euo pipefail
-          ssh -i ~/.ssh/hostinger_key -p "$HOSTINGER_PORT" -o StrictHostKeyChecking=accept-new "$HOSTINGER_USER@$HOSTINGER_HOST" "mkdir -p '$HOSTINGER_PATH' '$HOSTINGER_PATH/uploads/profiles' '$HOSTINGER_PATH/uploads/qrcodes'"
+          SSH_HOST="$(printf '%s' "$HOSTINGER_HOST" | tr -d '[:space:]')"
+          SSH_HOST="${SSH_HOST#ssh://}"
+          SSH_HOST="${SSH_HOST#sftp://}"
+          SSH_HOST="${SSH_HOST#*@}"
+          SSH_HOST="${SSH_HOST%%/*}"
+          SSH_HOST="${SSH_HOST%%:*}"
+          SSH_PORT="$(printf '%s' "$HOSTINGER_PORT" | tr -d '[:space:]')"
+          SSH_USER="$(printf '%s' "$HOSTINGER_USER" | tr -d '[:space:]')"
+          SSH_USER="${SSH_USER%@*}"
+          ssh -i ~/.ssh/hostinger_key -p "$SSH_PORT" -o StrictHostKeyChecking=accept-new "$SSH_USER@$SSH_HOST" "mkdir -p '$HOSTINGER_PATH' '$HOSTINGER_PATH/uploads/profiles' '$HOSTINGER_PATH/uploads/qrcodes'"
 
       - name: Upload application files
         shell: bash
         run: |
           # Stop the workflow if any command fails
           set -euo pipefail
+          SSH_HOST="$(printf '%s' "$HOSTINGER_HOST" | tr -d '[:space:]')"
+          SSH_HOST="${SSH_HOST#ssh://}"
+          SSH_HOST="${SSH_HOST#sftp://}"
+          SSH_HOST="${SSH_HOST#*@}"
+          SSH_HOST="${SSH_HOST%%/*}"
+          SSH_HOST="${SSH_HOST%%:*}"
+          SSH_PORT="$(printf '%s' "$HOSTINGER_PORT" | tr -d '[:space:]')"
+          SSH_USER="$(printf '%s' "$HOSTINGER_USER" | tr -d '[:space:]')"
+          SSH_USER="${SSH_USER%@*}"
           # Store the SSH command so that RSYNC will be able to connect to Hostinger
-          RSYNC_SSH="ssh -i ~/.ssh/hostinger_key -p $HOSTINGER_PORT -o StrictHostKeyChecking=accept-new"
+          RSYNC_SSH="ssh -i ~/.ssh/hostinger_key -p $SSH_PORT -o StrictHostKeyChecking=accept-new"
           # Build the RSYNC option list
           RSYNC_OPTIONS=(
             # Archive mode
@@ -79,7 +114,7 @@ jobs:
             --exclude "uploads/profiles/*"
             --exclude "uploads/qrcodes/*"
           )
-          rsync "${RSYNC_OPTIONS[@]}" -e "$RSYNC_SSH" ./ "$HOSTINGER_USER@$HOSTINGER_HOST:$HOSTINGER_PATH/"
+          rsync "${RSYNC_OPTIONS[@]}" -e "$RSYNC_SSH" ./ "$SSH_USER@$SSH_HOST:$HOSTINGER_PATH/"
 
       - name: Create production environment file
         shell: bash
@@ -106,5 +141,14 @@ jobs:
             printf 'SMTP_FROM_EMAIL=%s\n' "${SMTP_FROM_EMAIL:-$SMTP_USERNAME}"
             printf 'SMTP_FROM_NAME="%s"\n' "${SMTP_FROM_NAME:-ClassTrack}"
           } > .env.deploy
-          scp -i ~/.ssh/hostinger_key -P "$HOSTINGER_PORT" -o StrictHostKeyChecking=accept-new .env.deploy "$HOSTINGER_USER@$HOSTINGER_HOST:$HOSTINGER_PATH/.env"
+          SSH_HOST="$(printf '%s' "$HOSTINGER_HOST" | tr -d '[:space:]')"
+          SSH_HOST="${SSH_HOST#ssh://}"
+          SSH_HOST="${SSH_HOST#sftp://}"
+          SSH_HOST="${SSH_HOST#*@}"
+          SSH_HOST="${SSH_HOST%%/*}"
+          SSH_HOST="${SSH_HOST%%:*}"
+          SSH_PORT="$(printf '%s' "$HOSTINGER_PORT" | tr -d '[:space:]')"
+          SSH_USER="$(printf '%s' "$HOSTINGER_USER" | tr -d '[:space:]')"
+          SSH_USER="${SSH_USER%@*}"
+          scp -i ~/.ssh/hostinger_key -P "$SSH_PORT" -o StrictHostKeyChecking=accept-new .env.deploy "$SSH_USER@$SSH_HOST:$HOSTINGER_PATH/.env"
           rm -f .env.deploy
