@@ -121,7 +121,7 @@ jobs:
             --exclude "uploads/profiles/*"
             --exclude "uploads/qrcodes/*"
           )
-          rsync "${RSYNC_OPTIONS[@]}" -e "$RSYNC_SSH" ./ "$SSH_USER@$SSH_HOST:$SSH_PATH/"
+          rsync "${RSYNC_OPTIONS[@]}" --rsync-path="mkdir -p '$SSH_PATH' && rsync" -e "$RSYNC_SSH" ./ "$SSH_USER@$SSH_HOST:$SSH_PATH/"
 
       - name: Create production environment file
         shell: bash
