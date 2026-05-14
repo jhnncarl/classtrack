@@ -35,6 +35,19 @@ jobs:
           : "${HOSTINGER_USER:?Missing GitHub secret HOSTINGER_USER}"
           : "${HOSTINGER_PATH:?Missing GitHub secret HOSTINGER_PATH}"
           : "${HOSTINGER_SSH_PRIVATE_KEY:?Missing GitHub secret HOSTINGER_SSH_PRIVATE_KEY}"
+          HOSTINGER_HOST="${HOSTINGER_HOST#ssh://}"
+          HOSTINGER_HOST="${HOSTINGER_HOST#sftp://}"
+          HOSTINGER_HOST="${HOSTINGER_HOST#*@}"
+          HOSTINGER_HOST="${HOSTINGER_HOST%%/*}"
+          HOSTINGER_HOST="${HOSTINGER_HOST%%:*}"
+          if [[ ! "$HOSTINGER_PORT" =~ ^[0-9]+$ ]]; then
+            echo "HOSTINGER_PORT must be only the port number, for example: 65002"
+            exit 1
+          fi
+          {
+            echo "HOSTINGER_HOST=$HOSTINGER_HOST"
+            echo "HOSTINGER_PORT=$HOSTINGER_PORT"
+          } >> "$GITHUB_ENV"
           # Create SSH folder used by the runner
           mkdir -p ~/.ssh
           # Write the Hostinger private key from GitHub Secrets into a temporary key file
